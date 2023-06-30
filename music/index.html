@@ -16,7 +16,7 @@
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="/lib/svg/svg.min.js"></script>
 	<script type="text/javascript" src="/common/Config.js"></script>
-	<script type="text/javascript" src="./script.js"></script>
+	<script type="text/javascript" src="/music/script.js"></script>
 
 </head>
 
@@ -46,7 +46,7 @@
 				</div>
 				<br>
 
-				<div style="height:150px;border:solid;border-radius:5px;border-width:1px;border-color:#95B8E7;">
+				<div style="height:173px;border:solid;border-radius:5px;border-width:1px;border-color:#95B8E7;">
 
 					<div style="width:40px;height:100%;float:left;position:relative;display:flex;flex-direction:column;border-right:ridge;border-width:thin;">
 						
@@ -75,13 +75,14 @@
 						<br>
 
 						<!-- Random -->
-						<input id="autoNext" class="easyui-switchbutton" data-options="checked:true,onText:'Random',offText:'Linner'" style="width:90px;margin-left:5px;">
+						<input id="autoNext" class="easyui-switchbutton" data-options="checked:true,onText:'Next',offText:'Stop'" style="width:62px;margin-left:5px;">
 						
 						<!-- Loop -->
 						Loop: <input id="loop" type="text" class="easyui-numberspinner" value="0" data-options="min:0,max:99,spinAlign:'horizontal'" style="width:83px;">
+						<br>
 						
 						<!-- Visualizations -->
-						Visual: <input id="visual" class="easyui-switchbutton" data-options="checked:true,onText:'Wave',offText:'Shake',onChange:mt.visual.onChangeType" style="width:90px;margin-left:5px;">
+						Visual: <input id="visual" class="easyui-switchbutton" data-options="checked:true,onText:'Wave',offText:'Shake',onChange:mt.visual.onChangeType" style="width:70px;margin-left:5px;">
 						<br>
 
 						<!-- Include -->
@@ -110,11 +111,9 @@
 			<!-- Toolbar -->
 			<div id="toolbar">
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-queue',plain:true" onclick="mt.next.add()">Play next</a>
-				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play',plain:true" onclick="mt.c_list.toolbar.edit()">Play force</a>
+				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play',plain:true" onclick="mt.player.playForce()">Play force</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play2',plain:true" onclick="mt.track.play()">Play track</a>
-				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="mt.c_list.toolbar.edit()">Edit</a>
-				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="mt.c_list.toolbar.remove()">Remove</a>
-				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-cut',plain:true" onclick="mt.c_list.toolbar.cut()">Cut</a>
+				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="mt.mgr.removeMusic()">Remove</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-share',plain:true" onclick="mt.handler.share()">Share</a>
 			</div>
 			
@@ -167,7 +166,7 @@
 						<input class="easyui-textbox" name="artists" style="width:100%" data-options="label:'Artists:'">
 					</div>
 					<div style="margin-bottom:10px">
-						<input class="easyui-textbox" name="duration" style="width:100%" data-options="label:'Duration:'">
+						<input id="form_duration" class="easyui-textbox" name="duration" style="width:100%" data-options="label:'Duration:'">
 					</div>
 					<div style="margin-bottom:10px">
 						<input class="easyui-textbox" name="tags" style="width:100%" data-options="label:'Tags:'">
