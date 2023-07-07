@@ -1,0 +1,50 @@
+
+* { box-sizing: border-box; } 
+
+/* html { overflow-y: scroll; } */
+
+body {
+  font-family: sans-serif;
+  text-align: center;
+  /* height: 100vh; */
+}
+
+#packgrid {
+  margin: auto;
+  background: #EEE;
+  max-width: 1200px;
+}
+
+/* clear fix */
+#packgrid:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.pgi {
+  float: left;
+  width: 100px;
+  height: 100px;
+  background: #a5c1e5;
+  border: 2px solid hsla(0, 0%, 0%, 0.5);
+}
+.pgi:hover {
+  background: #98b9e4;
+  cursor: pointer;
+}
+
+.pgimw { width:  210px; }
+.pgimh { height: 210px; }
+.pgilw { width:  320px; }
+.pgilh { height: 320px; }
+
+.pgis {
+  width: 320px;
+  height: 320px;
+  background: #ffe48d;
+}
+.pgis:hover {
+  background: #fdde77;
+  cursor: pointer;
+}

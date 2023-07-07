@@ -17,36 +17,42 @@ var anime = {
 		},
 		initDataGrid: function() {
 
+			// Add edittor tagbox
 			if ($.fn.datagrid.defaults.editors.tagbox == undefined) {
 				$.extend($.fn.datagrid.defaults.editors, {
 					tagbox: {
-						init: function(container,options){
+						init: function(container,options) {
 							let input = $('<input>').appendTo(container);
 							input.tagbox(options);
 							return input;
 						},
-						destroy: function(target){
+						destroy: function(target) {
+							// #TODO Thêm phần chưa nhấn enter nữa, bị mất
 							$(target).tagbox('destroy');
 						},
-						getValue: function(target){
+						getValue: function(target) {
 							return $(target).tagbox('getValues').join(',');
 						},
-						setValue: function(target, value){
+						setValue: function(target, value) {
 							if (value){
 								$(target).tagbox('setValues', value.split(','));
 							} else {
 								$(target).tagbox('clear');
 							}
 						},
-						resize: function(target, width){
+						resize: function(target, width) {
 							$(target).tagbox('resize', width);
 						}
 					}
 				});
 			}
 
+			// Init grid
+			formatterRate = function(v,r,i) {
+				return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
+			}
 			this.component.datagrid({
-				url: '/manager/anime/search',
+				url: '/manager/search/anime',
 				toolbar: '#toolbarAnime',
 				rownumbers: true,
 				singleSelect: true,
@@ -54,44 +60,27 @@ var anime = {
 				pageSize: 10,
 				columns: [[
 					{field:'name', title:'Name', sortable:true, editor:{type:'textbox'}},
-					{field:'story', title:'Story', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'art', title:'Art', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'sound', title:'Sound', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'fantasy', title:'Fantasy', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'sad', title:'Sad', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'joke', title:'Joke', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'brand', title:'Brand', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'review', title:'Review', width:60, align:'center', sortable:true,
-						formatter: function(v,r,i) {
-							return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-						},
-						styler: function(v,r,i) { return 'background-color:#eff9ff;'; },
-						editor:{type:'numberspinner', options:{min:1, max:5}}
-					},
+					{field:'story', title:'Story', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'art', title:'Art', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'sound', title:'Sound', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'fantasy', title:'Fantasy', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'sad', title:'Sad', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'joke', title:'Joke', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'brand', title:'Brand', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate},
+					{field:'review', title:'Review', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: formatterRate, styler: function(v,r,i) { return 'background-color:#eff9ff;'; }},
 					{field:'end', title:'End', editor:{type:'textbox'}},
 					{field:'character', title:'Character', editor:{type:'tagbox'}},
-					{field:'updateTime', title:'Update', formatter:function(v, r, i) {
-						return v;
-					}},
-					{field:'action', title:'', width:70, hidden:true, formatter:function(v, r, i) {
-						return '<div id="action'+r.id+'"></div>';
-					}}
+					{field:'updateTime', title:'Update'},
+					{field:'action', title:'', width:70, hidden:true, formatter:function(v, r, i) { return '<div id="action'+r.id+'"></div>'; }}
 				]],
-				onLoadSuccess: function(data) {
+				onAfterEdit: function(i,r,c) { // Fix sau numberspinner edittor bị đổi thành string
+					keys = ['art','brand','fantasy','joke','review','sad','sound','story']
+					for (let i in keys) {
+						k = keys[i];
+						v = c[k];
+						if (v && typeof(v) != 'number')
+							r[k] = parseInt(v);
+					}
 				},
 				onDblClickRow: function(index,row) {
 					anime.toolbar.edit();
@@ -177,17 +166,22 @@ var anime = {
 			// Prepare data
 			let data = dg.datagrid('getSelected');
 
+			// Update date
+			data.updateTime = moment().format("YYYY/MM/DD HH:mm:ss");
+			if (data.id == 0) delete data.id; // Nếu id = 0 thì thêm mới
+
 			// Save API
 			$.ajax({
 				type: 'POST',
-				url: '/manager/anime/save',
-				data: {data: data},
+				url: '/manager/save/anime',
+				data: JSON.stringify(data),
+				contentType: 'application/json',
 				success: function(res) {
 					anime.c_datagrid.component.datagrid('reload');
 				},
 				error: function(e) {
-					anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
-					alert('Fail: '+e);
+					// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+					console.error('Fail: '+e);
 				}
 			});
 

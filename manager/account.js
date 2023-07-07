@@ -19,7 +19,7 @@ var account = {
 		},
 		initDataGrid: function() {
 			this.component.datagrid({
-				url: '/manager/account/search',
+				url: '/manager/search/account',
 				toolbar: '#toolbar'+account.postfix,
 				rownumbers: true,
 				singleSelect: true,
@@ -34,9 +34,6 @@ var account = {
 						return '<div id="action'+r.id+account.postfix+'"></div>';
 					}}
 				]],
-				onLoadSuccess: function(data) {
-
-				},
 				onDblClickRow: function(index,row) {
 					account.toolbar.edit();
 				},
@@ -121,17 +118,21 @@ var account = {
 			// Prepare data
 			let data = dg.datagrid('getSelected');
 
+			// Update date
+			if (data.id == 0) delete data.id; // Nếu id = 0 thì thêm mới
+
 			// Save API
 			$.ajax({
 				type: 'POST',
-				url: '/manager/account/save',
-				data: {data: data},
+				url: '/manager/save/account',
+				data: JSON.stringify(data),
+				contentType: 'application/json',
 				success: function(res) {
 					account.c_datagrid.component.datagrid('reload');
 				},
 				error: function(e) {
-					account.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
-					alert('Fail: '+e);
+					// account.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+					console.error('Fail: '+e);
 				}
 			});
 

@@ -1,4 +1,4 @@
-var manager = {
+var mt = {
 
 	// Forward
 	init: function() {
@@ -14,7 +14,7 @@ var manager = {
 		addAnime: function() {
 			this.component.tabs('add', {
 				title: 'Anime',
-				href: '/manager/anime',
+				href: '/manager/anime.html',
 				closable: true,
 				tools:[{
 					iconCls:'icon-key',
@@ -27,7 +27,7 @@ var manager = {
 		addFilm: function() {
 			this.component.tabs('add', {
 				title:'Film',
-				href: '/manager/film',
+				href: '/manager/film.html',
 				closable:true,
 				tools:[{
 					iconCls:'icon-key',
@@ -40,7 +40,7 @@ var manager = {
 		addMovie: function() {
 			this.component.tabs('add', {
 				title:'Movie',
-				href: '/manager/movie',
+				href: '/manager/movie.html',
 				closable:true,
 				tools:[{
 					iconCls:'icon-key',
@@ -53,7 +53,7 @@ var manager = {
 		addManga: function() {
 			this.component.tabs('add', {
 				title:'Manga',
-				href: '/manager/manga',
+				href: '/manager/manga.html',
 				closable:true,
 				tools:[{
 					iconCls:'icon-key',
@@ -66,7 +66,7 @@ var manager = {
 		addGame: function() {
 			this.component.tabs('add', {
 				title:'Game',
-				href: '/manager/game',
+				href: '/manager/game.html',
 				closable:true,
 				tools:[{
 					iconCls:'icon-key',
@@ -79,7 +79,7 @@ var manager = {
 		addAccount: function() {
 			this.component.tabs('add', {
 				title:'Account',
-				href: '/manager/account',
+				href: '/manager/account.html',
 				closable:true,
 				tools:[{
 					iconCls:'icon-key',

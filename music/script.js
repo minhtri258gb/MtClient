@@ -2,10 +2,12 @@ var mt = {
 	_blogUrl: '',
 	_focus: true,
 	init: function() {
+
+		this.skip = true; // Skip for before interact
+
 		this.core.init();
 		this.gui.init();
 		this.player.init();
-		this.visual.init();
 		this.next.init();
 		this.mgr.init();
 
@@ -14,6 +16,13 @@ var mt = {
 
 		// Process URL Param OR Auto play
 		this.handler.prepare();
+	},
+	initOnInteract: function() {
+		// API get music will call: mt.handler.changeMusicPost
+		if (this.skip) {
+			delete this.skip;
+			this.visual.init();
+		}
 	},
 	core: {
 		interactName: '',
@@ -434,6 +443,9 @@ var mt = {
 		},
 		changeMusicPost: function(res) {
 
+			// Init after interact
+			mt.initOnInteract();
+
 			// Free and Create BlogUrl
 			if (mt._blogUrl.length > 0)
 				URL.revokeObjectURL(mt._blogUrl);
@@ -797,12 +809,12 @@ var mt = {
 		_ctx: null,
 		_currentTime: 0,
 		_waveColor1: '#f0f0f0',
-		_waveColor2: '#ffe48d',
 		staticGenSizeW: 0, // Fix lỗi resize để static ko bị scale
 		// type visual
 		c_btnSwitch: null,
 		type: true, // true: wave, false: shake
 		init: function() {
+
 			this._staticWave = $('#staticWave');
 			this._curStaticWave = $('#curStaticWave');
 			this._currentTimeLbl = $('#currentTime');
@@ -812,18 +824,23 @@ var mt = {
 
 			this._staticWave[0].addEventListener('click', this.clickStatic, false);
 			this._dynamicWave[0].addEventListener('click', this.clickDynamic, false);
-
-			this._context = new window.AudioContext();
+			
+			window.AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
+			this._context = new AudioContext();
 
 			let canvas = this._staticWave[0];
 			this._ctx = canvas.getContext('2d');
 
 			this.dynamicWave();
+			// this.dynamicWave2();
 
 			// Button switch
 			this.c_btnSwitch = $('#visual');
 		},
 		clear: function() {
+			if (mt.skip)
+				return;
+
 			this._ctx.fillStyle = "rgba(0,0,0,1)";
 			this._ctx.globalCompositeOperation = "destination-out";
 			this._ctx.clearRect(0, 0, this._staticWave[0].width, this._staticWave[0].height);
@@ -840,7 +857,7 @@ var mt = {
 				this._staticWave[0].width = w;
 				this._staticWave[0].height = h;
 
-				this._ctx.fillStyle = this._waveColor1;
+				this._ctx.fillStyle = '#f0f0f0'; // Màu xám nhạt
 				this._ctx.globalCompositeOperation = 'source-over';
 
 				let data = buffer.getChannelData(0);
@@ -871,15 +888,15 @@ var mt = {
 
 
 			// Cập nhật vị trí thanh current
-			this._curStaticWave.css('left',pos);
+			this._curStaticWave.css('left', pos);
 			
 			// Vẽ current cho static
 			pos = pos * this.staticGenSizeW / w; // Fix lỗi scale khi resize window
 			if (currentTime > this._currentTime) {
-				this._ctx.fillStyle = this._waveColor2;
+				this._ctx.fillStyle = '#ffe48d'; // màu cam
 				this._ctx.fillRect(0, 0, pos, h);
 			} else {
-				this._ctx.fillStyle = this._waveColor1;
+				this._ctx.fillStyle = '#f0f0f0'; // Màu xám nhạt
 				this._ctx.fillRect(pos, 0, w, h);
 			}
 
@@ -894,57 +911,84 @@ var mt = {
 		},
 		dynamicWave: function() {
 
-			if (mt.core.isLocal()) {
-				var analyser = this._context.createAnalyser();
-				analyser.fftSize = 512;
+			var analyser = this._context.createAnalyser();
+			analyser.fftSize = 128;
 
-				var source = this._context.createMediaElementSource(mt.player.component[0]); // Gây lỗi ko phát nhạc được
-				source.connect(analyser);
-				analyser.connect(this._context.destination);
-			
-				var bufferLength = analyser.frequencyBinCount;
-				var dataArray = new Uint8Array(bufferLength);
+			var source = this._context.createMediaElementSource(mt.player.component[0]); // Gây lỗi ko phát nhạc được
+			source.connect(analyser);
+			analyser.connect(this._context.destination);
+		
+			var bufferLength = analyser.frequencyBinCount;
+			var dataArray = new Uint8Array(bufferLength);
 
-				var canvas = this._dynamicWave[0];
-				canvas.width = canvas.clientWidth;
-				canvas.height = canvas.clientHeight;
-			
-				var ctx = canvas.getContext("2d");
-				var WIDTH = canvas.width;
-				var HEIGHT = canvas.height;
-			
-				var barWidth = WIDTH / bufferLength * 1.5;
-				var barHeight;
+			var canvas = this._dynamicWave[0];
+			canvas.width = canvas.clientWidth;
+			canvas.height = canvas.clientHeight;
+		
+			var ctx = canvas.getContext("2d");
+			var WIDTH = canvas.width;
+			var HEIGHT = canvas.height;
+		
+			var heightWave;
 
-				function renderFrame() {
-					requestAnimationFrame(renderFrame);
-			
-					if (mt.visual.type)
-						analyser.getByteFrequencyData(dataArray);
-					else
-						analyser.getByteTimeDomainData(dataArray);
-					// analyser.getFloatTimeDomainData(dataArray);
-			
-					ctx.clearRect(0, 0, WIDTH, HEIGHT);
-			
-					for (var i = 0, x = 0; i < bufferLength; i++) {
-						barHeight = dataArray[i] / 256 * HEIGHT;
+			// For type 1
+			var sizeloop = Math.ceil(bufferLength * 2 / 3);
+			var barWidth = WIDTH / bufferLength * 1.5 - 2;
+			var gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+			gradient.addColorStop(1.0, '#fff8af');
+			gradient.addColorStop(0.5, '#ffe48d');
+			gradient.addColorStop(0.0, '#bba040');
+			// gradient.addColorStop(1.0, '#fff7bf');
+			// gradient.addColorStop(0.5, '#ffe48d');
+			// gradient.addColorStop(0.0, '#ccb15a');
+			var capYPositionArray = new Array(sizeloop); // Lưu lịch sử vị trí Cap
 
-						var r = barHeight + 25 * (i / bufferLength);
-						var g = 250 * (i / bufferLength);
-						var b = 50;
-			
-						ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
-						ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
-			
+			// For type 2
+			var HEIGHTHALF = HEIGHT / 2;
+			ctx.lineWidth = 2; // line width
+			ctx.strokeStyle = "#000"; // line color
+			const sliceWidth = WIDTH / bufferLength;
+			const scaleFactor = 5/2;
+
+			function renderFrame() {
+				requestAnimationFrame(renderFrame);
+				ctx.clearRect(0, 0, WIDTH, HEIGHT); // reset canvas
+
+				if (mt.visual.type) {
+					analyser.getByteFrequencyData(dataArray); // 0 - 255
+					for (var i = 0, x = 0; i < sizeloop; i++) {
+						heightWave = dataArray[i] / 256 * HEIGHT;
+						
+						// Render Bar
+						ctx.fillStyle = gradient;
+						ctx.fillRect(x, HEIGHT - heightWave, barWidth, heightWave);
+
+						// Render Cap
+						if (heightWave < capYPositionArray[i]) {
+							heightWave = --capYPositionArray[i];
+						} else {
+							capYPositionArray[i] = heightWave;
+						}
+						ctx.fillStyle = '#000';
+						ctx.fillRect(x, HEIGHT - heightWave - 2, barWidth, 2);
+
 						x += barWidth + 2;
 					}
+				} else {
+					analyser.getByteTimeDomainData(dataArray);
+					ctx.beginPath();
+					ctx.moveTo(0, HEIGHTHALF);
+					for (var i=0, x = sliceWidth/2; i < bufferLength; i++) {
+						// 0 > 255 | 0 > 2 | -1 > 1 | scale 5/2 | to height
+						heightWave = (dataArray[i] / 128.0 - 1) * scaleFactor * HEIGHTHALF + HEIGHTHALF;
+						ctx.lineTo(x, heightWave);
+						x += sliceWidth;
+					}
+					ctx.lineTo(WIDTH, HEIGHTHALF);
+					ctx.stroke();
 				}
-
-				renderFrame();
-			} else {
-				this._dynamicWave.hide();
 			}
+			renderFrame();
 		},
 		onChangeType: function(toogle) {
 			let self = mt.visual;

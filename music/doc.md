@@ -9,3 +9,4 @@ change to howler?
 collap content của layout (edit, cut)
 form đổi qua table properti
 
+[ ] phân tiếp tiếp chỗ vẽ mới so với vẽ cũ

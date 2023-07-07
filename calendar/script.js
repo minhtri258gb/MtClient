@@ -1,33 +1,65 @@
 var mt = {
-
 	init: function() {
 		this.calendar.init();
 	},
-
 	calendar: {
-
-		_jquery: null,
-
+		_cld: null,
 		init: function() {
-			this._jquery = $('#calendar');
-			this._jquery.calendar({
-				width: 500,
-				height: 500,
-				firstDay: 1,
-				weeks: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
-				months: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
-				onChange: this.onChange
+			const calendar = new tui.Calendar('#calendar', {
+				defaultView: 'month', // week
+				// template: {
+				// 	time(event) {
+				// 		const { start, end, title } = event;
+				// 		return `<span style="color: white;">${formatTime(start)}~${formatTime(end)} ${title}</span>`;
+				// 	},
+				// 	allday(event) {
+				// 		return `<span style="color: gray;">${event.title}</span>`;
+				// 	},
+				// },
+				// calendars: MOCK_CALENDARS,
+				// calendars: [{
+				// 	id: 'cal1',
+				// 	name: 'Personal',
+				// 	backgroundColor: '#03bd9e',
+				// }, {
+				// 	id: 'cal2',
+				// 	name: 'Work',
+				// 	backgroundColor: '#00a9ff',
+				// }],
 			});
+
 		},
-
-		onChange: function(newDate, oldDate) { // Date, Date
-			console.log(newDate, oldDate)
-		}
-
+		changeView: function(type) {
+			// type: day, week, month
+			this._cld.changeView(type);
+		},
+		cleanEvent: function() {
+			this._cld.clear();
+		},
+		createEvent: function() { // #TODO
+			this._cld.createEvents([
+				{
+					id: '1',
+					calendarId: '1',
+					title: 'my event',
+					category: 'time',
+					dueDateClass: '',
+					start: '2018-01-18T22:30:00+09:00',
+					end: '2018-01-19T02:30:00+09:00',
+				},
+				{
+					id: '2',
+					calendarId: '1',
+					title: 'second event',
+					category: 'time',
+					dueDateClass: '',
+					start: '2018-01-18T17:30:00+09:00',
+					end: '2018-01-19T17:31:00+09:00',
+				},
+			]);
+		},
 	},
-
 	solar: {
-
 		to: function(date) {
 
 			// Phân tích ngày
@@ -47,16 +79,11 @@ var mt = {
 			let jd = dd + (153*m+2)/5 + 365*y + y/4 - 32083;
 
 			return jd;
-		}
-
+		},
 	},
-
 	utils: {
-
 		str2date: function(str) { // Format 
 			return date;
-		}
-
-	}
-
+		},
+	},
 };

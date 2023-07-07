@@ -2,8 +2,8 @@ var game = {
 
 	postfix: '_game',
 
-	rowID: -1,
-	rowSel: -1,
+	rowID: -1, // -1: edit, 0: row mới, >= 1: rowId
+	rowSel: -1, // row đã chọn từ trước
 
 	// Forward
 	init: function() {
@@ -18,8 +18,12 @@ var game = {
 			this.initDataGrid();
 		},
 		initDataGrid: function() {
+			
+			formatterRate = function(v,r,i) {
+				return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
+			}
 			this.component.datagrid({
-				url: '/manager/game/search',
+				url: '/manager/search/game',
 				toolbar: '#toolbar'+game.postfix,
 				rownumbers: true,
 				singleSelect: true,
@@ -27,32 +31,24 @@ var game = {
 				pageSize: 10,
 				columns: [[
 					{field:'name', title:'Name', editor:{type:'textbox'}},
-					{field:'graphic', title:'Graphic', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'audio', title:'Audio', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'gameplay', title:'Gameplay', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'story', title:'Story', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
-					{field:'review', title:'Review', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
-						return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:6px"></span>';
-					}},
+					{field:'graphic', title:'Graphic', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter:formatterRate},
+					{field:'audio', title:'Audio', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter:formatterRate},
+					{field:'gameplay', title:'Gameplay', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter:formatterRate},
+					{field:'story', title:'Story', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter:formatterRate},
+					{field:'review', title:'Review', width:60, align:'center', sortable:true, editor: {type:'numberspinner', options:{min:1, max:5}}, formatter:formatterRate},
 					{field:'muliplayer', title:'Multiplayer', editor:{type:'textbox'}},
 					{field:'end', title:'End', editor:{type:'textbox'}},
-					{field:'updateTime', title:'Update', formatter:function(v, r, i) {
-						return v;
-					}},
-					{field:'action', title:'', width:70, hidden:true, formatter:function(v, r, i) {
-						return '<div id="action'+r.id+game.postfix+'"></div>';
-					}}
+					{field:'updateTime', title:'Update'},
+					{field:'action', title:'', width:70, hidden:true, formatter:function(v, r, i) { return '<div id="action'+r.id+game.postfix+'"></div>'; }}
 				]],
-				onLoadSuccess: function(data) {
-
+				onAfterEdit: function(i,r,c) { // Fix sau numberspinner edittor bị đổi thành string
+					keys = ['graphic','audio', 'gameplay', 'story', 'review']
+					for (let i in keys) {
+						k = keys[i];
+						v = c[k];
+						if (v && typeof(v) != 'number')
+							r[k] = parseInt(v);
+					}
 				},
 				onDblClickRow: function(index,row) {
 					game.toolbar.edit();
@@ -138,17 +134,22 @@ var game = {
 			// Prepare data
 			let data = dg.datagrid('getSelected');
 
+			// Update date
+			data.updateTime = moment().format("YYYY/MM/DD HH:mm:ss");
+			if (data.id == 0) delete data.id; // Nếu id = 0 thì thêm mới
+
 			// Save API
 			$.ajax({
 				type: 'POST',
-				url: '/manager/game/save',
-				data: {data: data},
+				url: '/manager/save/game',
+				data: JSON.stringify(data),
+				contentType: 'application/json',
 				success: function(res) {
 					game.c_datagrid.component.datagrid('reload');
 				},
 				error: function(e) {
-					game.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
-					alert('Fail: '+e);
+					// game.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+					console.error('Fail: '+e);
 				}
 			});
 

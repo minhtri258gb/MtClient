@@ -1,23 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<title>CISUM</title>
-
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-
 	<link id="logo" rel="shortcut icon" type="image/png" href="/music/favicon.ico">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
 	<link rel="stylesheet" type="text/css" href="/music/style.css">
-
 	<script type="text/javascript" src="/lib/jquery-3.6.0.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="/lib/svg/svg.min.js"></script>
 	<script type="text/javascript" src="/common/Config.js"></script>
 	<script type="text/javascript" src="/music/script.js"></script>
-
 </head>
 
 <body>
@@ -26,9 +21,6 @@
 
 		<div data-options="region:'west',split:false,collapsible:false" style="width:25%">
 		
-			<audio id="player" controls hidden></audio>
-			<br>
-
 			<div style="width:98%;margin-left:1%;margin-right:1%;">
 
 				<h2 id="music_title" style="text-align:center">Music Player</h2>
@@ -221,9 +213,7 @@
 		</div>
 	</div>
 
-	<script>
-		mt.init();
-	</script>
+	<script>mt.init()</script>
+	
 </body>
-
 </html>
