@@ -2,11 +2,18 @@
 # TODO
 filter rate
 tag on datagrid
-save track
-download track
-play track
 change to howler?
-collap content của layout (edit, cut)
 form đổi qua table properti
 
-[ ] phân tiếp tiếp chỗ vẽ mới so với vẽ cũ
+## Cut
++ để thêm nhóm track
+mark để lấy curtime
+nhiều nút play cho từng cụm
+> Nút cộng để mark, 2 lần = 1 nhóm, xóa để remove mark, chọn nhóm muốn play
+
+## Media, thêm hình
+
+## Thêm textbox search cho tên bài hát
+
+# BUG
+> Bài ko có trong máy sẽ bị treo

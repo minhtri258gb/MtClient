@@ -1,6 +1,4 @@
 var mt = {
-	_blogUrl: '',
-	_focus: true,
 	init: function() {
 
 		this.skip = true; // Skip for before interact
@@ -447,14 +445,14 @@ var mt = {
 			mt.initOnInteract();
 
 			// Free and Create BlogUrl
-			if (mt._blogUrl.length > 0)
-				URL.revokeObjectURL(mt._blogUrl);
+			if (mt.player._blogUrl.length > 0)
+				URL.revokeObjectURL(mt.player._blogUrl);
 			
-			mt._blogUrl = URL.createObjectURL(new Blob([res]));
+			mt.player._blogUrl = URL.createObjectURL(new Blob([res]));
 
 			// Load to player
 			let c = mt.player.component[0];
-			c.src = mt._blogUrl;
+			c.src = mt.player._blogUrl;
 			c.pause();
 			c.load();
 			c.oncanplaythrough = c.play();
@@ -481,6 +479,7 @@ var mt = {
 		},
 	},
 	event: { // #TODO chuyển đi hết
+		_focus: true,
 		init: function() {
 			this.resize();
 			this.keypress();
@@ -510,12 +509,12 @@ var mt = {
 		onfocus: function() {
 			window.onfocus = function() {
 				// mt.mgr.c_list.scrollToCur(); // pause lại
-				mt._focus = true;
+				mt.event._focus = true;
 			};
 		},
 		onblur: function() {
 			window.onblur = function() {
-				mt._focus = false;
+				mt.event._focus = false;
 			}
 		},
 		media: function() {
@@ -552,6 +551,7 @@ var mt = {
 		musicIdPlay: -1,
 		isPlay: false,
 		duration: 0,
+		_blogUrl: '',
 		init: function() {
 
 			// player html
@@ -635,10 +635,8 @@ var mt = {
 		pause: function(flag) {
 			let c = this.component;
 			if (flag === undefined)
-			flag = c[0].paused == false;
-				
+				flag = c[0].paused == false;
 			flag ? c[0].pause() : c[0].play();
-			
 			mt.player.isPlay = !flag;
 		},
 		changeTime: function(value) {
@@ -799,6 +797,7 @@ var mt = {
 		},
 	},
 	visual: {
+		// Sóng nhạc tĩnh toàn bài và sóng nhạc đang phát 
 		_staticWave: null,
 		_curStaticWave: null,
 		_currentTimeLbl: null,
@@ -808,7 +807,6 @@ var mt = {
 		_source: null, // Để bên player
 		_ctx: null,
 		_currentTime: 0,
-		_waveColor1: '#f0f0f0',
 		staticGenSizeW: 0, // Fix lỗi resize để static ko bị scale
 		// type visual
 		c_btnSwitch: null,
@@ -879,7 +877,7 @@ var mt = {
 			});
 		},
 		update: function(currentTime) {
-			if (!mt._focus)
+			if (!mt.event._focus)
 				return;
 
 			let w = this._staticWave[0].clientWidth;
@@ -996,6 +994,7 @@ var mt = {
 		},
 	},
 	next: {
+		// Danh sách phát đang chờ
 		_listnext: null,
 		init: function() {
 			this._listnext = $('#listNext');
@@ -1090,6 +1089,7 @@ var mt = {
 		},
 	},
 	edit: {
+		// Chỉnh sửa thông tin bài hát
 		c_content: null,
 		form: null,
 		isOpen: false,
@@ -1129,7 +1129,10 @@ var mt = {
 			if (this.isOpen && music) {
 
 				// Fill duration
-				if (music.duration == null && music.id == mt.mgr.musics[mt.player.musicIdPlay].id)
+				if (music.duration == null &&
+					mt.player.musicIdPlay >= 0 &&
+					music.id == mt.mgr.musics[mt.player.musicIdPlay].id
+				)
 					music.duration = mt.player.duration;
 				
 				// Fill data
@@ -1157,6 +1160,7 @@ var mt = {
 		},
 	},
 	new: {
+		// Danh sách thêm bài hát
 		c_content: null,
 		isOpen: false,
 		lstMusicNew: [],
@@ -1258,23 +1262,14 @@ var mt = {
 		},
 	},
 	cut: {
-		// old
-		active: false,
-		isTest: false,
-		// new
 		c_content: null,
-		isOpen: false,
+		isOpen: false, // Mở chức năng
+		isTest: false, // Đánh dấu đang phát thử
 		init: function() {
-
-			// old
 			this.c_slider.init();
 			this.c_start.init();
 			this.c_end.init();
-			this.active = true;
-
-			// new
 			this.c_content = $('#right_cut');
-			// ...
 		},
 		open: function() {
 			
@@ -1375,13 +1370,13 @@ var mt = {
 			}
 		},
 		onChangeMusic: function() {
-			if (!this.active)
+			if (!this.isOpen)
 				return;
 			
 			this.fill(mt.mgr.musics[mt.player.musicIdPlay])
 		},
 		onUpdate: function(time) {
-			if (!this.active || !this.isTest)
+			if (!this.isOpen || !this.isTest)
 				return;
 			
 			if (time > this.c_end.get()) {
@@ -1390,7 +1385,7 @@ var mt = {
 			}
 		},
 		onPlayerEnd: function() {
-			if (this.active && this.isTest) {
+			if (this.isOpen && this.isTest) {
 				this.isTest = false;
 				return false;
 			}
@@ -1445,6 +1440,7 @@ var mt = {
 		},
 	},
 	track: {
+		// Phát đoạn trích hay
 		isActive: false, // Đang chạy track hay ko
 		timeStart: 0, // Thời gian bắt đầu track
 		timeEnd: 0, // Thời gian ngưng track
@@ -1482,6 +1478,7 @@ var mt = {
 			else {
 				mt.player.changeTime(this.timeStart);
 				mt.player.pause(false);
+				mt.player.c_pause.switchIcon();
 			}
 		},
 		onChangeMusic: function() {
@@ -1495,7 +1492,7 @@ var mt = {
 				return;
 			
 			if (time > this.timeEnd) {
-				mt.player.pause(true);
+				mt.handler.pause("[mt.track.onUpdate] track done")
 				this.isActive = false;
 			}
 		},
@@ -1526,6 +1523,7 @@ var mt = {
 			this.soundClick.init();
 		},
 		soundClick: {
+			// Hiệu ứng âm thanh
 			_sndClick: null,
 			init: function() {
 				this._sndClick = new Audio('/res/effect/sound/mixkit-video-game-mystery-alert-234.wav');
@@ -1534,6 +1532,11 @@ var mt = {
 			play: function() {
 				this._sndClick.play();
 			}
+		},
+	},
+	mediaSession: {
+		init: function() {
+
 		},
 	},
 }
