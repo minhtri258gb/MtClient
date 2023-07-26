@@ -17,3 +17,5 @@ nhiều nút play cho từng cụm
 
 # BUG
 > Bài ko có trong máy sẽ bị treo
+
+* Nếu ko tìm thấy bài thì hiển thị danh sách thiếu và reload bài mới (ko xóa nữa)

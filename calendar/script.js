@@ -1,11 +1,85 @@
 var mt = {
+	dev: function() {
+		this.calendar.createEvent();
+	},
 	init: function() {
 		this.calendar.init();
+
+		this.dev();
+	},
+	event: {
+		lstBirthday: [],
+		lstDateEvent: [],
+		lstTodo: [],
+		lstPeronalLog: [],
+		refresh: function(type) {
+			// Làm mới danh sách
+			if (type == 1 || type == -2) { // Birthday
+				// $.ajax({
+				// 	type: 'POST',
+				// 	url: '/manager/save/anime',
+				// 	data: JSON.stringify(data),
+				// 	contentType: 'application/json',
+				// 	success: function(res) {
+				// 		anime.c_datagrid.component.datagrid('reload');
+				// 	},
+				// 	error: function(e) {
+				// 		// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+				// 		console.error('Fail: '+e);
+				// 	}
+				// });
+			}
+			if (type == 2 || type == -2) { // Date event
+				$.ajax({
+					type: 'POST',
+					url: '/calendar/get',
+					data: JSON.stringify(data),
+					contentType: 'application/json',
+					success: function(res) {
+						anime.c_datagrid.component.datagrid('reload');
+					},
+					error: function(e) {
+						// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+						console.error('Fail: '+e);
+					}
+				});
+			}
+			if (type == 3 || type == -2) { // Todo list
+				// $.ajax({
+				// 	type: 'POST',
+				// 	url: '/manager/save/anime',
+				// 	data: JSON.stringify(data),
+				// 	contentType: 'application/json',
+				// 	success: function(res) {
+				// 		anime.c_datagrid.component.datagrid('reload');
+				// 	},
+				// 	error: function(e) {
+				// 		// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+				// 		console.error('Fail: '+e);
+				// 	}
+				// });
+			}
+			if (type == 4 || type == -2) { // Personal log
+				// $.ajax({
+				// 	type: 'POST',
+				// 	url: '/manager/save/anime',
+				// 	data: JSON.stringify(data),
+				// 	contentType: 'application/json',
+				// 	success: function(res) {
+				// 		anime.c_datagrid.component.datagrid('reload');
+				// 	},
+				// 	error: function(e) {
+				// 		// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
+				// 		console.error('Fail: '+e);
+				// 	}
+				// });
+			}
+		},
 	},
 	calendar: {
 		_cld: null,
 		init: function() {
-			const calendar = new tui.Calendar('#calendar', {
+			this._cld = new tui.Calendar('#calendar', {
 				defaultView: 'month', // week
 				// template: {
 				// 	time(event) {
@@ -16,7 +90,6 @@ var mt = {
 				// 		return `<span style="color: gray;">${event.title}</span>`;
 				// 	},
 				// },
-				// calendars: MOCK_CALENDARS,
 				// calendars: [{
 				// 	id: 'cal1',
 				// 	name: 'Personal',
@@ -44,8 +117,8 @@ var mt = {
 					title: 'my event',
 					category: 'time',
 					dueDateClass: '',
-					start: '2018-01-18T22:30:00+09:00',
-					end: '2018-01-19T02:30:00+09:00',
+					start: '2023-07-18T22:30:00+09:00',
+					end: '2023-07-19T02:30:00+09:00',
 				},
 				{
 					id: '2',
@@ -53,8 +126,8 @@ var mt = {
 					title: 'second event',
 					category: 'time',
 					dueDateClass: '',
-					start: '2018-01-18T17:30:00+09:00',
-					end: '2018-01-19T17:31:00+09:00',
+					start: '2023-07-18T17:30:00+09:00',
+					end: '2023-07-19T17:31:00+09:00',
 				},
 			]);
 		},

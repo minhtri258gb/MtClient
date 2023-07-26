@@ -1,24 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+	<title>IPA</title>
+
 	<meta charset="utf-8">
-	<title>TSEUQER</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
-	
+
 	<script type="text/javascript" src="/lib/jquery-3.6.0.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
-	<script type="text/javascript" src="./script.js"></script>
-	
+	<!-- <script type="text/javascript" src="/lib/axios/axios.min.js"></script> -->
+	<script type="text/javascript" src="/lib/jsonview.js"></script>
+	<script type="text/javascript" src="/request/script.js"></script>
+
+	<style>
+		.overlay {
+			display: none;
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+			z-index: 999;
+			background: rgba(255,255,255,0.8) url("/res/gif/loading.gif") center no-repeat;
+		}
+		body.loading {
+				overflow: hidden;   
+		}
+		body.loading .overlay {
+				display: block;
+		}
+	</style>
+
 </head>
-<body>
 
-	<div id="tabs" style="width:500px;height:250px;"></div>
+<body stype="width:100vw">
 
-	<!-- <input class="easyui-textbox" data-options="iconCls:'icon-search',label:'URL'" style="width:300px"> -->
+	<div style="margin:auto;text-align:center;">
 
-	<!-- <a id="btn" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'" onclick="mt.sendRequest()">Send</a> -->
+		<input id="type_request" style="width:90px;">
+		<input id="url" style="width:672px">
+		<a id="btn_go" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-send'" onclick="mt.url.request()"></a>
+		
+		<div class="easyui-accordion" data-options="onUnselect:mt.gui.unSelect" style="width:800px;height:auto;margin:auto">
+			<div title="Params" data-options="iconCls:'icon-reload',selected:true" style="padding:10px;">
+				<table id="params"></table>
+			</div>
+			<div title="Header" data-options="iconCls:'icon-save',onUnselect:mt.header.endEditing" style="overflow:auto;padding:10px;">
+				<table id="header"></table>
+			</div>
+			<div title="Body" data-options="iconCls:'icon-key'">
+				<input id="type_body" style="width:110px;">
+				<br>
+				<input id="body" style="width:798px">
+			</div>
+			<div title="Authorization" data-options="iconCls:'icon-key'" style="overflow:auto;padding:10px;">
+				<input id="type_authorize" style="width:110px;">
+				<br>
+				<input id="access_token" style="width:778px">
+			</div>
+		</div>
+		
+		<a id="btn_copy" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search'" onclick="mt.url.click()" style="display:none"></a>
+		<div id="response" style="width:801px;border-style:ridge;margin:auto;display:none"></div>
+
+	</div>
+
+	<div class="overlay"></div>
 
 	<script>
 		mt.init();

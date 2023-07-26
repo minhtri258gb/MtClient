@@ -431,7 +431,10 @@ var mt = {
 						setTimeout(() => { location.reload(); }, 10000);
 					} else if (xhr.status == 303) {
 						mt.gui.notice('File not found'); // Thông báo không tìm thấy bài trong ổ đĩa
-						setTimeout(() => { mt.handler.next("auto"); }, 3000); // Tự động next
+						mt.handler.end("force");
+						setTimeout(() => {
+							mt.handler.next("auto");
+						}, 4000); // Tự động next
 					}
 				},
 			});
