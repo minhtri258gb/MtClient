@@ -4,7 +4,7 @@ var mt = {
 	},
 	init: function() {
 		this.calendar.init();
-
+		this.event.refresh(-2);
 		this.dev();
 	},
 	event: {
@@ -31,12 +31,12 @@ var mt = {
 			}
 			if (type == 2 || type == -2) { // Date event
 				$.ajax({
-					type: 'POST',
+					type: 'GET',
 					url: '/calendar/get',
-					data: JSON.stringify(data),
+					// data: JSON.stringify(data),
 					contentType: 'application/json',
 					success: function(res) {
-						anime.c_datagrid.component.datagrid('reload');
+						mt.event.lstDateEvent = res;
 					},
 					error: function(e) {
 						// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1

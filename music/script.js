@@ -343,10 +343,11 @@ var mt = {
 			// Reset URL
 			window.history.pushState('', '', '/music');
 
-			// Auto play
-			if (mt.core.isLocal()) { // Lỗi tương tác nhạc đối với truy cập IP / hostname
-				setTimeout(() => mt.handler.next("auto"), 1000);
-			}
+			// Lỗi đối với bản Chrome mới
+			// // Auto play
+			// if (mt.core.isLocal()) { // Lỗi tương tác nhạc đối với truy cập IP / hostname
+			// 	setTimeout(() => mt.handler.next("auto"), 1000);
+			// }
 		},
 		pause: function(target) {
 			

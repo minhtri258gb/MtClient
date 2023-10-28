@@ -166,6 +166,10 @@ var anime = {
 			// Prepare data
 			let data = dg.datagrid('getSelected');
 
+			// Sync cols
+			if (data.character == '')
+				delete data.character;
+
 			// Update date
 			data.updateTime = moment().format("YYYY/MM/DD HH:mm:ss");
 			if (data.id == 0) delete data.id; // Nếu id = 0 thì thêm mới
