@@ -22,6 +22,9 @@ var mt = {
 			this.visual.init();
 		}
 	},
+	config: {
+		defaultVolume: 0.3, // Âm lượng mặc định của loa
+	},
 	core: {
 		interactName: '',
 		init: function() {
@@ -47,7 +50,9 @@ var mt = {
 		},
 	},
 	gui: {
+
 		layout: null,
+
 		init: function() {
 			// Init layout easyUI
 			let c = $('#layout');
@@ -200,14 +205,14 @@ var mt = {
 		c_list: {
 			component: null,
 			init: function() {
-	
+				
 				// Component
 				this.component = $("#list");
-	
+				
 				this.initDatagrid();
 			},
 			initDatagrid: function() {
-	
+				
 				// Thêm editor loại tagbox
 				if ($.fn.datagrid.defaults.editors.tagbox == undefined) {
 					$.extend($.fn.datagrid.defaults.editors, {
@@ -236,7 +241,7 @@ var mt = {
 						}
 					});
 				}
-	
+				
 				this.component.datagrid({
 					data: this.getData(),
 					toolbar: '#toolbar',
@@ -312,7 +317,6 @@ var mt = {
 	},
 	handler: { // #TODO chuyển đi hết
 		_target: null,
-
 		begin: function(target) {
 			if (target != undefined) {
 				if (this._target != null)
@@ -473,7 +477,7 @@ var mt = {
 		share: function() {
 			$.get('/common/getIPLocal', function(res, status) {
 				if (status == 'success') {
-					let url = res + "/music?stt=" + mt.player.musicIdPlay;
+					let url = "http://" + res + "/music?stt=" + mt.player.musicIdPlay;
 					if (mt.core.isSafe()) // Tự động copy
 						navigator.clipboard.writeText(url).then(() => mt.gui.notice("Copied link to share"));
 					else
@@ -551,25 +555,26 @@ var mt = {
 		},
 	},
 	player: {
+
 		component: null,
 		musicIdPlay: -1,
 		isPlay: false,
 		duration: 0,
 		_blogUrl: '',
+
 		init: function() {
 
-			// player html
-			// let c = $("#player");
-			// this.component = c;
+			// Load default
+			this.c_volumeBar.base = mt.config.defaultVolume;
 
+			// Init Component
 			let audio = new Audio();
 			let c = $(audio);
 			this.component = c;
-
 			c.on("ended", mt.player.onEnd);
 			c.on("loadeddata", mt.player.onLoadedData);
 			c.on("timeupdate", mt.event.playMusic);
-			c.prop("volume", mt.player.c_volumeBar.base);
+			c.prop("volume", this.c_volumeBar.base); // Set giá trị mặc định loa
 			
 			// gui
 			this.c_pause.init();
@@ -626,8 +631,10 @@ var mt = {
 		},
 		setVolume: function(n) {
 			if (!isNaN(n)) {
-				if (n > 1.0) n = 1.0;
-				else if (n < 0.0) n = 0.0;
+				if (n > 1.0)
+					n = 1.0;
+				else if (n < 0.0)
+					n = 0.0;
 				mt.player.component.prop("volume", n);
 			}
 		},
@@ -688,10 +695,11 @@ var mt = {
 			}
 		},
 		c_volumeBar: {
+
 			component: null,
-			base: 0.3,
+			base: 1.0,
 			offset: 100.0,
-	
+
 			init: function() {
 				let c = $('#volumeBar');
 				this.component = c;
@@ -705,24 +713,20 @@ var mt = {
 					onChange: this.onChange
 				});
 			},
-	
 			onChange: function(newValue, oldValue) {
 				let self = mt.player.c_volumeBar;
 				self.base = newValue / (self.offset / 100.0);
 				mt.player.setVolume(newValue);
 				mt.player.c_btnVolume.update(newValue);
 			},
-	
 			getVolume: function() {
 				return this.component.slider('getValue');
 			},
-	
 			setVolume: function(volume) {
 				if (volume == undefined)
 					volume = this.base * (this.offset / 100.0);
 				mt.player.c_volumeBar.component.slider('setValue', volume);
 			},
-	
 			setOffset: function(offset) {
 				this.offset = offset;
 			}
@@ -800,8 +804,8 @@ var mt = {
 			}
 		},
 	},
-	visual: {
-		// Sóng nhạc tĩnh toàn bài và sóng nhạc đang phát 
+	visual: { // Sóng nhạc tĩnh toàn bài và sóng nhạc đang phát
+		
 		_staticWave: null,
 		_curStaticWave: null,
 		_currentTimeLbl: null,
@@ -815,6 +819,7 @@ var mt = {
 		// type visual
 		c_btnSwitch: null,
 		type: true, // true: wave, false: shake
+
 		init: function() {
 
 			this._staticWave = $('#staticWave');
@@ -1008,6 +1013,11 @@ var mt = {
 				rownumbers: true,
 				valueField: 'stt',
 				textField: 'name',
+				textFormatter: function(v,r,i) {
+					if (r.loop > 0)
+						return v+' ('+r.loop+')';
+					return v;
+				},
 				onDblClickRow: function(index,row) {
 					if (row.loop > 0) { // Nếu có loop thì giảm loop
 						row.loop--;
@@ -1041,31 +1051,23 @@ var mt = {
 			}
 
 			// Case in list
-			let list = this._listnext.datalist('getRows');
+			let rows = this._listnext.datalist('getRows');
 			let found = false;
 
-			for (let i in list) {
-				if (music.idArr != list[i].stt)
+			for (let i in rows) {
+				let row = rows[i];
+				if (music.idArr != row.stt)
 					continue;
 				
-				list[i].loop++;
-
-				if (list[i].loop == 1) {
-					list[i].name += " (1)";
-				} else {
-					let pos = list[i].name.lastIndexOf("(");
-					list[i].name = list[i].name.substring(0, pos + 1) + list[i].loop + ")";
-				}
-
-				mt.next._listnext.datalist('refreshRow', i);
+				row.loop++; // Tăng số lần loop
+				mt.next._listnext.datalist('refreshRow', +i); // Cập nhật danh sách phát
 
 				found = true;
 				break;
 			}
 
-			if (!found) {
+			if (!found)
 				this._listnext.datalist('appendRow', { stt: music.idArr, name: music.name, loop: 0 });
-			}
 		},
 		pop: function() {
 			let row = this._listnext.datalist('getSelected');
@@ -1092,17 +1094,21 @@ var mt = {
 			this._listnext.datalist('deleteRow', size - 1);
 		},
 	},
-	edit: {
-		// Chỉnh sửa thông tin bài hát
+	edit: { // Chỉnh sửa thông tin bài hát
+
 		c_content: null,
 		form: null,
 		isOpen: false,
+
 		init: function() {
 			this.c_content = $("#right_edit");
 			this.form = $("#form_music");
 			this.form.form({
 				url: "/music/edit",
-				success: function(res) { mt.mgr.c_list.reload(); },
+				success: function(res) {
+					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
+					mt.mgr.c_list.reload(); // Reload lại datagrid
+				},
 				error: function(e) { alert('Fail: '+e); }
 			});
 		},
@@ -1208,7 +1214,7 @@ var mt = {
 				type: 'POST',
 				url: '/music/refresh',
 				data: {},
-				dataType: "json",
+				dataType: 'json',
 				success: function(res) {
 					self.lstMusicNew = res;
 					self.c_list.component.datagrid('loadData', self.lstMusicNew);
@@ -1216,6 +1222,7 @@ var mt = {
 			});
 		},
 		add: function() {
+
 			// mt.mgr.c_list.reload();
 		},
 		c_list: {
@@ -1228,9 +1235,10 @@ var mt = {
 					toolbar: '#new_toolbar',
 					columns:[[
 						{field:'action', title:'', width:70, formatter: function(v,r,i) {
-							if (r.filename == "empty") return '';
-							return '<a href="#" class="newNO" onclick="mt.new.c_list.newNO('+i+')"></a> \
-											<a href="#" class="newOK" onclick="mt.new.c_list.newOK('+i+')"></a>';
+							if (r.filename == "empty")
+								return '';
+							return `<a href="#" class="newNO" onclick="mt.new.c_list.newNO(`+i+`)"></a>
+									<a href="#" class="newOK" onclick="mt.new.c_list.newOK(`+i+`)"></a>`;
 						}},
 						{field:'filename', title:'File Name'},
 					]],

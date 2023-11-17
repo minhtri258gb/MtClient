@@ -816,10 +816,11 @@ var mt = {
 	},
 	
 	jzz: {
-		
 		h_cov: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
 		
 		init: function() {
+
+			JZZ.MIDI.sxMasterVolumeF(0.1);
 
 			// Register
 			// JZZ.synth.Tiny.register('Synth');
@@ -829,7 +830,6 @@ var mt = {
 			
 			// this.out.volumeF(c, xx);
 		},
-
 		send: function(note, toggle) {
 			let offsetNote = mt.tool.offsetNote.get();
 			let finalNote = note + offsetNote;
@@ -843,11 +843,9 @@ var mt = {
 			else
 				this.out.send([0x80, finalNote, 0]);
 		},
-
 		setInstrument: function(num) { // 0 - 127
 			this.out.program(0, num);
 		},
-		
 		name2num: function(name) {
 			if (!name.length || name.length < 2)
 				throw('[mt.jzz.num2name] input not midi name');
@@ -871,7 +869,6 @@ var mt = {
 				throw('[mt.jzz.num2name] input not number');
 			return this.h_cov[num % 12] + (Math.floor(num / 12) - 1);
 		},
-
 	},
 
 	key: {
@@ -1058,6 +1055,7 @@ var mt = {
 			let v = note % 12;
 			return (v==1 || v==3 || v==6 || v==8 || v==10);
 		}
+	
 	},
 
 };
