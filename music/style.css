@@ -24,3 +24,8 @@
 #btnTop:hover {
 	background-color: rgb(43, 51, 163);
 }
+
+/* Ẩn thanh cuộn của phần bên trái */
+#left_content::-webkit-scrollbar {
+	display: none;
+}

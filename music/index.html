@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>CISUM</title>
+	<title>Music</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link id="logo" rel="shortcut icon" type="image/png" href="/music/favicon.ico">
@@ -19,7 +19,7 @@
 
 	<div id="layout" class="easyui-layout" style="caret-color:transparent;">
 
-		<div data-options="region:'west',split:false,collapsible:false" style="width:25%">
+		<div id="left_content" data-options="region:'west',split:false,collapsible:false" style="width:25%;">
 		
 			<div style="width:98%;margin-left:1%;margin-right:1%;">
 
@@ -105,6 +105,7 @@
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-queue',plain:true" onclick="mt.next.add()">Play next</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play',plain:true" onclick="mt.player.playForce()">Play force</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play2',plain:true" onclick="mt.track.play()">Play track</a>
+				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-refresh',plain:true" onclick="mt.mgr.c_list.reload()">Refresh</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="mt.mgr.removeMusic()">Remove</a>
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-share',plain:true" onclick="mt.handler.share()">Share</a>
 			</div>
@@ -122,19 +123,19 @@
 
 		</div>
 
-	
+
 		<div data-options="
-			region:'east',
-			title:'Detail',
-			split:true,
-			hideExpandTool:true,
-			expandMode:null,
-			hideCollapsedContent:false,
-			collapsedSize:68,
-			collapsedContent:function(){return $('#extra_tools_bar');},
-			onCollapse:mt.gui.onCollapseRight,
-			onResize:mt.gui.onResizeRight"
-			style="width:300px;"
+			region: 'east',
+			title: 'Detail',
+			split: true,
+			hideExpandTool: true,
+			expandMode: null,
+			hideCollapsedContent: false,
+			collapsedSize: 68,
+			collapsedContent: function() {return $('#extra_tools_bar')},
+			onCollapse: mt.gui.onCollapseRight,
+			onResize: mt.gui.onResizeRight"
+			style="width:300px;caret-color:auto;"
 		>
 
 			<!-- Extra Tools -->
@@ -191,7 +192,7 @@
 			<div id="right_new" hidden>
 				<div id="new_toolbar" style="text-align:center;">
 					<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-refresh',plain:true" onclick="mt.new.refresh()">Refresh</a>
-					<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="mt.new.add()">Add</a>
+					<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="mt.new.addAll()">Add</a>
 				</div>
 				<table id="new_list"></table>
 			</div>

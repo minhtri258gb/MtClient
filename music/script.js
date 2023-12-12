@@ -1,19 +1,14 @@
 var mt = {
-	init: function() {
-
+	init: function() { // Khởi tạo
 		this.skip = true; // Skip for before interact
-
 		this.core.init();
 		this.gui.init();
 		this.player.init();
 		this.next.init();
 		this.mgr.init();
-
 		this.event.init();
 		this.effect.init();
-
-		// Process URL Param OR Auto play
-		this.handler.prepare();
+		this.handler.prepare(); // Process URL Param OR Auto play
 	},
 	initOnInteract: function() {
 		// API get music will call: mt.handler.changeMusicPost
@@ -49,10 +44,8 @@ var mt = {
 			return window.isSecureContext;
 		},
 	},
-	gui: {
-
+	gui: { // Giao diện
 		layout: null,
-
 		init: function() {
 			// Init layout easyUI
 			let c = $('#layout');
@@ -100,9 +93,10 @@ var mt = {
 				mt.new.c_list.resize();
 		},
 	},
-	mgr: {
-		musics: [], // List music from Server
-		history: [],
+	mgr: { // Quản lý
+		musics: [], // List music from server
+		history: [], // List histtory music played
+		lstRandSeed: [],
 		init: function() {
 			this.c_tabInclude.init();
 			this.c_tabExclude.init();
@@ -118,9 +112,18 @@ var mt = {
 				async: false
 			}).responseJSON;
 
-			// Add property reference id array
-			for (let i=0; i<this.musics.length; i++)
-				this.musics[i].idArr = i;
+			// Brower lst Music
+			this.lstRandSeed = [];
+			for (let i=0; i<this.musics.length; i++) {
+				let music = this.musics[i];
+
+				// Add property reference id array
+				music.idArr = i;
+
+				// Compile lstRandSeed
+				for (let j=0; j<music.rate; j++)
+					this.lstRandSeed.push(i);
+			}
 		},
 		fillDuration: function(duration) {
 			let music = this.musics[mt.player.musicIdPlay];
@@ -382,6 +385,7 @@ var mt = {
 			// If list next have data, get it
 			let row = mt.next.pop();
 			if (row != null) {
+
 				// change loop
 				mt.player.c_loop.set(row.loop);
 
@@ -391,9 +395,12 @@ var mt = {
 			}
 
 			// #TODO randomlist
-			let i = Math.floor(Math.random() * mt.mgr.musics.length);
+			// let i = Math.floor(Math.random() * mt.mgr.musics.length);
+			let len = mt.mgr.lstRandSeed.length;
+			let seed = Math.floor(Math.random() * len);
+			let musicIdArr = mt.mgr.lstRandSeed[seed];
 
-			this.changeMusic(i);
+			this.changeMusic(musicIdArr);
 		},
 		changeMusic: function(musicId, target) {
 			
@@ -404,7 +411,7 @@ var mt = {
 			if (mt.player.musicIdPlay != -1 && this._target != "mt.player.c_back.click")
 				mt.mgr.history.push(mt.player.musicIdPlay);
 
-			// Select Row (just UI) and Roll to [exception mt.mgr.c_list.selectRow]
+			// Select Row (just UI) and scroll to [exception mt.mgr.c_list.selectRow]
 			if (this._target != "mt.mgr.c_list.clickRow") {
 				setTimeout(() => { mt.mgr.c_list.scrollToCur() }, 500); // Scroll to music
 				mt.mgr.c_list.component.datagrid('selectRow', musicId); // Show select row on datagrid
@@ -555,13 +562,11 @@ var mt = {
 		},
 	},
 	player: {
-
 		component: null,
 		musicIdPlay: -1,
 		isPlay: false,
 		duration: 0,
 		_blogUrl: '',
-
 		init: function() {
 
 			// Load default
@@ -1095,16 +1100,14 @@ var mt = {
 		},
 	},
 	edit: { // Chỉnh sửa thông tin bài hát
-
 		c_content: null,
 		form: null,
 		isOpen: false,
-
 		init: function() {
-			this.c_content = $("#right_edit");
-			this.form = $("#form_music");
+			this.c_content = $('#right_edit');
+			this.form = $('#form_music');
 			this.form.form({
-				url: "/music/edit",
+				url: '/music/edit',
 				success: function(res) {
 					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
 					mt.mgr.c_list.reload(); // Reload lại datagrid
@@ -1169,7 +1172,7 @@ var mt = {
 			});
 		},
 	},
-	new: {
+	new: { // Thêm nhạc
 		// Danh sách thêm bài hát
 		c_content: null,
 		isOpen: false,
@@ -1221,9 +1224,21 @@ var mt = {
 				}
 			});
 		},
-		add: function() {
-
-			// mt.mgr.c_list.reload();
+		addAll: function() {
+			let lstFileName = [];
+			for (let i in mt.new.lstMusicNew)
+				lstFileName.push(mt.new.lstMusicNew[i].filename);
+			$.ajax({
+				type: 'POST',
+				url: '/music/addAll',
+				data: {lstFileName: lstFileName},
+				success: function(res) {
+					mt.mgr.c_list.reload(); // Reload lại datagrid
+					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
+					// mt.new.c_list.component.datagrid('loadData', []);
+					// mt.mgr.c_list.component.datagrid('reload');
+				}
+			});
 		},
 		c_list: {
 			component: null,
@@ -1260,6 +1275,7 @@ var mt = {
 						lst.splice(index, 1);
 						mt.new.c_list.component.datagrid('loadData', lst);
 						mt.mgr.c_list.component.datagrid('reload');
+
 					}
 				});
 			},
@@ -1273,7 +1289,7 @@ var mt = {
 			},
 		},
 	},
-	cut: {
+	cut: { // Cắt soundtrack
 		c_content: null,
 		isOpen: false, // Mở chức năng
 		isTest: false, // Đánh dấu đang phát thử
