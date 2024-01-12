@@ -1,6 +1,7 @@
 var mt = {
 	init: function() { // Khởi tạo
 		this.skip = true; // Skip for before interact
+
 		this.core.init();
 		this.gui.init();
 		this.player.init();
@@ -8,7 +9,8 @@ var mt = {
 		this.mgr.init();
 		this.event.init();
 		this.effect.init();
-		this.handler.prepare(); // Process URL Param OR Auto play
+
+		this.core.prepare(); // Process URL Param OR Auto play
 	},
 	initOnInteract: function() {
 		// API get music will call: mt.handler.changeMusicPost
@@ -24,18 +26,6 @@ var mt = {
 		interactName: '',
 		init: function() {
 
-			// Set Authenticate
-			$.ajax({
-				type: 'POST',
-				url: '/authorize',
-				data: {},
-				success: function(res) {
-					if (typeof(res) == 'boolean')
-						mt.authorize = res
-					else
-						mt.authorize = (res == 'true');
-				}
-			});
 		},
 		isLocal: function() {
 			return window.location.href.startsWith('http://localhost/');
@@ -43,6 +33,34 @@ var mt = {
 		isSafe: function() {
 			return window.isSecureContext;
 		},
+		prepare: function() {
+
+			// Get param
+			let urlParams = new URLSearchParams(window.location.search);
+			let param = {
+				stt: urlParams.get('stt')
+			};
+
+			// Add next list
+			if (param.stt != null && !isNaN(param.stt)) {
+				// Thêm tên vào next list
+				let name = mt.mgr.musics.length == 0 ? 'Next Music' : mt.mgr.musics[param.stt].name;
+				mt.next.push({idArr: param.stt, name:name});
+			}
+
+			// Reset URL
+			window.history.pushState('', '', '/music');
+		},
+		access: function() {
+			mt.auth.show(function(result) {
+				if (result)
+					$('#btnAccess').hide();
+			});
+		},
+		lostAccess: function() {
+			$('#btnAccess').show();
+			this.access();
+		}
 	},
 	gui: { // Giao diện
 		layout: null,
@@ -52,7 +70,7 @@ var mt = {
 			this.layout = c;
 			c.layout({ fit: true });
 			c.layout('panel', 'center').panel('options').onResize = mt.gui.onCenterResize;
-			c.layout('collapse', 'east');
+			c.layout('collapse', 'east'); // #DEBUG lag
 		},
 		notice: function(message, durationSecond = 3) {
 			$.messager.show({
@@ -64,21 +82,16 @@ var mt = {
 		},
 		changeMusicTitle: function(music) {
 
-			// Tên nhạc
-			let musicName = music.name;
-			if (music.artists) // Tên nghệ sĩ
-				musicName = music.artists + " - " + musicName;
-
 			// Đổi tiêu đề web
-			document.title = musicName;
+			document.title = music.name;
 
 			// Đổi tên hiển thị
-			$('#music_title').html(musicName);
+			$('#music_title').html(music.name);
 		},
 		onCenterResize: function(width, height) { // #TODO position
 			let ops = mt.gui.layout.layout('panel', 'center').panel('options');
 			if (mt.mgr.c_list.component)
-				mt.mgr.c_list.component.datagrid({ width:ops.width - 12, height:ops.height - 48 });
+				mt.mgr.c_list.component.datagrid('resize', { width:ops.width - 12, height:ops.height - 48 });
 		},
 		onCollapseRight: function() { // #TODO position
 			if (mt.edit.isOpen)
@@ -176,15 +189,28 @@ var mt = {
 				let c = $('#tagInclude');
 				mt.mgr.c_tabInclude.component = c;
 				c.tagbox({
-					label: 'Include: ',
-					onChange: mt.mgr.c_tabInclude.onChange
+					label: 'Include:',
+					labelWidth: 55,
+					height: 25,
+					onChange: this.onChange
 				});
 			},
 			onChange: function(newValue, oldValue) {
+				newValue = 'ABC';
 				mt.mgr.c_list.reload();
 			},
 			get: function() {
-				return mt.mgr.c_tabInclude.component.tagbox('getValues');
+				return this.component.tagbox('getValues');
+			},
+			addTag: function(tag) {
+				let lstTag = this.get();
+				if (lstTag.indexOf(tag) == -1) {
+					lstTag.push(tag);
+					let self = this;
+					setTimeout(function() {
+						self.component.tagbox('setValues', lstTag)
+					}, 100);
+				}
 			}
 		},
 		c_tabExclude: {
@@ -193,8 +219,10 @@ var mt = {
 				let c = $('#tagExclude');
 				mt.mgr.c_tabExclude.component = c;
 				c.tagbox({
-					label: 'Exclude: ',
-					value: 'less',
+					label: 'Exclude:',
+					labelWidth: 55,
+					height: 25,
+					// value: 'less', // Giá trị mặc định
 					onChange: mt.mgr.c_tabExclude.onChange
 				});
 			},
@@ -215,36 +243,6 @@ var mt = {
 				this.initDatagrid();
 			},
 			initDatagrid: function() {
-				
-				// Thêm editor loại tagbox
-				if ($.fn.datagrid.defaults.editors.tagbox == undefined) {
-					$.extend($.fn.datagrid.defaults.editors, {
-						tagbox: {
-							init: function(container,options){
-								let input = $('<input>').appendTo(container);
-								input.tagbox(options);
-								return input;
-							},
-							destroy: function(target){
-								$(target).tagbox('destroy');
-							},
-							getValue: function(target){
-								return $(target).tagbox('getValues').join(',');
-							},
-							setValue: function(target, value){
-								if (value){
-									$(target).tagbox('setValues', value.split(','));
-								} else {
-									$(target).tagbox('clear');
-								}
-							},
-							resize: function(target, width){
-								$(target).tagbox('resize', width);
-							}
-						}
-					});
-				}
-				
 				this.component.datagrid({
 					data: this.getData(),
 					toolbar: '#toolbar',
@@ -253,19 +251,16 @@ var mt = {
 					singleSelect: true,
 					autoRowHeight: false,
 					columns:[[
-						{field:'artists', title:'Artists', sortable:false, resizable:true, align:'left', editor:'textbox'},
-						{field:'name', title:'Name', sortable:false, resizable:true, align:'left', editor:'textbox'},
-						{field:'duration', title:'Duration', width:'64px', sortable:false, resizable:false, align:'center',
-							formatter:function(v,r,i) {
-								let durationStr = (v == null ? '' : mt.util.cov_time(v));
-								return '<span id="duration'+r.id+'">'+durationStr+'</span>';
-							}},
-						{field:'tags', title:'Tags', sortable:false, resizable:true, align:'left', editor:'tagbox'},
-						{field:'rate', title:'Rate', width:60, align:'center', sortable:true, editor:{type:'numberspinner', options:{min:1, max:5}}, formatter: function(v,r,i) {
+						{field:'name', title:'Name', sortable:false, resizable:true, align:'left'},
+						{field:'rate', title:'Rate', width:60, align:'center', sortable:true, formatter: function(v,r,i) {
 							return '<span class="rating l-btn-icon icon-rating'+v+'" style="position:initial;margin-top:0px"></span>';
 						}},
-						{field:'action', title:'', width:70, hidden:true, formatter:function(v, r, i) {
-							return '<div id="action'+r.id+'"></div>';
+						{field:'duration', title:'Duration', width:'64px', sortable:false, resizable:false, align:'center', formatter:function(v,r,i) {
+							let durationStr = (v == null ? '' : mt.util.cov_time(v));
+							return '<span id="duration'+r.id+'">'+durationStr+'</span>';
+						}},
+						{field:'tags', title:'Tags', sortable:false, resizable:true, align:'left', formatter:function(v,r,i) {
+							return v.split(',').map(s => `<a href="#" onClick="mt.mgr.c_tabInclude.addTag('${s}')" style="color:black">[${s}]</a>`).join();
 						}}
 					]],
 					onSelect: function(i,r) {
@@ -273,7 +268,7 @@ var mt = {
 					},
 					onDblClickRow: function(index,row) { // interact
 						mt.handler.changeMusic(index, "mt.mgr.c_list.dupClickRow");
-					},
+					}
 				});
 			},
 			getData: function() {
@@ -333,47 +328,6 @@ var mt = {
 				this._target = null;
 			}
 		},
-		prepare: function() {
-
-			// Get param
-			let urlParams = new URLSearchParams(window.location.search);
-			let param = {
-				stt: urlParams.get('stt')
-			};
-
-			// Add next list
-			if (param.stt != null && !isNaN(param.stt)) {
-				let name = mt.mgr.musics.length == 0 ? 'Next Music' : mt.mgr.musics[param.stt].name; // Thêm tên cho next list nếu ko tự play ngay
-				mt.next.push({idArr: param.stt, name:name});
-			}
-
-			// Reset URL
-			window.history.pushState('', '', '/music');
-
-			// Lỗi đối với bản Chrome mới
-			// // Auto play
-			// if (mt.core.isLocal()) { // Lỗi tương tác nhạc đối với truy cập IP / hostname
-			// 	setTimeout(() => mt.handler.next("auto"), 1000);
-			// }
-		},
-		pause: function(target) {
-			
-			// mt.event.keydown.space
-			// mt.player.c_pause.click
-
-			if (this.begin(target))
-				return;
-			
-			if (mt.player.musicIdPlay == -1) {
-				this.next();
-				return;
-			}
-
-			mt.player.pause();
-			mt.player.c_pause.switchIcon();
-
-			this.end(target);
-		},
 		next: function(target) {
 			if (this.begin(target))
 				return;
@@ -412,7 +366,7 @@ var mt = {
 				mt.mgr.history.push(mt.player.musicIdPlay);
 
 			// Select Row (just UI) and scroll to [exception mt.mgr.c_list.selectRow]
-			if (this._target != "mt.mgr.c_list.clickRow") {
+			if (this._target != "mt.mgr.c_list.clickRow") { // #DEBUG lag
 				setTimeout(() => { mt.mgr.c_list.scrollToCur() }, 500); // Scroll to music
 				mt.mgr.c_list.component.datagrid('selectRow', musicId); // Show select row on datagrid
 			}
@@ -431,10 +385,14 @@ var mt = {
 			// Clean Wave
 			mt.visual.clear();
 
+			// Show tags
+			mt.player.c_tag.set(music.tags);
+
 			// Load music
 			$.ajax({
 				type: 'GET',
-				url: '/music/getMusic?filename='+music.filename,
+				url: '/music/getMusic',
+				data: $.param({name: music.name}),
 				xhrFields: { responseType: 'arraybuffer'},
 				success: this.changeMusicPost,
 				error: (xhr, ajaxOptions, thrownError) => {
@@ -447,6 +405,8 @@ var mt = {
 						setTimeout(() => {
 							mt.handler.next("auto");
 						}, 4000); // Tự động next
+					} else {
+						mt.handler.end("force");
 					}
 				},
 			});
@@ -482,13 +442,24 @@ var mt = {
 			mt.handler.end("force");
 		},
 		share: function() {
-			$.get('/common/getIPLocal', function(res, status) {
-				if (status == 'success') {
-					let url = "http://" + res + "/music?stt=" + mt.player.musicIdPlay;
-					if (mt.core.isSafe()) // Tự động copy
-						navigator.clipboard.writeText(url).then(() => mt.gui.notice("Copied link to share"));
-					else
-						mt.gui.notice("Link for share: " + url);
+			$.ajax({
+				url: '/common/getIPLocal',
+				type: 'GET',
+				data: {
+					token: mt.auth.get()
+				},
+				success: function(res, status) {
+					if (status == 'success') {
+						let url = "http://" + res + "/music?stt=" + mt.player.musicIdPlay;
+						if (mt.core.isSafe()) // Tự động copy
+							navigator.clipboard.writeText(url).then(() => mt.gui.notice("Copied link to share"));
+						else
+							mt.gui.notice("Link for share: " + url);
+					}
+				},
+				error: function(xhr, status, error) {
+					if (error == 'FORBIDDEN')
+						mt.core.lostAccess();
 				}
 			});
 		},
@@ -507,13 +478,12 @@ var mt = {
 			});
 		},
 		keypress: function() {
-			window.addEventListener('keyup', function(event) {
-			});
+			// window.addEventListener('keyup', function(event) {});
 			window.addEventListener('keydown', function(event) {
 				let isAction = false;
 				if (event.code === 'Space') {
 					isAction = true;
-					mt.handler.pause("mt.event.keydown.space");
+					mt.player.pause();
 				}
 				
 				if (isAction)
@@ -533,8 +503,8 @@ var mt = {
 			}
 		},
 		media: function() {
-			navigator.mediaSession.setActionHandler('play', () => { mt.handler.pause("mt.event.media.play") });
-			navigator.mediaSession.setActionHandler('pause', () => { mt.handler.pause("mt.event.media.pause") });
+			navigator.mediaSession.setActionHandler('play', () => { mt.player.pause() });
+			navigator.mediaSession.setActionHandler('pause', () => { mt.player.pause() });
 			// navigator.mediaSession.setActionHandler('seekbackward', function() { alert('seekbackward') });
 			// navigator.mediaSession.setActionHandler('seekforward', function() { alert('seekforward') });
 			navigator.mediaSession.setActionHandler('previoustrack', () => { mt.player.c_back.onClick() });
@@ -589,6 +559,7 @@ var mt = {
 			this.c_btnVolume.init();
 			this.c_autoNext.init();
 			this.c_loop.init();
+			this.c_tag.init();
 		},
 		changeMusic: function(index) {
 			// #TODO
@@ -596,20 +567,27 @@ var mt = {
 		onEnd: function(event) { // callback
 			let self = mt.player;
 
-			let nextFlag1 = self.c_autoNext.value();
-			let nextFlag2 = mt.cut.onPlayerEnd();
-			let nextFlag3 = mt.track.onPlayerEnd();
+			// // Case: Force pause music on top track
+			// let isStopCut = mt.cut.onPlayerEnd();
+			// let isStopTrack = mt.track.onPlayerEnd();
+			// if (isStopCut || isStopTrack) {
+			// 	self.isPlay = false;
+			// 	self.c_pause.switchIcon();
+			// 	return;
+			// }
 
-			if (nextFlag1 && nextFlag2 && nextFlag3) {
-				if (self.c_loop.pop()) self.replay(); // If have loop then replay
-				else mt.handler.next("mt.player.onEnd"); // Auto next
+			// Auto loop
+			if (self.c_loop.pop()) {
+				self.replay();
+				return;
 			}
-			else {
 
-				// State end music
+			// Auto next
+			let isAutoNext = self.c_autoNext.value();
+			if (isAutoNext) {
+				mt.handler.next("mt.player.onEnd"); // Auto next
+			} else {
 				self.isPlay = false;
-				self.musicIdPlay = -1;
-				self.duration = 0;
 				self.c_pause.switchIcon();
 			}
 		},
@@ -649,11 +627,21 @@ var mt = {
 			c[0].play();
 		},
 		pause: function(flag) {
+			// Nếu ko có bài nào đang chạy thì dùng chức năng "next"
+			if (this.musicIdPlay == -1) {
+				mt.handler.next();
+				return;
+			}
+
+			// Đổi trạng thái chạy nhạc
 			let c = this.component;
 			if (flag === undefined)
 				flag = c[0].paused == false;
 			flag ? c[0].pause() : c[0].play();
-			mt.player.isPlay = !flag;
+			this.isPlay = !flag;
+
+			// Chuyển Icon đổi nút
+			this.c_pause.switchIcon();
 		},
 		changeTime: function(value) {
 			this.component[0].currentTime = value;
@@ -669,9 +657,6 @@ var mt = {
 			init: function() {
 				let c = $("#btnPause");
 				this.component = c;
-			},
-			onClick: function() {
-				mt.handler.pause("mt.player.c_pause.click");
 			},
 			switchIcon: function() {
 				if (mt.player.isPlay)
@@ -790,7 +775,7 @@ var mt = {
 		c_loop: {
 			component: null,
 			init: function() {
-				this.component = $("#loop");
+				this.component = $('#loop');
 			},
 			pop: function() {
 				let c = this.component;
@@ -808,9 +793,25 @@ var mt = {
 				this.component.numberbox('setValue', n);
 			}
 		},
+		c_tag: {
+			component: null,
+			init: function() {
+				let c = $('#tags');
+				c.tagify({
+					originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
+					userInput: false,
+					maxTags: 5,
+				});
+				this.component = c.data('tagify');
+			},
+			set: function(tagStr) {
+				this.component.removeAllTags();
+				if (tagStr != null && tagStr.length > 0)
+					this.component.addTags(tagStr);
+			},
+		},
 	},
 	visual: { // Sóng nhạc tĩnh toàn bài và sóng nhạc đang phát
-		
 		_staticWave: null,
 		_curStaticWave: null,
 		_currentTimeLbl: null,
@@ -824,7 +825,6 @@ var mt = {
 		// type visual
 		c_btnSwitch: null,
 		type: true, // true: wave, false: shake
-
 		init: function() {
 
 			this._staticWave = $('#staticWave');
@@ -1023,6 +1023,9 @@ var mt = {
 						return v+' ('+r.loop+')';
 					return v;
 				},
+				// onLoadSuccess: function() {
+				// 	$(this).datagrid('enableDnd');
+				// },
 				onDblClickRow: function(index,row) {
 					if (row.loop > 0) { // Nếu có loop thì giảm loop
 						row.loop--;
@@ -1108,11 +1111,20 @@ var mt = {
 			this.form = $('#form_music');
 			this.form.form({
 				url: '/music/edit',
-				success: function(res) {
-					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
-					mt.mgr.c_list.reload(); // Reload lại datagrid
+				onSubmit: function(param) {
+					param.token = mt.auth._token; // Add token
 				},
-				error: function(e) { alert('Fail: '+e); }
+				success: function(res) {
+					if (res == "Access denied") {
+						mt.core.lostAccess();
+					} else {
+						mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
+						mt.mgr.c_list.reload(); // Reload lại datagrid
+					}
+				},
+				error: function() {
+					alert('Fail: ' + e);
+				}
 			});
 		},
 		open: function() {
@@ -1131,7 +1143,8 @@ var mt = {
 
 			// Fill info if have selected music
 			let music = mt.mgr.c_list.component.datagrid('getSelected');
-			this.fillData(music);
+			if (music)
+				this.fillData(music);
 
 		},
 		close: function() {
@@ -1151,9 +1164,7 @@ var mt = {
 				// Fill data
 				this.form.form('load',{
 					id: music.id,
-					filename: music.filename,
 					name: music.name,
-					artists: music.artists,
 					duration: music.duration,
 					tags: music.tags,
 					decibel: music.decibel,
@@ -1163,14 +1174,7 @@ var mt = {
 					miss: music.miss,
 				});
 			}
-		},
-		onSubmitClick: function() {
-			let self = this;
-			$.messager.confirm('Confirm','Are you sure you want to save data?', function(r) {
-				if (r)
-					self.form.form('submit');
-			});
-		},
+		}
 	},
 	new: { // Thêm nhạc
 		// Danh sách thêm bài hát
@@ -1182,12 +1186,6 @@ var mt = {
 			this.c_list.init();
 		},
 		open: function() {
-
-			// Check Access
-			if (!mt.authorize) {
-				alert("Access denied");
-				return;
-			}
 
 			// Khởi tạo nếu chưa
 			if (this.c_content == null)
@@ -1209,6 +1207,7 @@ var mt = {
 		close: function() {
 			this.isOpen = false;
 			this.c_content.hide();
+			mt.mgr.c_list.reload()
 		},
 		refresh: function() {
 			let self = this;
@@ -1216,27 +1215,43 @@ var mt = {
 			$.ajax({
 				type: 'POST',
 				url: '/music/refresh',
-				data: {},
+				data: {
+					token: mt.auth.get()
+				},
 				dataType: 'json',
 				success: function(res) {
 					self.lstMusicNew = res;
 					self.c_list.component.datagrid('loadData', self.lstMusicNew);
+				},
+				error: function(xhr, status, error) {
+					if (error == 'FORBIDDEN') {
+						mt.core.lostAccess();
+
+						// Đóng phần chỉnh sửa
+						setTimeout(function() {
+							mt.gui.layout.layout('collapse', 'east')
+						}, 1000);
+					}
 				}
 			});
 		},
 		addAll: function() {
 			let lstFileName = [];
 			for (let i in mt.new.lstMusicNew)
-				lstFileName.push(mt.new.lstMusicNew[i].filename);
+				lstFileName.push(mt.new.lstMusicNew[i].name);
 			$.ajax({
 				type: 'POST',
 				url: '/music/addAll',
-				data: {lstFileName: lstFileName},
+				data: {
+					lstFileName: lstFileName,
+					token: mt.auth.get(),
+				},
 				success: function(res) {
-					mt.mgr.c_list.reload(); // Reload lại datagrid
 					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
-					// mt.new.c_list.component.datagrid('loadData', []);
-					// mt.mgr.c_list.component.datagrid('reload');
+				},
+				error: function(xhr, status, error) {
+					if (error == 'FORBIDDEN')
+						mt.core.lostAccess();
 				}
 			});
 		},
@@ -1255,7 +1270,7 @@ var mt = {
 							return `<a href="#" class="newNO" onclick="mt.new.c_list.newNO(`+i+`)"></a>
 									<a href="#" class="newOK" onclick="mt.new.c_list.newOK(`+i+`)"></a>`;
 						}},
-						{field:'filename', title:'File Name'},
+						{field:'name', title:'Name'},
 					]],
 					onLoadSuccess: function() {
 						$('.newOK').linkbutton({ iconCls:'icon-ok', plain:true });
@@ -1269,13 +1284,19 @@ var mt = {
 				$.ajax({
 					type: 'POST',
 					url: '/music/add',
-					data: mt.new.lstMusicNew[index],
+					data: {
+						name: mt.new.lstMusicNew[index].name,
+						token: mt.auth.get(),
+					},
 					success: function(res) {
 						let lst = mt.new.lstMusicNew;
 						lst.splice(index, 1);
 						mt.new.c_list.component.datagrid('loadData', lst);
 						mt.mgr.c_list.component.datagrid('reload');
-
+					},
+					error: function(xhr, status, error) {
+						if (error == 'FORBIDDEN')
+							mt.core.lostAccess();
 					}
 				});
 			},
@@ -1412,14 +1433,14 @@ var mt = {
 				this.isTest = false;
 			}
 		},
-		onPlayerEnd: function() {
-			if (this.isOpen && this.isTest) {
-				this.isTest = false;
-				return false;
-			}
+		// onPlayerEnd: function() {
+		// 	if (this.isOpen && this.isTest) {
+		// 		this.isTest = false;
+		// 		return true;
+		// 	}
 
-			return true;
-		},
+		// 	return false;
+		// },
 		play: function() {
 			this.isTest = true;
 			mt.player.changeTime(this.c_start.get());
@@ -1520,18 +1541,18 @@ var mt = {
 				return;
 			
 			if (time > this.timeEnd) {
-				mt.handler.pause("[mt.track.onUpdate] track done")
+				mt.player.pause()
 				this.isActive = false;
 			}
 		},
-		onPlayerEnd: function() {
-			if (this.isActive) {
-				this.isActive = false;
-				return false;
-			}
+		// onPlayerEnd: function() {
+		// 	if (this.isActive) {
+		// 		this.isActive = false;
+		// 		return true;
+		// 	}
 
-			return true;
-		},
+		// 	return false;
+		// },
 	},
 	util: {
 		cov_time: function(value) {

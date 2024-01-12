@@ -1,0 +1,5 @@
+var mt = {
+	init: function() {
+		
+	}
+}

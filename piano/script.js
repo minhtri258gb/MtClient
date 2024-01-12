@@ -1,12 +1,4 @@
-/**
- * xanh dam		3859F7
- * xanh lat		85C6FF
- * tim dam		3211CC
- * tim lat		7E5DFF
-**/
-
 var mt = {
-
 	keyMap: {},
 	midi: {
 		file: null,
@@ -15,7 +7,6 @@ var mt = {
 		BPM: 0,
 		notes: [],
 		factor: 1.0, // clock to milisecond
-
 		loadFromFake: function() {
 			this.data = [
 				{time:0, note:64, velocity:80, duration:500},
@@ -25,7 +16,6 @@ var mt = {
 			];
 			mt.screen.note.prepare();
 		},
-
 		loadFromFile: function(file) {
 
 			if (file == undefined || file == null)
@@ -80,7 +70,6 @@ var mt = {
 
 			mt.screen.note.prepare();
 		},
-
 		loadFromDesign: function() {
 			
 			this.data = [
@@ -90,9 +79,7 @@ var mt = {
 
 			mt.screen.note.prepare();
 		}
-
 	},
-
 	init: function() {
 
 		// Init UI
@@ -102,6 +89,7 @@ var mt = {
 
 		this.screen.init();
 		this.jzz.init();
+		this.tone.init();
 		this.key.init();
 		this.event.init();
 		
@@ -109,7 +97,6 @@ var mt = {
 
 		this.tool.bind.bindKeyBoard(true);
 	},
-
 	// Component
 	tool: {
 		bind: {
@@ -135,7 +122,6 @@ var mt = {
 				}
 			}
 		},
-
 		offsetNote: {
 			component: null,
 			init: function() {
@@ -145,7 +131,6 @@ var mt = {
 				return parseInt(this.component.numberspinner('getValue'));
 			}
 		},
-
 		file: {
 			component: null,
 			init: function() {
@@ -174,7 +159,6 @@ var mt = {
 				mt.midi.loadFromFile(new JZZ.MIDI.SMF(data));
 			}
 		},
-
 		play: {
 
 			click: function() {
@@ -193,7 +177,6 @@ var mt = {
 				}, mt.screen.note.rulerTime);
 			}
 		},
-
 		download: {
 
 			click: function() {
@@ -218,7 +201,6 @@ var mt = {
 				document.body.removeChild(a);
 			}
 		},
-
 		switch: {
 			
 			chance: function(checked) {
@@ -229,7 +211,6 @@ var mt = {
 					mt.screen.note.takeDataFromDesign();
 			}
 		},
-
 		test: function() {
 			// Create a MIDI file. Type 1; 100 clocks per quarter note.
 			// Normally, it would rather be 96, but 100 makes it easier to count.
@@ -278,7 +259,6 @@ var mt = {
 			// Finally, write it to the document as a link and as an embedded object:
 			document.getElementById('out').innerHTML = 'New file: <a download=lame.mid href=' + uri + '>DOWNLOAD</a>';
 		},
-
 		instrument: {
 
 			h_class: [
@@ -470,12 +450,10 @@ var mt = {
 
 		}
 	},
-
 	screen: {
 		svg: null,
 		width: 0,
 		height: 0,
-
 		init: function() {
 
 			let width = document.documentElement.clientWidth - 256; // subtract left
@@ -511,7 +489,6 @@ var mt = {
 			// this.design.show(false);
 			// this.note.show(true);
 		},
-
 		piano: {
 			svg: null,
 			width: 0,
@@ -571,7 +548,6 @@ var mt = {
 				svgObj.attr({fill:(active ? '#ccc' : (svgObj.data('b')?'#000':'#fff'))});
 			}
 		},
-
 		design: {
 			groupGrid: null,
 			groupAdd: null,
@@ -677,7 +653,6 @@ var mt = {
 				return 36 + lvl * 12 + this._cov[stt];
 			}
 		},
-
 		ruler: {
 			group: null,
 			len: 10,
@@ -694,7 +669,6 @@ var mt = {
 				this.group.rect(8, design.height).move(design.width+1, 0).attr({ fill: pattern });
 			}
 		},
-
 		note: {
 			svg: null,
 			timeline: null,
@@ -792,7 +766,6 @@ var mt = {
 				this.timeline.play();
 			}
 		},
-		
 		util: {
 			rectInfo: function(note) {
 				let fS = mt.util.checkSharp(note.note);
@@ -814,13 +787,9 @@ var mt = {
 			}
 		}
 	},
-	
 	jzz: {
 		h_cov: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
-		
 		init: function() {
-
-			JZZ.MIDI.sxMasterVolumeF(0.1);
 
 			// Register
 			// JZZ.synth.Tiny.register('Synth');
@@ -828,7 +797,7 @@ var mt = {
 
 			this.out = JZZ().openMidiOut().or(()=>{ alert('Cannot open MIDI port!'); });
 			
-			// this.out.volumeF(c, xx);
+			this.setVolume(0.4);
 		},
 		send: function(note, toggle) {
 			let offsetNote = mt.tool.offsetNote.get();
@@ -845,6 +814,9 @@ var mt = {
 		},
 		setInstrument: function(num) { // 0 - 127
 			this.out.program(0, num);
+		},
+		setVolume: function(val) { // 0.0 - 1.0
+			this.out.volumeF(0, val);
 		},
 		name2num: function(name) {
 			if (!name.length || name.length < 2)
@@ -870,9 +842,63 @@ var mt = {
 			return this.h_cov[num % 12] + (Math.floor(num / 12) - 1);
 		},
 	},
+	tone: {
+		_synth: null,
+		// _sample: null,
+		// _keyboard: null,
+		init: function() {
+			Tone.context.lookAhead = 0; // Bỏ độ trễ
 
+			// this._synth = new Tone.Synth().toDestination();
+			this._synth = new Tone.PolySynth().toDestination();
+			this._synth.volume.value = -6;
+
+			// this._sample = new Tone.Sampler().toDestination();
+
+			// this._keyboard = new Tone.Keyboard();
+		},
+		trigger: function(note, toggle) {
+			let noteTone = Tone.Frequency(note, "midi").toNote();
+			if (toggle) {
+				this._synth.triggerAttack(noteTone, Tone.now());
+				mt.key._keyname.text("Key: " + noteTone); // Show keyname
+			}
+			else
+				this._synth.triggerRelease(noteTone, Tone.now());
+		},
+		test: function() {
+			// this._synth.triggerAttackRelease("C5", "8n");
+
+			// Convert
+			let midi = Tone.Frequency("B4").toMidi();
+			console.log(midi);
+			// Convert
+			let note1 = Tone.Frequency(71, "midi").toNote();
+			console.log(note1);
+
+			
+			// let note = Tone.Frequency(88, "midi").toFrequency();
+			// console.log(Tone.Frequency(88, "midi"))
+			
+			let now1 = Tone.now();
+			let note = Tone.Frequency(71, "midi").toFrequency();
+			mt.tone._synth.triggerAttack(note, now1)
+			mt.tone._synth.triggerRelease(now1 + 1)
+
+
+			
+
+			let now2 = Tone.now();
+			mt.tone._synth.triggerAttack("B4", now2)
+			mt.tone._synth.triggerRelease("B4", now2 + 1)
+
+			let now3 = Tone.now();
+			mt.tone._synth.triggerRelease(now3);
+
+
+		},
+	},
 	key: {
-
 		/**
 		 * key: keyCode of keyBoard
 		 * value: {
@@ -881,16 +907,26 @@ var mt = {
 		 * }
 		**/
 		map: {},
-
 		_keyname: null,
-
 		init: function() {
 
 			// Init component
 			this._keyname = $('#keyname');
 
+			// Load keybind
+			this.load();
+		},
+		load: function() {
+
 			// Init keybind
-			let t = this.bind;
+			let t = function(key, note) {
+				let keyCode = mt.util.covKeyCharKeyCode(key);
+				let noteNum = mt.util.covCodeNumJzzMidi(note);
+				if (!keyCode || !noteNum)
+					return;
+				mt.key.map[keyCode] = { note: noteNum };
+			};
+
 			// 123
 			t('`', 'D#5'); t('2', 'F#5'); t('3', 'G#5'); t('4', 'Bb5'); t('6', 'C#6'); t('7', 'D#6'); t('9', 'F#6'); t('0', 'G#6'); t('-', 'Bb6');
 			// QWE
@@ -906,14 +942,6 @@ var mt = {
 			// ZXC
 			t('SH', 'C#5'); t('X', 'Bb4'); t('C', 'G#4'); t('V', 'F#4'); t('N', 'D#4'); t('M', 'C#4'); t('.', 'Bb3'); t('/', 'G#3');
 		},
-
-		bind: function(key, note) {
-			let keyCode = mt.util.covKeyCharKeyCode(key);
-			let noteNum = mt.util.covCodeNumJzzMidi(note);
-			if (!keyCode || !noteNum) return;
-			mt.key.map[keyCode] = { note: noteNum };
-		},
-
 		reset: function() {
 			for (keyCode in this.map) {
 				keyPress = this.map[keyCode];
@@ -923,8 +951,7 @@ var mt = {
 				}
 			}
 		},
-		
-		keyDown: function(e) {
+		keyDown: function(e) { // Nhấn vào
 			var e = window.event || e;
 			let keyCode = e.keyCode;
 			let keyPress = mt.key.map[keyCode];
@@ -932,49 +959,43 @@ var mt = {
 				keyPress.press = true;
 				mt.screen.piano.keyEffect(SVG('#k'+keyPress.note), true);
 				mt.jzz.send(keyPress.note, true);
+				// mt.tone.trigger(keyPress.note, true);
 			}
 			if (e.keyCode == 123 || e.keyCode == 116)
 				return true;
 			return false;
 		},
-
-		keyUp: function(e) {
+		keyUp: function(e) { // Thả ra
 			var e = window.event || e;
 			let keyCode = e.keyCode;
 			let keyPress = mt.key.map[keyCode];
-			if (keyPress)
-			{
+			if (keyPress) {
 				keyPress.press = false;
 				mt.screen.piano.keyEffect(SVG('#k'+keyPress.note), false);
 				mt.jzz.send(keyPress.note, false);
+				// mt.tone.trigger(keyPress.note, false);
 			}
 			
 			if (e.keyCode == 123)
 				return true;
 
 			return false;
-		}
+		},
 	},
-
 	event: {
-
 		init: function() {
 			window.onfocus = this.focus;
 			window.onblur = this.blur;
 		},
-
 		focus: function() {
 			mt.tool.bind.bindKeyBoard(true);
 		},
-
 		blur: function() {
 			mt.tool.bind.bindKeyBoard(false);
 			mt.key.reset();
-		}
+		},
 	},
-
 	util: {
-
 		covKeyCharKeyCode: function(value, direct = true) {
 			if (!value) return undefined;
 			if (!mt._covKeyCharKeyCode)
@@ -1014,7 +1035,6 @@ var mt = {
 				return undefined;
 			}
 		},
-
 		covCodeNumJzzMidi: function(value, direct = true) {
 			if (!value) return undefined;
 			if (!mt._covCodeNumJzzMidi) {
@@ -1050,12 +1070,10 @@ var mt = {
 				return baseCode + level;
 			}
 		},
-
 		checkSharp: function(note) {
 			let v = note % 12;
 			return (v==1 || v==3 || v==6 || v==8 || v==10);
-		}
-	
+		},
 	},
-
 };
+$(document).ready(() => mt.init());
