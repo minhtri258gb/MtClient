@@ -463,6 +463,35 @@ var mt = {
 				}
 			});
 		},
+		listSync: function() {
+			$.ajax({
+				type: 'POST',
+				url: '/music/listSync',
+				xhrFields: {
+					responseType: 'blob'
+				},
+				success: function(blob, textStatus, request) {
+					filename = 'listSync.txt'
+					disposition = request.getResponseHeader('Content-Disposition');
+					if (disposition && disposition.indexOf('attachment') !== -1) {
+						var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+						var matches = filenameRegex.exec(disposition);
+						if (matches != null && matches[1]) { 
+							filename = matches[1].replace(/['"]/g, '');
+						}
+					}
+
+					var a = document.createElement('a');
+					var url = window.URL.createObjectURL(blob);
+					a.href = url;
+					a.download = filename;
+					document.body.append(a);
+					a.click();
+					a.remove();
+					window.URL.revokeObjectURL(url);
+				},
+			});
+		},
 	},
 	event: { // #TODO chuyển đi hết
 		_focus: true,
