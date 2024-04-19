@@ -63,22 +63,22 @@
 
 					<div style="height:100%;margin-left:50px;padding:5px 5px 5px 5px;">
 
+						<!-- Button -->
+						<div style="text-align:center;margin-right:10px;">
+							<a id="btnBack" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-back2'" style="width:32px;" onclick="mt.player.c_back.onClick()"></a>
+							<a id="btnPause" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play'" style="width:32px;" onclick="mt.player.pause()"></a>
+							<a id="btnNext" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-next'" style="width:32px;" onclick="mt.player.c_next.onClick()"></a>
+						</div>
+
 						<div>
 							<!-- Visualizations -->
 							<div style="float:left;">
 								<input id="visual" class="easyui-switchbutton" data-options="checked:true,onText:'Wave',offText:'Shake',onChange:mt.visual.onChangeType" style="width:70px;margin-left:5px;float:left;">
 							</div>
-	
+							
 							<!-- Random -->
 							<div style="float:right;">
 								<input id="autoNext" class="easyui-switchbutton" data-options="checked:true,onText:'Next',offText:'Stop'" style="width:62px;margin-left:5px;float:right;">
-							</div>
-							
-							<!-- Button -->
-							<div style="text-align:center;margin-right:120px;">
-								<a id="btnBack" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-back2'" style="width:32px;" onclick="mt.player.c_back.onClick()"></a>
-								<a id="btnPause" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play'" style="width:32px;" onclick="mt.player.pause()"></a>
-								<a id="btnNext" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-next'" style="width:32px;" onclick="mt.player.c_next.onClick()"></a>
 							</div>
 						</div>
 
