@@ -1,3 +1,38 @@
 {
-	"liveServer.settings.port": 5501
+	"editor.showFoldingControls": "always",
+    "editor.folding": true,
+    "editor.foldingStrategy": "indentation",
+	"editor.defaultFoldingRangeProvider": "zokugun.explicit-folding",
+	"explicitFolding.rules": {
+		"*": {
+			"begin": "{{{",
+			"end": "}}}"
+		},
+		"javascript": [
+			{
+				"begin": "{",
+				"end": "}",
+				"foldEOF": true
+			},
+			{
+				"begin": "`",
+				"end": "`"
+			},
+			{
+				"foldLastLine": true
+			},
+		],
+	},
+	"[javascriptreact]": {
+		"explicitFolding.rules": [
+			{
+				"begin": "{/*",
+				"end": "*/}"
+			},
+			{
+				"begin": "<",
+				"end": "/>"
+			}
+		]
+	}
 }
