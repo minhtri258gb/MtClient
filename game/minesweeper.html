@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Minesweeper</title>
-    <link rel="shortcut icon" type="image/png" href="./game/minesweeper/favicon.ico">
-	<script type="text/javascript" src="./lib/jquery-3.6.0.min.js"></script>
+    <link rel="shortcut icon" type="image/png" href="../game/minesweeper/favicon.ico">
+	<script type="text/javascript" src="../lib/jquery-3.6.0.min.js"></script>
 	<!-- <script type="text/javascript" src="./lib/svg/svg.min.js"></script> -->
 	<style>
 		table.board {
@@ -245,7 +245,7 @@
 			},
 
 			content: {
-				skin: "./game/minesweeper/",
+				skin: "./minesweeper/",
 				width: 0,
 				height: 0,
 
@@ -279,7 +279,7 @@
 					// let cellH = this.height / mt.game.height;
 					// for (let h=0; h<mt.game.height; h++) {
 					// 	for (let w=0; w<mt.game.width; w++) {
-					// 		let r = this.svg.image("./game/minesweeper/cell.png")
+					// 		let r = this.svg.image("./minesweeper/cell.png")
 					// 			.size(cellW, cellH)
 					// 		// this.svg.rect(cellW, cellH)
 					// 			.move(h*cellH, w*cellW)
@@ -297,7 +297,7 @@
 						html += '<tr>';
 						for (let w=0; w<mt.game.width; w++) {
 							let pos = h * mt.game.height + w;
-							html += '<td class="cell"><img alt="" id="c'+pos+'" src="./game/minesweeper/cell.png"';
+							html += '<td class="cell"><img alt="" id="c'+pos+'" src="./minesweeper/cell.png"';
 							html += ' onmousedown="return mt.content.click(event)"';
 							html += '></td>';
 						}

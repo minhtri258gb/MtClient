@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Editor</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" type="image/png" href="/editor/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="/lib/nanogallery2/css/nanogallery2.min.css">
+	<link rel="stylesheet" type="text/css" href="/image/style.css">
+	<script type="text/javascript" src="/lib/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="/lib/nanogallery2/jquery.nanogallery2.min.js"></script>
+	<script type="text/javascript" src="/lib/jimp/jimp.js"></script>
+	<script type="text/javascript" src="/lib/svg/svg.min.js"></script>
+	<script type="text/javascript" src="/image/script.js"></script>
+	<script type="text/javascript" src="/common/config.js"></script>
+</head>
+<body>
+
+	<div id="tabs" class="easyui-tabs" data-options="fit:true" style="width:500px;height:250px;">
+
+	<!-- Tab Sticker -->
+	<div title="Sticker" style="padding:2px;display:none;">
+		<div id="layout" class="easyui-layout">
+			<!-- <div data-options="region:'north',title:'North Title',split:true" style="height:100px;"></div> -->
+			<!-- <div data-options="region:'east',title:'East',split:true" style="width:100px;"></div> -->
+			
+			<!-- Left panel -->
+			<div data-options="region:'west',title:'West',split:true" style="width:360px;">
+				<input id="file" class="easyui-filebox" style="width:300px">
+				<a id="btn" href="#" class="easyui-linkbutton" onclick="handler.upload()">easyui</a>
+				<div id="dd" class="easyui-draggable" data-options="handle:'#title'" style="width:100px;height:100px;">
+					<div id="title" style="background:#ccc;">title</div>
+				</div>
+				<div id="content"></div>
+			</div>
+
+			<!-- Center Panel -->
+			<div data-options="region:'center',title:'center title'" style="padding:5px;background:#eee;">
+				<h1>gallery made with nanogallery2</h1>
+				<div id="nanogallery2"></div>
+			</div>
+
+			<!-- Right Panel -->
+			<div data-options="
+				region: 'east',
+				title: 'Detail',
+				split: true,
+				hideExpandTool: true,
+				expandMode: null,
+				hideCollapsedContent: false,
+				collapsedSize: 68,
+				collapsedContent: function() {return $('#extra_tools_bar')},
+				onCollapse: mt.gui.onCollapseRight,
+				onResize: mt.gui.onResizeRight"
+				style="width:300px;caret-color:auto;"
+			>
+				<!-- Extra Tools -->
+				<div id="extra_tools_bar" style="padding:2px">
+					<a href="javascript:void(0)" class="easyui-linkbutton" style="width:100%" data-options="iconCls:'icon-large-detail',size:'large',iconAlign:'top'" onclick="mt.edit.open()">Detail</a>
+				</div>
+				<br>
+				
+				<!-- Detail content -->
+				<div id="right_edit" hidden>
+					<form id="form_image" method="post" style="margin: 10px 5px 5px 5px;">
+						<div style="margin-bottom:10px">
+							<input class="easyui-textbox" name="name" style="width:100%" data-options="label:'Name:',required:true">
+						</div>
+						<div style="margin-bottom:10px">
+							<input id="form_duration" class="easyui-textbox" name="duration" style="width:100%" data-options="label:'Duration:'">
+						</div>
+						<div style="margin-bottom:10px">
+							<input class="easyui-textbox" name="tags" style="width:100%" data-options="label:'Tags:'">
+						</div>
+						<div style="margin-bottom:10px">
+							<input class="easyui-numberbox" name="decibel" label="Dedibel:" suffix="%" data-options="required:true" style="width:100%;">
+						</div>
+						<div style="margin-bottom:10px">
+							<input class="easyui-numberbox" name="rate" label="Rate:" min="1" max="5" style="width:100%;">
+						</div>
+						<div style="margin-bottom:10px">
+							<input class="easyui-textbox" name="trackbegin" style="width:100%" data-options="label:'Track begin:'">
+						</div>
+						<div style="margin-bottom:10px">
+							<input class="easyui-textbox" name="trackend" style="width:100%" data-options="label:'Track end:'">
+						</div>
+						<div>
+							<input type="hidden" name="id">
+						</div>
+					</form>
+					<div style="text-align:center;padding:5px 0">
+						<a href="javascript:void(0)" class="easyui-linkbutton" onclick="mt.edit.form.form('submit')" style="width:80px">Save</a>
+						<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()" style="width:80px">Reset</a>
+					</div>
+				</div>
+
+			</div>
+
+			<!-- <div data-options="region:'south',title:'South Title',split:true" style="height:100px;"></div> -->
+		</div>
+	</div>
+
+	<div title="Template" data-options="iconCls:'icon-reload',closable:true" style="display:none;">
+		Template
+		Chỉnh text cho meme
+	</div>
+
+	<div title="Editor" data-options="iconCls:'icon-reload',closable:true" style="display:none;">
+		Editor
+		Kéo hoặc chọn ảnh rồi chỉnh sửa
+	</div>
+
+	<div title="Wallpaper" data-options="iconCls:'icon-reload',closable:true" style="display:none;">
+		Wallpaper
+	</div>
+
+	<div title="Albums" data-options="closable:true" style="overflow:auto;padding:20px;display:none;">
+		Albums
+		Lưu face link contact
+	</div>
+		
+	</div>
+</body>
+</html>
