@@ -16,12 +16,19 @@ img.menuIcon {
 }
 
 /* Highlight dòng thay đổi dữ liệu */
-.highlight-row {
-	background-color: #ffeb3b !important; /* Màu vàng nổi bật */
+.highlight-row-add {
+	background-color: #d4fcff !important; /* Màu vàng nổi bật */
+	transition: background-color 1s; /* Hiệu ứng chuyển màu */
+}
+.highlight-row-edit {
+	background-color: #fff8be !important; /* Màu vàng nổi bật */
 	transition: background-color 1s; /* Hiệu ứng chuyển màu */
 }
 
 /* Chỉnh CSS header */
 .tabulator-col-title {
-	padding-right: 5px;
+	padding-right: 0px !important;
+}
+.tabulator-col-sorter {
+	right: 0px !important;
 }
