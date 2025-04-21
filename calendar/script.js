@@ -1,10 +1,11 @@
 var mt = {
 	dev: function() {
-		this.calendar.createEvent();
+		// this.calendar.addEvent();
+		// this.calendar.addHolidate();
 	},
 	init: function() {
 		this.calendar.init();
-		this.event.refresh(-2);
+		// this.event.refresh(-2);
 		this.dev();
 	},
 	event: {
@@ -32,7 +33,7 @@ var mt = {
 			if (type == 2 || type == -2) { // Date event
 				$.ajax({
 					type: 'GET',
-					url: '/calendar/get',
+					url: '/api/calendar/get',
 					// data: JSON.stringify(data),
 					contentType: 'application/json',
 					success: function(res) {
@@ -77,59 +78,58 @@ var mt = {
 		},
 	},
 	calendar: {
-		_cld: null,
-		init: function() {
-			this._cld = new tui.Calendar('#calendar', {
-				defaultView: 'month', // week
-				// template: {
-				// 	time(event) {
-				// 		const { start, end, title } = event;
-				// 		return `<span style="color: white;">${formatTime(start)}~${formatTime(end)} ${title}</span>`;
-				// 	},
-				// 	allday(event) {
-				// 		return `<span style="color: gray;">${event.title}</span>`;
-				// 	},
-				// },
-				// calendars: [{
-				// 	id: 'cal1',
-				// 	name: 'Personal',
-				// 	backgroundColor: '#03bd9e',
-				// }, {
-				// 	id: 'cal2',
-				// 	name: 'Work',
-				// 	backgroundColor: '#00a9ff',
-				// }],
-			});
 
+		m_cld: null, // Instance
+
+		init: function() {
+
+			// Thiết lập
+			let options = {
+				manualEditingEnabled: true,
+				showDayNumberOrdinals: false, // Ẩn chữ th trên số
+				autoRefreshTimerDelay: 0, // Ko refresh
+				fullScreenModeEnabled: false, // Ẩn nút toàn màn hình
+				openInFullScreenMode: true, // Bật toàn màn hình
+				minimumYear: 1990,
+				maximumYear: 2050,
+				tooltipDelay: 300,
+				eventTooltipDelay: 300,
+			};
+
+			// Sử dụng ngôn ngữ việt
+			options = Object.assign(options, __TRANSLATION_OPTIONS);
+
+			// Khởi tạo lịch
+			this.m_cld = new calendarJs('calendar', options);
 		},
-		changeView: function(type) {
-			// type: day, week, month
-			this._cld.changeView(type);
+		addEvent: function() {
+			let event = {
+				from: new Date(),
+				to: new Date(),
+				title: "A New Event",
+				description: "A description of the event"
+			};
+			mt.calendar.m_cld.addEvent(event);
 		},
-		cleanEvent: function() {
-			this._cld.clear();
-		},
-		createEvent: function() { // #TODO
-			this._cld.createEvents([
-				{
-					id: '1',
-					calendarId: '1',
-					title: 'my event',
-					category: 'time',
-					dueDateClass: '',
-					start: '2023-07-18T22:30:00+09:00',
-					end: '2023-07-19T02:30:00+09:00',
-				},
-				{
-					id: '2',
-					calendarId: '1',
-					title: 'second event',
-					category: 'time',
-					dueDateClass: '',
-					start: '2023-07-18T17:30:00+09:00',
-					end: '2023-07-19T17:31:00+09:00',
-				},
-			]);
+		addHolidate: function() {
+			/** Holidate struct {
+			 *   day: number,
+			 *   month: number,
+			 *   year: number,
+			 *   title: string,
+			 *   onClick: function => Object,
+			 *   onClickUrl: function => string,
+			 *   backgroundColor: string,
+			 *   textColor: string,
+			 * }
+			 */
+			let today = new Date();
+			let holiday = {
+				day: today.getDate(),
+				month: today.getMonth() + 1,
+				title: "A New Holiday",
+			};
+			this.m_cld.addHolidays([holiday]);
 		},
 	},
 	solar: {

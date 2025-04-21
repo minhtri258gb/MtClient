@@ -12,8 +12,8 @@ var mt = {
 			this.jzz.init();
 
 			this.isInit = false;
-
-		} catch (e) {
+		}
+		catch (e) {
 			console.error(e);
 		}
 	},

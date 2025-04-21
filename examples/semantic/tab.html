@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Semantic - Tab</title>
+	<link href="/editor/favicon.ico" type="image/png" rel="shortcut icon">
+	<link href="/lib/semantic/semantic.min.css" type="text/css" rel="stylesheet">
+	<script src="/lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+	<script src="/lib/semantic/semantic.min.js" type="text/javascript"></script>
+</head>
+<body>
+
+	<div class="ui top attached tabular menu">
+		<a class="item active" data-tab="manager">Manager</a>
+		<a class="item" data-tab="anime">Anime</a>
+		<a class="item" data-tab="game">Game</a>
+		<a class="item" data-tab="movie">Movie</a>
+	</div>
+
+	<div class="ui bottom attached tab segment active" data-tab="manager">
+		Manager
+	</div>
+
+	<div class="ui bottom attached tab segment" data-tab="anime">
+		Anime
+	</div>
+
+	<div class="ui bottom attached tab segment" data-tab="game">
+		Game
+	</div>
+
+	<div class="ui bottom attached tab segment" data-tab="movie">
+		Movie
+	</div>
+
+	<script type="module">
+		var mt = {
+			c_table: null, // Object Table
+			d_list: [], // Danh sách dữ liệu
+
+			init: function() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Init Tab
+				$('.menu .item').tab({
+					// cache: true, // Cache tab
+					// context: 'parent',
+					// auto: true,
+					// path: '/manager/', // Thêm thư mục manager
+					// apiSettings: {
+					// 	// url: '/manager/{$tab}.html', // Ko ăn
+					// 	beforeSend: (settings) => {
+					// 		// console.log('beforeSend', settings);
+					// 		settings.url = '/manager' + settings.url + '.html'; // Thêm đuôi .html
+					// 		return settings;
+					// 	},
+					// },
+					onFirstLoad: async (tabPath) => {
+						try {
+							if (tabPath == 'manager')
+								return;
+							let response = await fetch(`/manager/${tabPath}.html`);
+							let htmlContent = await response.text();
+							$(`.segment[data-tab="${tabPath}"]`).html(htmlContent);
+						}
+						catch (e) {
+							console.error("[ERROR]", e)
+						}
+					},
+					// onLoad: (tabPath, parameterArray, historyEvent) => {
+					// 	console.log('onLoad', tabPath, parameterArray, historyEvent);
+					// },
+					// onRequest: (tabPath) => {
+					// 	console.log('onRequest', tabPath);
+					// },
+					// onVisible: (tabPath) => {
+					// 	console.log('onVisible', tabPath);
+					// },
+				});
+
+				// Select first tab
+				$('.menu .item[data-tab="manager"]').tab('change tab', 'manager');
+
+			},
+		};
+		$(document).ready(async () => mt.init());
+	</script>
+
+</body>
+</html>

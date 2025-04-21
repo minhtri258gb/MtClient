@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Semantic - Tab</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/nanogallery2/css/nanogallery2.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/test/style.css"> -->
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
+	<!-- <script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/lib/nanogallery2/jquery.nanogallery2.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
+	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
+</head>
+<body>
+
+	<div id="tab"></div>
+
+	<script>
+
+		function uiTab(idElement, options) {
+			
+			let activeTab = 0;
+
+			// Validate
+			if (options.subtabs == null || options.subtabs.length == 0)
+				console.error("[UI Tab] Không có options.subtab!");
+			if (options.activeTab != null && options.activeTab.length > 0) {
+				for (let i in options.subtabs) {
+					let subtab = options.subtabs[i];
+					if (subtab.name == options.activeTab) {
+						activeTab = i;
+						break;
+					}
+				}
+			}
+
+			// Build HTML Header
+			let html = `<div class="ui top attached tabular menu">`;
+			for (let i in options.subtabs) {
+				let subtab = options.subtabs[i];
+				let htmlActive = (activeTab == i) ? ' active' : '';
+				html += `<a class="item${htmlActive}" data-tab="${subtab.name}">${subtab.title}</a>`;
+			}
+			html += `</div>`;
+
+			// Build HTML Content
+			for (let i in options.subtabs) {
+				let subtab = options.subtabs[i];
+				let htmlActive = (activeTab == i) ? ' active' : '';
+				html += `<div class="ui bottom attached tab segment${htmlActive}" data-tab="${subtab.name}"></div>`;
+			}
+
+			// Place HTML
+			$('#'+idElement).html(html);
+
+			// Active component
+			$('#'+idElement+' .item').tab({
+				onLoad: function(tabname, history) {
+					console.log(a)
+					console.log(b)
+					console.log(c)
+					debugger
+				},
+			});
+
+			// Load content for first subtab
+			$('#'+idElement+' .tab.active').html('loadasdsadsad');
+		}
+		
+		// ====== TEST ======
+		uiTab('tab', {
+			subtabs: [
+				{ title: "Anime", name: "anime", url: "/manager/anime.html", },
+				{ title: "Game", name: "game", url: "/manager/game.html", },
+				{ title: "Story", name: "story", url: "/manager/story.html", },
+			],
+			activeTab: 'anime',
+		});
+
+	</script>
+</body>
+</html>

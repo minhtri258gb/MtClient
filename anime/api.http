@@ -1,0 +1,37 @@
+@id = 3000
+
+
+@searchText = "Delicious"
+
+### @name Search
+GET https://api.jikan.moe/v4/anime
+?page=1
+&limit=2
+&q={{searchText}}
+
+
+
+### @name getInfo_Full_ById
+GET https://api.jikan.moe/v4/anime/{{id}}/full
+
+
+
+### @name getInfo_ById
+GET https://api.jikan.moe/v4/anime/{{id}}
+
+
+
+### @name getVideo_ById
+GET https://api.jikan.moe/v4/anime/{{id}}/videos
+
+
+
+### @name getImage_ById
+GET https://api.jikan.moe/v4/anime/{{id}}/pictures
+
+
+
+### @name getTheme_ById
+GET https://api.jikan.moe/v4/anime/{{id}}/themes
+
+

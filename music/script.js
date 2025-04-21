@@ -26,6 +26,12 @@ var mt = {
 		interactName: '',
 		init: function() {
 
+			// Call API - Init Music App
+			// this.musics = $.ajax({
+			// 	type: 'GET',
+			// 	url: '/music/init',
+			// 	async: false
+			// });
 		},
 		isLocal: function() {
 			return window.location.href.startsWith('http://localhost/');
@@ -386,7 +392,7 @@ var mt = {
 			mt.visual.clear();
 
 			// Show tags
-			mt.player.c_tag.set(music.tags);
+			// mt.player.c_tag.set(music.tags);
 
 			// Load music
 			$.ajax({
@@ -588,7 +594,7 @@ var mt = {
 			this.c_btnVolume.init();
 			this.c_autoNext.init();
 			this.c_loop.init();
-			this.c_tag.init();
+			// this.c_tag.init();
 		},
 		changeMusic: function(index) {
 			// #TODO
@@ -822,23 +828,23 @@ var mt = {
 				this.component.numberbox('setValue', n);
 			}
 		},
-		c_tag: {
-			component: null,
-			init: function() {
-				let c = $('#tags');
-				c.tagify({
-					originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
-					userInput: false,
-					maxTags: 5,
-				});
-				this.component = c.data('tagify');
-			},
-			set: function(tagStr) {
-				this.component.removeAllTags();
-				if (tagStr != null && tagStr.length > 0)
-					this.component.addTags(tagStr);
-			},
-		},
+		// c_tag: {
+		// 	component: null,
+		// 	init: function() {
+		// 		let c = $('#tags');
+		// 		c.tagify({
+		// 			originalInputValueFormat: valuesArr => valuesArr.map(item => item.value).join(','),
+		// 			userInput: false,
+		// 			maxTags: 5,
+		// 		});
+		// 		this.component = c.data('tagify');
+		// 	},
+		// 	set: function(tagStr) {
+		// 		this.component.removeAllTags();
+		// 		if (tagStr != null && tagStr.length > 0)
+		// 			this.component.addTags(tagStr);
+		// 	},
+		// },
 	},
 	visual: { // Sóng nhạc tĩnh toàn bài và sóng nhạc đang phát
 		_staticWave: null,

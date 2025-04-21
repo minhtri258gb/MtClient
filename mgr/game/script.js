@@ -35,6 +35,7 @@ var game = {
 			render: (row, ex) => ex.value == 1 ? `<img src="/res/icons/check.png" width="16" height="16"/>` : '',
 			editable: { type: 'checkbox', style: 'text-align: center' },
 		};
+
 		let renderDateTime = (row, ex) => (ex.value == null) ? '' : DateTime.fromSeconds(ex.value).toFormat('yyyy/MM/dd');
 		let editorListView = { type: 'combo', items: game.l_view };
 

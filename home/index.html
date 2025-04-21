@@ -4,15 +4,42 @@
 	<title>Home</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="/home/style.css">
-	<script src="/lib/jquery-3.6.0.min.js"></script>
+	<link href="/lib/semantic/semantic.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/jstree-3.3.17/themes/default/style.min.css" rel="stylesheet" type="text/css">
+	<link href="/home/style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<script src="/lib/semantic/semantic.min.js" type="text/javascript"></script>
+	<script src="/lib/jstree-3.3.17/jstree.min.js"></script>
 	<script src="/lib/packery/packery.pkgd.min.js"></script>
-	<script src="/common/config.js"></script>
-	<script src="/home/script.js"></script>
+	<script src="/home/script.js" type="module"></script>
 </head>
 <body>
-	<h2>Application list</h2>
-	<div id="packgrid"></div>
-	<script>mt.init()</script>
+	<div class="layoutMain">
+
+		<!-- Left -->
+		<div class="layoutLeft">
+
+			<!-- Search -->
+			<div class="ui icon input" style="margin:16px 16px;">
+				<input id="fieldSearch" type="text" placeholder="Search...">
+				<i class="search icon"></i>
+			</div>
+
+			<!-- JsTree -->
+			<div id="jstree"></div>
+
+		</div>
+
+		<!-- Center -->
+		<div class="layoutCenter">
+
+			<!-- Title -->
+			<h2>Application list</h2>
+
+			<!-- Grid -->
+			<div id="packgrid"></div>
+
+		</div>
+	</div>
 </body>
 </html>

@@ -982,6 +982,33 @@ var mt = {
 			return false;
 		},
 	},
+	controller: {
+		init: function() {
+			JZZ({sysex:true}).and(function() {
+				let inputs = this.info().inputs;
+				let outputs = this.info().outputs;
+
+				// enable message handlers on all MIDI-In ports:
+				for (let i in inputs) {
+					this.openMidiIn(i).connect(function(msg) {
+						if (msg.isIdResponse()) {
+							let gear = msg.gearInfo();
+							console.log('ID Response SysEx received:');
+							console.log('   port:    ' + this.name());
+							console.log('   message: ' + msg);
+							console.log('   brand:   ' + gear.brand);
+							console.log('   model:   ' + gear.model);
+							console.log('   device:  ' + gear.descr);
+						}
+					});
+				}
+
+				// send the ID Request SysEx to all MIDI-Out ports:
+				for (let i in outputs)
+					this.openMidiOut(i).sxIdRequest();
+			});
+		}
+	},
 	event: {
 		init: function() {
 			window.onfocus = this.focus;

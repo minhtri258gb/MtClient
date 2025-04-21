@@ -1,0 +1,24 @@
+
+body {
+	height: 100vh;
+	margin: 0;
+}
+
+.container {
+	/* background-color: bisque; */
+	height: 100vh;
+	width: 100%;
+	max-width: 100%;
+	padding: 0;
+
+	.container-left {
+		background-color: bisque;
+		float: left;
+		width: 25%;
+		height: 100%;
+	}
+	.container-right {
+		background-color: cadetblue;
+		height: 100%;
+	}
+}

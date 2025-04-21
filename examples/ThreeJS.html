@@ -1,0 +1,77 @@
+<!-- http://localhost/examples/ThreeJS.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>ThreeJS</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/w2ui/w2ui-2.0.min.css"> -->
+
+	<!-- <script src="/lib/jquery/jquery-3.7.1.min.js"></script> -->
+	<!-- <script src="/lib/w2ui/w2ui-2.0.min.js"></script> -->
+	<!-- <script src="/common/config.js"></script> -->
+
+	<style>
+		body { margin: 0; };
+	</style>
+
+</head>
+<body>
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "/lib/threejs/three.module.min.js",
+				"three/addon/": "/lib/threejs/jsm/"
+			}
+		}
+	</script>
+	<script type="module">
+		import * as THREE from 'three';
+		import { GLTFLoader } from 'three/addon/loaders/GLTFLoader.js';
+
+		var app = {
+
+			// Properties
+			m_scene: null,
+			m_camera: null,
+			m_renderer: null,
+			m_mesh: null,
+
+			// Method
+			init: function() {
+
+				// Init UI - Grid
+				const width = window.innerWidth, height = window.innerHeight;
+
+				this.m_camera = new THREE.PerspectiveCamera(70, width / height, 0.01, 10);
+				this.m_camera.position.z = 1;
+
+				this.m_scene = new THREE.Scene();
+
+				const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+				const material = new THREE.MeshNormalMaterial();
+
+				this.m_mesh = new THREE.Mesh(geometry, material);
+				this.m_scene.add(this.m_mesh);
+
+				this.m_renderer = new THREE.WebGLRenderer({ antialias: true });
+				this.m_renderer.setSize(width, height);
+				this.m_renderer.setAnimationLoop(this.render);
+				document.body.appendChild(this.m_renderer.domElement);
+			},
+			render: function(time) {
+				self = app;
+
+				self.m_mesh.rotation.x = time / 2000;
+				self.m_mesh.rotation.y = time / 1000;
+
+				self.m_renderer.render( self.m_scene, self.m_camera );
+			},
+		};
+
+		app.init();
+
+	</script>
+</body>
+</html>

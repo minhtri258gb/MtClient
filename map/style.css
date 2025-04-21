@@ -1,0 +1,26 @@
+body {
+	height: 100vh;
+	margin: 0;
+}
+
+#map {
+	height: 100%;
+}
+
+#controlContain {
+	position: absolute;
+	bottom: 34px;
+	right: 16px;
+	z-index: 1000;
+	width: 30px;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+
+	.btnTyle {
+		width: 20px;
+		height: 20px;
+		margin: 5px 5px 5px 5px;
+		cursor: pointer;
+	}
+}

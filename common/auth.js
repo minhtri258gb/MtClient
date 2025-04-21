@@ -5,6 +5,7 @@ mt.auth = {
 	_isInit: false,
 	_token: '',
 	_cbk_func_result: null, // Hàm callback khi có kết quả authorize
+
 	init: function() {
 		this._isInit = true;
 
@@ -51,13 +52,14 @@ mt.auth = {
 				}
 				let password = hashtring($('#pu_login_password').val());
 
-				// Call API
-				$.ajax({
-					type: 'POST',
-					url: '/authorize',
-					data: { password: password },
-					success: function(res) {
-						
+				// Call API - Authen
+				fetch('/authorize', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ password: new String(password) })
+				}).then((response) => {
+					response.json().then((res) => {
+
 						let title = '', msg = '';
 						if (res.result) {
 							mt.auth._token = res.token;
@@ -78,8 +80,17 @@ mt.auth = {
 
 						if (mt.auth._cbk_func_result != null)
 							mt.auth._cbk_func_result(res.result);
-					}
-				}); // End call API
+					});
+				});
+				// $.ajax({
+				// 	type: 'POST',
+				// 	url: '/authorize',
+				// 	contentType: 'application/json',
+				// 	data: { password: password },
+				// 	success: function(res) {
+						
+				// 	}
+				// }); // End call API
 			}
 
 			// Init textbox

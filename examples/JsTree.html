@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>JsTree</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="/lib/semantic/semantic.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/jstree-3.3.17/themes/default/style.min.css" type="text/css" rel="stylesheet">
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<script src="/lib/semantic/semantic.min.js" type="text/javascript"></script>
+	<script src="/lib/jstree-3.3.17/jstree.min.js"></script>
+	<style>
+		.custom-node .jstree-icon {
+			margin: 4px 5px;
+			width: 16px !important;
+			height: 16px !important;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- Search -->
+	<div class="ui icon input" style="margin:16px 16px;">
+		<input id="fieldSearch" type="text" placeholder="Search...">
+		<i class="search icon"></i>
+	</div>
+
+	<!-- JsTree -->
+	<div id="jstree">asd</div>
+
+	<script type="module">
+		import mtAuthen from '/common/authen.js';
+
+		var mt = {
+			p_authen: mtAuthen,
+			m_clientPath: '',
+
+			config: {
+				h_lstSkip: [
+					'.git', '.gitignore', '.vscode', 'package.json', 'package-lock.json', 'node_modules',
+					'lib', 'res'
+				],
+				h_lstExt: [
+					'html',
+				],
+				h_lstExtImage: [
+					'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'ico', 'svg',
+				],
+				h_lstExtAudio: [
+					'wav', 'mp3', 'ogg', 'aac', 'mid', 'midi',
+				],
+				h_lstExtVideo: [
+					'mp4', 'm4v', 'avi', 'mov', 'flv', '3gp',
+				],
+				h_type: {
+					'folder': { },
+					'file': { icon: '/res/icons/file16.png' },
+					'image': { icon: '/res/icons/image16.png' },
+					'html': { icon: '/res/icons/web16.png' },
+				},
+			},
+
+			init: async function() {
+
+				// Bind Global
+				window.mt = mt;
+
+				// Authen auto
+				await this.p_authen.login('-1393153393');
+
+				// Read config
+				let resClientPath = await fetch('/file/getClientPath', {
+					method: 'GET',
+					headers: {
+						'Authorization': 'Bearer '+this.p_authen.getToken(),
+					},
+				});
+				this.m_clientPath = await resClientPath.json();
+
+				// Init
+				this.initUI();
+			},
+			initUI: function() {
+
+				// Config Tree
+				$('#jstree').jstree({
+					core: {
+						data: {
+							url: '/file/jstree',
+							headers: {
+								'Authorization': 'Bearer '+this.p_authen.getToken(),
+							},
+							dataType: 'json',
+							data: (node) => {
+								let folder = node.original?.path || this.m_clientPath; // Lấy path
+								return { folder };
+							},
+							success: (data) => this.processNode(data),
+						},
+					},
+					plugins: ['types', 'contextmenu', 'search'],
+					types: this.config.h_type,
+					contextmenu: {
+						items: (node) => this.contextmenu(node)
+					},
+				});
+
+				// Đăng ký sự kiện Double click
+				$('#jstree').on('dblclick', '.jstree-anchor', function(e) {
+					e.preventDefault();
+					let instance = $.jstree.reference(this);
+					let node = instance.get_node(this);
+					mt.doubleClick(node);
+				});
+
+				// Search
+				$('#fieldSearch').on('keypress', (event) => {
+					if (event.which === 13)
+						$('#jstree').jstree('search', $('#fieldSearch').val());
+				});
+			},
+			processNode: function (data) {
+				for (let i = data.length - 1; i >= 0; i--) {
+					let item = data[i];
+
+					// Danh sách ẩn
+					if (this.config.h_lstSkip.includes(item.text)){
+						data.splice(i, 1);
+						continue;
+					}
+
+					// Phân loại
+					if (item.isFolder) { // Folder
+						item.children = true; // Hiển thị action expand
+						item.type = 'folder';
+					}
+					else { // File
+						item.type = this.getType(item.text);
+						item.a_attr = { class: 'custom-node' };
+					}
+				}
+				return data;
+			},
+			contextmenu: function(node) {
+				// doc: https://www.jstree.com/api/#/?q=$.jstree.defaults.contextmenu&f=$.jstree.defaults.contextmenu.items
+
+				let options = {};
+
+				if (node.type == 'folder')
+					return options;
+
+				if (node.type == 'html') {
+					options.open = {
+						label: "Open",
+						icon: '/res/icons/play.png',
+						action: (obj) => {
+							let path = node.original.path;
+							path = path.replaceAll(this.m_clientPath, '');
+							window.open(path, '_blank');
+						}
+					};
+				}
+
+				return options;
+
+				// return {
+				// 	renameItem: {
+				// 		label: "Rename",
+				// 		icon: "fa fa-edit",
+				// 		action: function (obj) {
+				// 			$('#jstree').jstree(true).edit(node);
+				// 		}
+				// 	},
+				// 	deleteItem: {
+				// 		label: "Delete",
+				// 		icon: "fa fa-trash",
+				// 		action: function (obj) {
+				// 			$('#jstree').jstree(true).delete_node(node);
+				// 		}
+				// 	},
+				// 	customItem: {
+				// 		label: "Say Hello",
+				// 		action: function () {
+				// 			alert("Hello from node: " + node.text);
+				// 		}
+				// 	}
+				// };
+			},
+			doubleClick: function(node) {
+				if (node.type == 'html') {
+					let path = node.original.path;
+					path = path.replaceAll(this.m_clientPath, '');
+					window.open(path, '_blank');
+				}
+			},
+			getType: function(filename) {
+				let pos = filename.indexOf('.');
+				let ext = filename.substring(pos+1);
+				if (this.config.h_lstExt.includes(ext))
+					return ext;
+				else if (this.config.h_lstExtImage.includes(ext))
+					return 'image';
+				else if (this.config.h_lstExtAudio.includes(ext))
+					return 'audio';
+				return 'file';
+			},
+		};
+		$(document).ready(() => mt.init());
+	</script>
+</body>
+</html>

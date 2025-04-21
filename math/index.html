@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Math</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/bootstrap-5.3.3/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/math/style.css">
+	<script src="/lib/bootstrap-5.3.3/bootstrap.bundle.min.js"></script>
+	<script src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script src="/lib/svg/svg.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+	<script src="/math/script.js"></script>
+	<script src="/common/config.js"></script>
+</head>
+<body>
+
+	<div class="container">
+		<div class="container-left">
+			LEFT
+		</div>
+		<div class="container-right">
+			<span>RIGHT</span>
+			<br>
+
+			<div class="input-group">
+				<span class="input-group-text">With textarea</span>
+				<textarea class="form-control" aria-label="With textarea"></textarea>
+			</div>
+			
+			<span>Markdown biểu thức</span>
+			<br>
+			<p>
+				When \(a \ne 0\), there are two solutions to \(ax^2 + bx + c = 0\) and they are
+				\[x = {-b \pm \sqrt{b^2-4ac} \over 2a}.\]
+			</p>
+
+		</div>
+	</div>
+
+	<script>
+		mtMath.init();
+	</script>
+</body>
+</html>

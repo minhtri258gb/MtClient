@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>FinderJS</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<link rel="stylesheet" type="text/css" href="/lib/tabulator/css/tabulator_semanticui.min.css">
+	<link href="/lib/finderjs-1.3.1/example/finderjs.css" media="all" rel="stylesheet" />
+	<link
+		rel="stylesheet"
+		href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"
+		lazyload
+	/>
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
+	<script type="text/javascript" src="/lib/finderjs-1.3.1/build/finder.min.js"></script>
+	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
+	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
+	<style>
+		.site {
+			color: #404040;
+			display: flex;
+			flex-direction: column;
+			font: 400 1em/1.4 "Lucida Grande", Arial, Verdana, sans-serif;
+			margin: 0;
+			min-width: 38em;
+			min-height: 100vh;
+			text-rendering: optimizeLegibility;
+		}
+
+		.site-content {
+			flex: 1 0 auto;
+			padding: 0 0 3em;
+		}
+
+		a {
+			color: #00aced;
+		}
+
+		a:hover {
+			color: #007CAB;
+		}
+
+		a .fa {
+			padding-right: 5px;
+		}
+
+		.header {
+			background-color: #ECECEC;
+			padding: 4rem 0 2rem 0;
+			text-align: center;
+		}
+
+		.header .main-title {
+			font-size: 3em;
+			letter-spacing: -.075em;
+			margin: 0;
+		}
+
+		.header .main-title span {
+			font-weight: lighter;
+			text-transform: uppercase;
+		}
+
+		.fa-tree {
+			color: green;
+		}
+
+		.header .sub-title {
+			font-size: .95em;
+			font-weight: 300;
+			margin: .5em 0 1em;
+		}
+
+		.header .actions {
+			display: flex;
+			font-size: .9em;
+			justify-content: center;
+			margin: 2em 0 0 0;
+		}
+
+		.header .actions .btn {
+			margin-right: 1em;
+		}
+
+		.header .actions .btn .fa {
+			font-size: 1.3em;
+		}
+
+		.btn {
+			background-color: #D8D8D8;
+			border-radius: 2px;
+			color: #404040;
+			padding: .6em 2em;
+			text-decoration: none;
+			transition: background-color .2s;
+		}
+
+		.btn:hover{
+			background-color: #B5B5B5;
+			color: black;
+		}
+
+		.btn-hi {
+			background-color: #333;
+			color: white;
+		}
+
+		.btn-hi:hover {
+			background-color: #4078c0;
+			color: white;
+		}
+
+		.btn .fa-twitter {
+			color: #00aced;
+		}
+
+		nav {
+			font-size: .9em;
+			margin: 2em 0 0 0;
+		}
+
+		nav ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+			text-align: center;
+		}
+
+		nav ul li {
+			display: inline-block;
+			padding: 0 10px;
+		}
+
+		section {
+			padding: 2em 1.5em 3em 1.5em;
+		}
+
+		.section-container {
+			margin: 0 auto;
+			max-width: 53em;
+		}
+
+		section .sub-title {
+			margin: 0 0 1em;
+		}
+
+		section:nth-child(2n) {
+			background: #ECECEC;
+		}
+
+		.footer {
+			background: #565656;
+			color: #ABABAB;
+			font-size: .85em;
+			padding: 1.5rem;
+			text-align: center;
+		}
+
+		.footer .links {
+			padding: 0 0 1em;
+		}
+
+		.footer a {
+			color: white;
+		}
+
+		.footer p {
+			margin: 0 0 .5em;
+		}
+
+		.fa-external-link {
+			font-size: .7em;
+			margin-left: 4px;
+			vertical-align: middle;
+		}
+
+		.twitter-follow-button {
+			margin-left: 15px;
+		}
+
+		code {
+			background: #f8f8f8;
+			border: solid 1px #d9d9d9;
+			display: block;
+			padding: 2em 1.5em;
+		}
+
+		pre {
+			margin:0;
+			padding:0;
+		}
+
+		.alert {
+			background-color: #FEFFDD;
+			border-radius: 2px;
+			padding: 1em;
+		}
+
+		#container2 .fjs-col {
+			height: 500px;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="container"></div>
+
+	<script type="module">
+
+		var _ = {
+			isElement: function(element) {
+				try {
+					// eslint-disable-next-line no-undef
+					return element instanceof Element;
+				} catch (error) {
+					return !!(element && element.nodeType === 1);
+				}
+			},
+			el: function(element) {
+				var classes = [];
+				var tag = element;
+				var el;
+
+				if (this.isElement(element)) {
+					return element;
+				}
+
+				classes = element.split('.');
+				if (classes.length > 1) {
+					tag = classes[0];
+				}
+				el = document.createElement(tag);
+				this.addClass(el, classes.slice(1));
+
+				return el;
+			},
+			frag: function() {
+				return document.createDocumentFragment();
+			},
+			text: function(text) {
+				return document.createTextNode(text);
+			},
+			remove: function(element) {
+				if ('remove' in element) {
+					element.remove();
+				} else {
+					element.parentNode.removeChild(element);
+				}
+
+				return element;
+			},
+			closest: function(element, test) {
+				var el = element;
+
+				while (el) {
+					if (test(el)) {
+						return el;
+					}
+					el = el.parentNode;
+				}
+
+				return null;
+			},
+			addClass: function(element, className) {
+				var classNames = className;
+
+				function _addClass(el, cn) {
+					if (!el.className) {
+						el.className = cn;
+					} else if (!_.hasClass(el, cn)) {
+						if (el.classList) {
+							el.classList.add(cn);
+						} else {
+							el.className += ' ' + cn;
+						}
+					}
+				}
+
+				if (!Array.isArray(className)) {
+					classNames = className.trim().split(/\s+/);
+				}
+				classNames.forEach(_addClass.bind(null, element));
+
+				return element;
+			},
+			removeClass: function(element, className) {
+				var classNames = className;
+
+				function _removeClass(el, cn) {
+					var classRegex;
+					if (el.classList) {
+						el.classList.remove(cn);
+					} else {
+						classRegex = new RegExp('(?:^|\\s)' + cn + '(?!\\S)', 'g');
+						el.className = el.className.replace(classRegex, '').trim();
+					}
+				}
+
+				if (!Array.isArray(className)) {
+					classNames = className.trim().split(/\s+/);
+				}
+				classNames.forEach(_removeClass.bind(null, element));
+
+				return element;
+			},
+			hasClass: function(element, className) {
+				if (!element || !('className' in element)) {
+					return false;
+				}
+
+				return element.className.split(/\s+/).indexOf(className) !== -1;
+			},
+			nextSiblings: function(element) {
+				var next = element.nextSibling;
+				var siblings = [];
+
+				while (next) {
+					siblings.push(next);
+					next = next.nextSibling;
+				}
+
+				return siblings;
+			},
+			previousSiblings: function(element) {
+				var prev = element.previousSibling;
+				var siblings = [];
+
+				while (prev) {
+					siblings.push(prev);
+					prev = prev.previousSibling;
+				}
+
+				return siblings;
+			},
+			stop: function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+
+				return event;
+			},
+			first: function(parent, selector) {
+				return parent.querySelector(selector);
+			},
+			append: function(parent, _children) {
+				var _frag = this.frag();
+				var children = Array.isArray(_children) ? _children : [_children];
+
+				children.forEach(_frag.appendChild.bind(_frag));
+				parent.appendChild(_frag);
+
+				return parent;
+			},
+		};
+
+		var mt = {
+			h_host: `http://localhost:80`, // Host
+			h_folder: 'C:/Users/Windows/Downloads', // Đường dẫn gốc
+			m_accessToken: '', // Quyền truy cập
+			c_emitter: null, // Object Finder
+			c_container: null, // Element container
+			d_list: [], // Danh sách dữ liệu
+
+			init: async function() {
+				window.mt = this; // Bind Global
+				await this.authen();
+				await this.initFinder();
+			},
+			authen: async function() {
+				try {
+					// Call API - Authen
+					const responseAuthen = await fetch(this.h_host + '/authorize', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ password: "-1393153393" })
+					});
+
+					const resultAuth = await responseAuthen.json();
+					if (resultAuth.result == true)
+						this.m_accessToken = resultAuth.token;
+					else
+						throw { error: true, msg: "Lỗi phân quyền" };
+				}
+				catch (e) {
+					if (typeof e.msg == 'string')
+						alert(e.msg);
+					else
+						console.error("[ERROR] ", e);
+				}
+			},
+			initFinder: async function() {
+				try {
+
+					// Build Finder
+					// var data = [
+					// 	{
+					// 		size: '10 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: 'build',
+					// 		children: [
+					// 			{
+					// 				size: '44 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'build',
+					// 				children: [
+					// 					{
+					// 						size: '2 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'finder.js'
+					// 					}
+					// 				]
+					// 			},
+					// 			{
+					// 				size: '11 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'finder.js'
+					// 			}
+					// 		]
+					// 	},
+					// 	{
+					// 		size: '9 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: 'example',
+					// 		children: [
+					// 			{
+					// 				size: '10 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'example',
+					// 				children: [
+					// 					{
+					// 						size: '10 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'test',
+					// 						children: [
+					// 							{
+					// 								size: '10 KB',
+					// 								modified: '03/09/2014 at 11:45am',
+					// 								label: 'index.js'
+					// 							},
+					// 							{
+					// 								size: '10 KB',
+					// 								modified: '03/09/2014 at 11:45am',
+					// 								label: 'test.js'
+					// 							},
+					// 							{
+					// 								size: '10 KB',
+					// 								modified: '03/09/2014 at 11:45am',
+					// 								label: 'util.js'
+					// 							}
+					// 						]
+					// 					},
+					// 					{
+					// 						size: '33 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'bundle.js'
+					// 					},
+					// 					{
+					// 						size: '103 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'finderjs.css'
+					// 					},
+					// 					{
+					// 						size: '56 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'index.html'
+					// 					},
+					// 					{
+					// 						size: '122 KB',
+					// 						modified: '02/21/2015 at 10:04am',
+					// 						label: 'index.js'
+					// 					}
+					// 				]
+					// 			},
+					// 			{
+					// 				size: '8 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'bundle.js'
+					// 			},
+					// 			{
+					// 				size: '6 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'finderjs.css'
+					// 			},
+					// 			{
+					// 				size: '4 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'index.html'
+					// 			},
+					// 			{
+					// 				size: '2 KB',
+					// 				modified: '02/21/2015 at 10:04am',
+					// 				label: 'index.js'
+					// 			}
+					// 		]
+					// 	},
+					// 	{
+					// 		size: '10 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: 'test',
+					// 		children: [
+					// 			{
+					// 				size: '10 KB',
+					// 				modified: '03/09/2014 at 11:45am',
+					// 				label: 'index.js'
+					// 			},
+					// 			{
+					// 				size: '10 KB',
+					// 				modified: '03/09/2014 at 11:45am',
+					// 				label: 'test.js'
+					// 			},
+					// 			{
+					// 				size: '10 KB',
+					// 				modified: '03/09/2014 at 11:45am',
+					// 				label: 'util.js'
+					// 			}
+					// 		]
+					// 	},
+					// 	{
+					// 		size: '56 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: '.codeclimate.yml'
+					// 	},
+					// 	{
+					// 		size: '33 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: '.eslintrc'
+					// 	},
+					// 	{
+					// 		size: '101 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: '.gitignore'
+					// 	},
+					// 	{
+					// 		size: '96 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: '.travis.yml'
+					// 	},
+					// 	{
+					// 		size: '69 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'index.js'
+					// 	},
+					// 	{
+					// 		size: '666 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'LICENSE'
+					// 	},
+					// 	{
+					// 		size: '187 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'Makefile'
+					// 	},
+					// 	{
+					// 		size: '45 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'package.json'
+					// 	},
+					// 	{
+					// 		size: '10 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'README.md'
+					// 	},
+					// 	{
+					// 		size: '7 KB',
+					// 		modified: '02/15/2012 at 1:02pm',
+					// 		label: 'util.js'
+					// 	},
+					// 	{
+					// 		size: '10 KB',
+					// 		modified: '02/21/2015 at 10:04am',
+					// 		label: 'Project page',
+					// 		type: 'github-url',
+					// 		url: 'https://github.com/mynameistechno/finderjs'
+					// 	}
+					// ];
+
+					// Load data
+					this.d_list = await this.loadData('');
+
+					this.c_container = document.getElementById('container');
+
+					this.c_emitter = finder(this.c_container, this.d_list, {
+						createItemContent: (cfg, item) => this.createItemContent(cfg, item)
+					});
+
+					// when a leaf node selected, display the details in a new column
+					this.c_emitter.on('leaf-selected', (item) => {
+						this.c_emitter.emit('create-column', this.createSimpleColumn(item));
+					});
+
+					// scroll to the right if necessary when a new column is created
+					this.c_emitter.on('column-created', () => {
+						this.c_container.scrollLeft = this.c_container.scrollWidth - this.c_container.clientWidth;
+					});
+					this.c_emitter.on('item-selected', (event) => {
+						let item = event.item._item;
+						console.log('item-selected', item);
+					});
+				}
+				catch (e) {
+					if (typeof e.msg == 'string')
+						alert(e.msg);
+					else
+						console.error("[ERROR] ", e);
+				}
+			},
+			loadData: async function(path = '') {
+				try {
+
+					// Prepare Call API
+					let paramsURL = new  URLSearchParams();
+					paramsURL.append('folder', this.h_folder + path);
+					let url = this.h_host + '/file/list?' + paramsURL.toString();
+
+					// Call API - Get list
+					const responseList = await fetch(url, {
+						method: 'GET',
+						headers: { 'Content-Type': 'application/json' }
+					});
+					let lstName = await responseList.json();
+
+					// Process data
+					let lstFolder = [];
+					let lstFile = [];
+					for (let name of lstName) {
+						let item = {
+							size: '10 KB',
+							modified: '02/21/2015 at 10:04am',
+							label: name,
+						};
+						if (name.indexOf('.') > 0) {
+							item.children = null;
+							lstFile.push(item);
+						} else {
+							item.children = [
+								{
+									size: '2 KB',
+									modified: '02/21/2015 at 10:04am',
+									label: 'finder.js'
+								}
+							];
+							lstFolder.push(item);
+						}
+					}
+					return lstFolder.concat(lstFile);
+				}
+				catch (e) {
+					if (typeof e.msg == 'string')
+						alert(e.msg);
+					else
+						console.error("[ERROR] ", e);
+				}
+			},
+			createItemContent: function(cfg, item) {
+
+				// console.log('createItemContent item:', item)
+
+				var data = item.children || cfg.data;
+				var frag = document.createDocumentFragment();
+				var label = _.el('span');
+				var iconPrepend = _.el('i');
+				var iconAppend = _.el('i');
+				var prependClasses = ['fa'];
+				var appendClasses = ['fa'];
+
+				// prepended icon
+				if (data) {
+					prependClasses.push('fa-folder');
+				} else if (item.type === 'github-url') {
+					prependClasses.push('fa-github');
+				} else {
+					prependClasses.push('fa-file-o');
+				}
+				_.addClass(iconPrepend, prependClasses);
+
+				// text label
+				_.append(label, [iconPrepend, _.text(item.label)]);
+				frag.appendChild(label);
+
+				// appended icon
+				if (data) {
+					appendClasses.push('fa-caret-right');
+				} else if ('url' in item) {
+					appendClasses.push('fa-external-link');
+				}
+				_.addClass(iconAppend, appendClasses);
+				frag.appendChild(iconAppend);
+
+				return frag;
+			},
+			createSimpleColumn: function(item) {
+				try {
+
+					console.log('createSimpleColumn item:', item)
+
+					var div = _.el('div.fjs-col.leaf-col');
+					var row = _.el('div.leaf-row');
+					var filename = _.text(item.label);
+					var i = _.el('i');
+					var size = _.el('div.meta');
+					var sizeLabel = _.el('strong');
+					var mod = _.el('div.meta');
+					var modLabel = _.el('strong');
+
+					_.addClass(i, ['fa', 'fa-file-o']);
+					_.append(sizeLabel, _.text('Size: '));
+					_.append(size, [sizeLabel, _.text(item.size)]);
+					_.append(modLabel, _.text('Modified: '));
+					_.append(mod, [modLabel, _.text(item.modified)]);
+					_.append(row, [i, filename, size, mod]);
+
+					return _.append(div, row);
+				}
+				catch (e) {
+					if (typeof e.msg == 'string')
+						alert(e.msg);
+					else
+						console.error("[ERROR] ", e);
+				}
+			},
+		};
+
+		$('document').ready(() => mt.init());
+
+	</script>
+
+</body>
+</html>

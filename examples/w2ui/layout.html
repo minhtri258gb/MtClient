@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>W2UI Demo: layout/1</title>
+	<link rel="stylesheet" type="text/css" href="https://rawgit.com/vitmalina/w2ui/master/dist/w2ui.min.css">
+</head>
+<body>
+
+<div id="layout" style="width: 900px; height: 400px;"></div>
+
+<script type="module">
+	import { w2layout } from 'https://rawgit.com/vitmalina/w2ui/master/dist/w2ui.es6.min.js'
+
+	let pstyle = 'border: 1px solid #efefef; padding: 5px'
+	new w2layout({
+		box: '#layout',
+		name: 'layout',
+		panels: [
+			{ type: 'top', size: 50, style: pstyle, html: 'top' },
+			{ type: 'left', size: 200, style: pstyle, html: 'left' },
+			{ type: 'main', style: pstyle, html: 'main' }
+		]
+	})
+</script>
+
+</body>
+</html>

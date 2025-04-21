@@ -5,6 +5,8 @@ var mt = {
 	init: function() {
 		try {
 
+			window.mt = this;
+
 			this.event.init();
 			this.mgr.init();
 			this.sheet.init();
@@ -13,7 +15,8 @@ var mt = {
 
 			this.isInit = false;
 
-		} catch (e) {
+		}
+		catch (e) {
 			console.error(e);
 		}
 	},
@@ -331,7 +334,7 @@ var mt = {
 
 	},
 
-	notepad: {
+	notepad: { // Giao diện text của note nhạc
 		component: null,
 		_btn_notepad_compile: null,
 		isCompile: true,
@@ -409,7 +412,7 @@ var mt = {
 
 			// Auto compile
 			this.btnCompile();
-		},
+		}
 
 	},
 
@@ -418,6 +421,7 @@ var mt = {
 		_canvas: null,
 		_ctx: null,
 		_imgEmpty: null, // background without note
+		c_curNote: null, // TextBox note vừa nhấn
 
 		notes: [],
 		curNote: null,
@@ -440,6 +444,7 @@ var mt = {
 
 			// Component
 			this._btn_sheet_compile = $('#btn_sheet_compile');
+			this.c_curNote = $('#curNote');
 
 			// Init Sheet
 
@@ -520,7 +525,7 @@ var mt = {
 
 		},
 
-		click: function(e) {
+		click: function(e) { // Nhấn vào sheet
 
 			let self = mt.sheet;
 			let config = self.config;
@@ -563,6 +568,9 @@ var mt = {
 					tick: 500,
 					velocity: 127,
 				});
+
+				// Hiển thị note vừa nhấn
+				self.c_curNote.textbox('setValue', mt.jzz.num2name(midi));
 
 			} else {
 
@@ -615,6 +623,27 @@ var mt = {
 			this.isCompile = true;
 			this._btn_sheet_compile.linkbutton('disable');
 
+		},
+		btnWrite: function() {
+
+			// Auto compile
+			if (!this.isCompile)
+				this.btnCompile();
+
+			// Lấy Track hiện tại
+			let texts = [];
+			let curTime = 0;
+			for (let note of this.data) {
+				let text = mt.jzz.num2name(note.note) + ':' + note.duration;
+				texts.push(text);
+			}
+
+			let totalText = mt.notepad.component.textbox('getValue'); // Lấy text của notepad
+			totalText += texts.join(' ') + '\n'; // Thêm đoạn đã soạn
+			mt.notepad.component.textbox('setValue', totalText); // Set vào notepad
+
+			// Dọn sạch sheet sau khi note
+			this.reset();
 		},
 		btnPlay: function() {
 

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<title>DataTables</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="/lib/semantic/semantic.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/datatables/datatables.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/datatables/dataTables.semanticui.css" type="text/css" rel="stylesheet">
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+	<script src="/lib/datatables/datatables.min.js" type="text/javascript"></script>
+
+</head>
+<body>
+
+	<table id="tabledata" class="display" style="width:100%">
+	</table>
+
+	<script type="module">
+		var mt = {
+			h_host: `http://localhost:80`, // Host
+			m_accessToken: '', // Quyền truy cập
+			c_table: null, // Object Table
+			d_list: [], // Danh sách dữ liệu
+
+			init: function() {
+				window.mt = this; // Bind Global
+				this.initTable();
+			},
+			initTable: async function() {
+				try {
+
+					// Call API - Authen
+					const responseAuthen = await fetch(this.h_host + '/authorize', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ password: "-1393153393" })
+					});
+
+					const resultAuth = await responseAuthen.json();
+					if (resultAuth.result == true)
+						this.m_accessToken = resultAuth.token;
+					else
+						throw { error: true, msg: "Lỗi phân quyền" };
+
+					// Call API - Get list
+					const responseList = await fetch(this.h_host + '/database/query', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							token: this.m_accessToken,
+							path: "music.sqlite",
+							sql: `
+								SELECT id, name, duration, rate, tags, decibel, trackbegin, trackend
+								FROM music
+								WHERE miss = 0
+								LIMIT 10 OFFSET 0
+							`
+						})
+					});
+					this.d_list = await responseList.json();
+
+					// Init Table
+					this.c_table = new DataTable('#tabledata', {
+						data: this.d_list,
+						columns: [
+							{ title: 'Name', data: 'name' },
+							{ title: 'Duration', data: 'duration' },
+							{ title: 'Rate', data: 'rate' },
+							{ title: 'Tags', data: 'tags' },
+							{ title: 'Decibel', data: 'decibel' },
+						]
+					});
+
+				}
+				catch (e) {
+					if (typeof e.msg == 'string')
+						alert(e.msg);
+					else
+						console.error("[ERROR] ", e);
+				}
+			},
+		};
+		$('document').ready(() => mt.init());
+	</script>
+
+</body>
+</html>
