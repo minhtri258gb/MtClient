@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Prism JS</title>
+	<meta charset="UTF-8">
+	<!-- <link rel="shortcut icon" type="image/png" href="/engine/favicon.ico"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/engine/style.css"> -->
+	<link href="/lib/prism/prism.css" type="text/css" rel="stylesheet">
+	<script src="/lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+	<!-- <script src="/lib/mermaid-11.6.0/mermaid.min.js" type="text/javascript"></script> -->
+	<script src="/lib/prism/prism.js" type="text/javascript"></script>
+</head>
+<body> <!-- enabled for the whole page -->
+
+	<button onclick="mt.actionInsertSQL()">Insert SQL</button>
+
+	<pre class="line-numbers">
+		<code id="codeBlock" class="language-js">
+			var mt = {
+				init: function() {
+	
+					// Bind Global
+					window.mt = mt;
+	
+					// Init prismjs
+				}
+			};
+			$(document).ready(() => mt.init());
+		</code>
+	</pre>
+
+	<script type="module">
+		var mt = {
+			init: function() {
+
+				// Bind Global
+				window.mt = mt;
+
+				// Init prismjs
+			},
+			actionInsertSQL: function() {
+
+				var $codeBlock = $('#codeBlock');
+
+				// Xóa toàn bộ class ngôn ngữ
+				$codeBlock.removeClass(function(index, className) {
+					return (className.match(/(^|\s)language-\S+/g) || []).join(' ');
+				});
+
+				// Thêm ngôn ngữ sql
+				$codeBlock.addClass('language-' + 'sql');
+
+				let sql = 'INSERT INTO anime (id, code, name, rating)\n';
+				sql += 'VALUES (1, \'ONE_PIECE\', \'One Piece\', 8.5)';
+				$('#codeBlock').text(sql);
+
+				// Gọi Prism để highlight lại cú pháp
+				Prism.highlightElement($codeBlock[0]);
+			}
+		};
+		$(document).ready(() => mt.init());
+	</script>
+</body>
+</html>
