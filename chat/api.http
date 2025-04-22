@@ -1,0 +1,38 @@
+
+@host = http://localhost:11434
+
+
+### @name text_code_vip
+POST {{host}}/api/generate
+Content-Type: application/json
+
+{
+	"model": "qwen2.5-coder",
+	"prompt": "How are you today?"
+}
+
+
+
+### @name text_code
+POST {{host}}/api/generate
+Content-Type: application/json
+
+{
+	"model": "model_yi_coder",
+	"prompt": "How are you today?"
+}
+
+
+
+### @name image_new
+POST {{host}}/api/generate
+Content-Type: application/json
+
+{
+	"model": "model_text_image_stable_diffusion",
+	"prompt": "How are you today?"
+}
+
+
+### @name imagess
+127.0.0.1:50529->127.0.0.1:11434

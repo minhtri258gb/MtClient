@@ -61,7 +61,7 @@ var mt = {
 				body: (url, config, params) => {
 					return JSON.stringify({
 						database: this.m_database,
-						select: 'id,img,name,story,art,sound,fantasy,sad,joke,brand,review,end,character,time',
+						select: 'id,name,img,story,art,sound,fantasy,sad,joke,brand,review,end,character,time',
 						from: 'anime',
 						where: '',
 						sort: 'time DESC',
@@ -81,7 +81,7 @@ var mt = {
 			ajaxResponse: function (url, params, response) {
 				for (let row of response.data) {
 					if (row.img == null || row.img == '') {
-						row.img = '/res/icons/image16.png';
+						row.img = '/res/images/image_holder.jpg';
 					}
 				}
 				// let listData = response.data.map(item => ({
@@ -121,6 +121,7 @@ var mt = {
 					return mtUtil.date.date_to_str(new Date(timestamp * 1000), 'dd/MM/yy');
 				} },
 			],
+			editorEmptyValue: null,
 			rowContextMenu: (event, row) => this.rowContextMenu(event, row),
 			headerSortElement: function(column, dir) {
 				switch (dir) {
@@ -199,6 +200,28 @@ var mt = {
 
 		let row = cell.getRow(); // Cột đã chỉnh sửa
 		let rowData = row.getData(); // Dữ liệu của hàng
+
+
+		// // Move next Field
+		// setTimeout(() => {
+		// 	let lstCell = row.getCells();
+		// 	let nextCell = null;
+		// 	for (let i in lstCell) {
+		// 		let cell = lstCell[i];
+		// 		if (cell.getField() == field && i < lstCell.length) {
+		// 			nextCell = lstCell[+i + 1];
+		// 			break;
+		// 		}
+		// 	}
+		// 	console.log(nextCell.getField());
+		// 	nextCell.edit();
+		// 	// const table = cell.getTable();
+		// 	// table.navigateNext(); // Chuyển focus sang ô kế tiếp
+		// 	// const nextCell = table.getActiveCell(); // Lấy ô hiện tại đang được focus
+		// 	// if (nextCell)
+		// 	// 	nextCell.edit(); // Kích hoạt chế độ chỉnh sửa cho ô kế tiếp
+		// }, 500);
+
 
 		// Bỏ qua nếu là thêm mới
 		if (rowData.id == -1)
@@ -341,25 +364,43 @@ var mt = {
 	actionRemove: function(row) {
 		row.delete();
 	},
-	actionExeccute: function() {
+	actionExeccute: async function() {
 
-		console.log('actionExeccute', this.d_sql);
-
-		// Call API - Exec Database
-
-		// Xóa bỏ origin
-		let rowData = this.d_row.getData();
-		rowData._origin = null;
-		this.d_row.update(rowData);
+		let isInsert = this.d_sql.startsWith('INSERT');
 
 		// Đóng modal
 		MicroModal.close('modal-1');
 
-		// Tắt highlight sau khi lưu
-		let highlightClass = 'highlight-row-' + ((this.d_sql.startsWith('INSERT')) ? 'add' : 'edit');
-		this.d_row.getElement().classList.remove(highlightClass);
+		// Call API - Exec Database
+		let response = await fetch('/database/query', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + this.p_authen.getToken(),
+			},
+			body: JSON.stringify({
+				database: this.m_database,
+				sql: this.d_sql,
+			})
+		});
+		let jsonData = await response.json();
 
-	}
+		if (!response.ok) {
+			alert('[ERROR] ' + jsonData.message);
+			return;
+		}
+
+		// Xóa bỏ origin
+		let rowData = this.d_row.getData();
+		if (isInsert)
+			rowData.id = jsonData;
+		rowData._origin = null;
+		this.d_row.update(rowData);
+
+		// Tắt highlight sau khi lưu
+		let highlightClass = 'highlight-row-' + (isInsert ? 'add' : 'edit');
+		this.d_row.getElement().classList.remove(highlightClass);
+	},
 
 };
 $(document).ready(() => mt.init());

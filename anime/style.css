@@ -1,6 +1,3 @@
-/* body {
-	padding: 16px 16px 16px 16px;
-} */
 
 /* Ngắt dòng cột name */
 .tabulator .tabulator-cell[tabulator-field="name"] {
@@ -16,13 +13,13 @@ img.menuIcon {
 }
 
 /* Highlight dòng thay đổi dữ liệu */
-.highlight-row-add {
-	background-color: #d4fcff !important; /* Màu vàng nổi bật */
-	transition: background-color 1s; /* Hiệu ứng chuyển màu */
+.tabulator .highlight-row-add {
+	background-color: #d4fcff !important;
+	transition: background-color 1s;
 }
-.highlight-row-edit {
-	background-color: #fff8be !important; /* Màu vàng nổi bật */
-	transition: background-color 1s; /* Hiệu ứng chuyển màu */
+.tabulator .highlight-row-edit {
+	background-color: #fff8be !important;
+	transition: background-color 1s;
 }
 
 /* Chỉnh CSS header */
@@ -31,4 +28,9 @@ img.menuIcon {
 }
 .tabulator-col-sorter {
 	right: 0px !important;
+}
+
+/* Row onhover */
+.tabulator .tabulator-row:hover {
+	background-color: #e6f3ff;
 }
