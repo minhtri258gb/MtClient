@@ -6,6 +6,12 @@
 	text-overflow: unset !important; /* Tắt dấu ba chấm */
 	line-height: 1.4; /* Tùy chỉnh khoảng cách dòng */
 }
+.tabulator .tabulator-cell[tabulator-field="character"] {
+	white-space: normal !important; /* Cho phép ngắt dòng */
+	overflow-wrap: break-word; /* Ngắt từ khi cần */
+	text-overflow: unset !important; /* Tắt dấu ba chấm */
+	line-height: 1.4; /* Tùy chỉnh khoảng cách dòng */
+}
 
 /* Chỉnh CSS icon menu */
 img.menuIcon {

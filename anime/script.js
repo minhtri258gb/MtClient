@@ -28,7 +28,9 @@ var mt = {
 
 		// Rating Prop
 		let ratingProp = {
+			width: 80, // Old 70
 			hozAlign: 'center',
+			vertAlign: 'middle',
 			formatter: (cell, formatterParams, onRendered) => {
 				let value = cell.getValue(); // Lấy giá trị của ô (1-5)
 				if (value >= 1 && value <= 5)
@@ -36,8 +38,9 @@ var mt = {
 				else
 					return "N/A";
 			},
-			editor: 'number',
-			editorParams: { min: 1, max: 5, step: 1 },
+			editor: 'star',
+			// editor: 'number',
+			// editorParams: { min: 1, max: 5, step: 1 },
 			editable: false,
 		};
 
@@ -48,7 +51,10 @@ var mt = {
 			autoRowHeight: true, // Từ động wraptext
 			progressiveLoad: 'scroll',
 			progressiveLoadScrollMargin: 100,
+			filterMode: 'remote', // Filter
+			headerFilterLiveFilterDelay: 600,
 			sortMode: 'remote', // Sort
+			initialSort: [{column: 'time', dir: 'desc'}],
 			ajaxURL: this.h_endpoint, // Ajax
 			ajaxConfig: {
 				method: 'POST',
@@ -98,23 +104,23 @@ var mt = {
 				return response;
 			},
 			columns: [
-				{ title: "STT", formatter: 'rownum', width: 40, hozAlign: 'center', headerSort: false },
-				{ title: "Image", field: 'img', formatter: 'image', width: 80, visible: false
-					, formatterParams: { height: '100px', width: '70px', class: 'anime-image' }
+				{ title: "STT", formatter: 'rownum', width: 40, hozAlign: 'center', vertAlign: 'middle', headerSort: false },
+				{ title: "Image", field: 'img', formatter: 'image', width: 80//, visible: false
+					, headerSort: false, formatterParams: { height: '100px', width: '70px', class: 'anime-image' }
 					, editor: 'input', editable: false
 				},
-				{ title: "Name", field: 'name', headerSort: false, editor: 'input', editable: false },
-				{ title: "Story", field: 'story', width: 70, ...ratingProp},
-				{ title: "Art", field: 'art', width: 70, ...ratingProp},
-				{ title: "Sound", field: 'sound', width: 70, ...ratingProp},
-				{ title: "Fantasy", field: 'fantasy', width: 70, ...ratingProp},
-				{ title: "Sad", field: 'sad', width: 70, ...ratingProp},
-				{ title: "Joke", field: 'joke', width: 70, ...ratingProp},
-				{ title: "Brand", field: 'brand', width: 70, ...ratingProp},
-				{ title: "Review", field: 'review', width: 70, ...ratingProp},
-				{ title: "End", field: 'end', width: 80, headerSort: false, editor: 'input', editable: false},
-				{ title: "Character", field: 'character', width: 100, headerSort: false, editor: 'input', editable: false},
-				{ title: "Time", field: 'time', width: 69, formatter: (cell) => {
+				{ title: "Name", field: 'name', vertAlign: 'middle', headerSort: false, editor: 'input', editable: false },
+				{ title: "Story", field: 'story', ...ratingProp},
+				{ title: "Art", field: 'art', ...ratingProp},
+				{ title: "Sound", field: 'sound', ...ratingProp},
+				{ title: "Fantasy", field: 'fantasy', ...ratingProp},
+				{ title: "Sad", field: 'sad', ...ratingProp},
+				{ title: "Joke", field: 'joke', ...ratingProp},
+				{ title: "Brand", field: 'brand', ...ratingProp},
+				{ title: "Review", field: 'review', ...ratingProp},
+				{ title: "End", field: 'end', width: 80, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
+				{ title: "Character", field: 'character', width: 100, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
+				{ title: "Time", field: 'time', width: 69, vertAlign: 'middle', formatter: (cell) => {
 					let timestamp = cell.getValue();
 					if (timestamp == null)
 						return ''
@@ -140,7 +146,7 @@ var mt = {
 		MicroModal.init({
 			// openTrigger: '',
 			disableFocus: true,
-			debugMode: true,
+			debugMode: false,
 		});
 	},
 	rowContextMenu: function(event, row) {
@@ -176,6 +182,21 @@ var mt = {
 		actions.push({
 			label: '<img class="menuIcon" src="/res/icons/add.png" />New',
 			action: (e, row) => this.actionAdd(row),
+		});
+
+		// Tìm kiếm
+		actions.push({
+			label: '<img class="menuIcon" src="/res/icons/search16.png" />Search',
+			action: (e, row) => {
+				let column = this.c_table.getColumn('name');
+				if (column && column.getDefinition().headerFilter) {
+					this.c_table.updateColumnDefinition('name', { headerFilter: false });
+					this.c_table.clearFilter(true);
+				}
+				else {
+					this.c_table.updateColumnDefinition('name', { headerFilter: "input" });
+				}
+			},
 		});
 
 		// Action bảng
@@ -267,9 +288,8 @@ var mt = {
 		let rowData = row.getData();
 
 		// Cập nhật thời gian
-		// let curdate = new Date();
-		// rowData.updateTime = mtUtil.date.date_to_str(curdate);
-		rowData.time = Math.floor(Date.now() / 1000);
+		if ($('#cbxUpdateTime').is(':checked')) // Nếu có check
+			rowData.time = Math.floor(Date.now() / 1000);
 
 		let sql = '';
 		let action = '';
@@ -400,6 +420,22 @@ var mt = {
 		// Tắt highlight sau khi lưu
 		let highlightClass = 'highlight-row-' + (isInsert ? 'add' : 'edit');
 		this.d_row.getElement().classList.remove(highlightClass);
+	},
+	eventCbkTime: function() { // Modal SQL - Checkbox Update Time
+
+		// Kiểm tra giá trị checkbox
+		if ($('#cbxUpdateTime').is(':checked')) {
+			let time = Math.floor(Date.now() / 1000);
+			this.d_sql = this.d_sql.replace(/\nWHERE/, `,\n\ttime = ${time}\nWHERE`);
+		}
+		else {
+			this.d_sql = this.d_sql.replace(/,\n\ttime = \d+/, "");
+		}
+
+		// Highlight Code
+		let $codeBlock = $('#codeBlock');
+		$codeBlock.text(this.d_sql);
+		Prism.highlightElement($codeBlock[0]);
 	},
 
 };
