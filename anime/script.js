@@ -407,6 +407,7 @@ var mt = {
 
 		if (!response.ok) {
 			alert('[ERROR] ' + jsonData.message);
+			console.error('[ERROR] ', jsonData);
 			return;
 		}
 
