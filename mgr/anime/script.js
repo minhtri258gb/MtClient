@@ -438,6 +438,5 @@ var mt = {
 		$codeBlock.text(this.d_sql);
 		Prism.highlightElement($codeBlock[0]);
 	},
-
 };
 $(document).ready(() => mt.init());
