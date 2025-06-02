@@ -1,8 +1,42 @@
-#anime {
-	height: 100%;
 
-	#grid {
-		width: 100%;
-		height: 100%;
-	}
+/* Ngắt dòng cột name */
+.tabulator .tabulator-cell[tabulator-field="name"] {
+	white-space: normal !important; /* Cho phép ngắt dòng */
+	overflow-wrap: break-word; /* Ngắt từ khi cần */
+	text-overflow: unset !important; /* Tắt dấu ba chấm */
+	line-height: 1.4; /* Tùy chỉnh khoảng cách dòng */
+}
+.tabulator .tabulator-cell[tabulator-field="character"] {
+	white-space: normal !important; /* Cho phép ngắt dòng */
+	overflow-wrap: break-word; /* Ngắt từ khi cần */
+	text-overflow: unset !important; /* Tắt dấu ba chấm */
+	line-height: 1.4; /* Tùy chỉnh khoảng cách dòng */
+}
+
+/* Chỉnh CSS icon menu */
+img.menuIcon {
+	margin: 0 5px -3px 0;
+}
+
+/* Highlight dòng thay đổi dữ liệu */
+.tabulator .highlight-row-add {
+	background-color: #d4fcff !important;
+	transition: background-color 1s;
+}
+.tabulator .highlight-row-edit {
+	background-color: #fff8be !important;
+	transition: background-color 1s;
+}
+
+/* Chỉnh CSS header */
+.tabulator-col-title {
+	padding-right: 0px !important;
+}
+.tabulator-col-sorter {
+	right: 0px !important;
+}
+
+/* Row onhover */
+.tabulator .tabulator-row:hover {
+	background-color: #e6f3ff;
 }
