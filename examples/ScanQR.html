@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>QR Scanner PWA</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="permissions-policy" content="camera=(self)">
+
+	<link rel="manifest" href="/PWA/manifest.json">
+</head>
+<body>
+
+	<h1>Quét mã QR</h1>
+	<button onclick="startCamera()">Start Camera</button>
+	<video id="video" autoplay playsinline></video>
+	<canvas id="canvas" style="display: none;"></canvas>
+	<p>Kết quả: <span id="result"></span></p>
+	<div id="log" style="border: 1px solid #000;">empty</div>
+
+	<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+	<script>
+
+		// Lấy các phần tử DOM
+		const video = document.getElementById('video');
+		const canvasElement = document.getElementById('canvas');
+		const canvas = canvasElement.getContext('2d');
+		const resultElement = document.getElementById('result');
+
+		// Kiểm tra quyền truy cập camera
+		async function startCamera() {
+			try {
+
+				const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+				console.log('Trạng thái quyền camera:', permissionStatus.state);
+
+				// Xin cấp quyền
+				// const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+				// if (permissionStatus.state === 'denied') {
+				// 	document.getElementById('log').textContent = JSON.stringify(permissionStatus, null, 2);
+				// 	alert('Đã từ chối quyền truy cập Camera');
+				// 	return;
+				// }
+
+				// Mở camera
+				const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+				// const stream = await navigator.mediaDevices.getUserMedia({
+				// 	video: { facingMode: 'environment' } // Sử dụng camera sau
+				// });
+				video.srcObject = stream;
+				video.setAttribute('playsinline', true); // Đảm bảo hoạt động trên iOS
+				video.play();
+				requestAnimationFrame(tick); // Bắt đầu quét
+			} catch (err) {
+				console.log('Trạng thái quyền camera 2:', err.message);
+				document.getElementById('log').textContent = JSON.stringify(err.message, null, 2);
+				resultElement.textContent = 'Không thể truy cập camera. Vui lòng cấp quyền!';
+			}
+		}
+
+		// Hàm quét QR code
+		function tick() {
+			if (video.readyState === video.HAVE_ENOUGH_DATA) {
+				// Cập nhật kích thước canvas
+				canvasElement.height = video.videoHeight;
+				canvasElement.width = video.videoWidth;
+
+				// Vẽ khung hình từ video lên canvas
+				canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+				const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+
+				// Sử dụng jsQR để giải mã
+				const code = jsQR(imageData.data, imageData.width, imageData.height, {
+					inversionAttempts: 'dontInvert'
+				});
+
+				if (code) {
+					resultElement.textContent = code.data; // Hiển thị kết quả
+					// Có thể dừng camera nếu cần
+					// video.srcObject.getTracks().forEach(track => track.stop());
+				} else {
+					resultElement.textContent = 'Không tìm thấy mã QR';
+				}
+			}
+			requestAnimationFrame(tick); // Tiếp tục quét
+		}
+
+		// Bắt đầu camera khi tải trang
+		document.addEventListener('DOMContentLoaded', startCamera);
+	</script>
+</body>
+</html>

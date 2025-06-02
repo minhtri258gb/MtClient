@@ -5,18 +5,82 @@
 	<meta charset="UTF-8">
 	<!-- <link rel="shortcut icon" type="image/png" href="/engine/favicon.ico"> -->
 	<!-- <link rel="stylesheet" type="text/css" href="/engine/style.css"> -->
-	<script src="../lib/jquery-3.6.0.min.js" type="text/javascript"></script>
+	<script src="../lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
 	<script src="../lib/mermaid-11.6.0/mermaid.min.js" type="text/javascript"></script>
+	<style>
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+		#editor-container {
+			display: flex;
+			flex: 1;
+			min-height: 0;
+		}
+		#code-editor, #diagram-output {
+			width: 50%;
+			padding: 10px;
+			box-sizing: border-box;
+			overflow: auto;
+		}
+		#code-editor textarea {
+			width: 100%;
+			height: 100%;
+			resize: none;
+			font-family: 'Courier New', monospace;
+			font-size: 14px;
+			padding: 10px;
+			border: 1px solid #ccc;
+		}
+		#diagram-output {
+			border-left: 1px solid #ccc;
+			background-color: #f9f9f9;
+		}
+		#controls {
+			padding: 10px;
+			background-color: #f0f0f0;
+			text-align: center;
+		}
+		#update-btn {
+			padding: 8px 16px;
+			font-size: 16px;
+			cursor: pointer;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 4px;
+		}
+		#update-btn:hover {
+			background-color: #0056b3;
+		}
+	</style>
 </head>
 <body>
-	<div class="mermaid">
-		graph TD
-				A[Start] --> B{Decision}
-				B -->|Yes| C[Action 1]
-				B -->|No| D[Action 2]
-				C --> E[End]
-				D --> E
+
+	<div id="controls">
+		<button onclick="mt.renderDiagram()">Update Diagram</button>
 	</div>
+	<div id="editor-container">
+		<div id="code-editor">
+			<textarea id="mermaid-code">
+				graph TD
+					A[Start] --> B{Decision}
+					B -->|Yes| C[Action 1]
+					B -->|No| D[Action 2]
+					C --> E[End]
+					D --> E
+			</textarea>
+		</div>
+		<div id="diagram-output"></div>
+	</div>
+
+	<!-- <button onclick="mt.btnChange()">FIX</button>
+	<div id="codeBlock"></div>
+	<div class="mermaid" id="codeRender"></div> -->
+
 	<script type="module">
 		var mt = {
 			init: function() {
@@ -25,7 +89,65 @@
 				window.mt = mt;
 
 				// Init mermaid
-				mermaid.initialize({ startOnLoad: true });
+				mermaid.initialize({ startOnLoad: false });
+				this.renderDiagram();
+			},
+			btnChange: async function() {
+				this.renderDiagram();
+				// let code = `
+				// 	graph TD
+				// 		A[Start] --> B{Decision}
+				// 		B -->|Yes| C[Action 1]
+				// 		B -->|No| D[Action 2]
+				// 		C --> E[End]
+				// 		D --> E
+				// 		E --> F[Wat]
+				// `;
+				// $('#codeBlock').html(code);
+				// await mermaid.run({
+				// 	querySelector: '#codeBlock',
+				// });
+				// mermaid.render('diagram', code, (svgCode) => {
+				// 	$('#codeBlock').html(svgCode);
+				// });
+
+				// let element = document.querySelector('#codeBlock');
+				// const graphDefinition = 'graph TB\na-->b';
+				// const { svg } = await mermaid.render('codeBlock', graphDefinition);
+				// // element.innerHTML = svg;
+				// $('#codeBlock').html(svg);
+
+				// mermaid.initialize({ startOnLoad: true });
+				// const graphDefinition = `
+				// 	graph TD
+				// 		A[Start] --> B{Decision}
+				// 		B -->|Yes| C[Action 1]
+				// 		B -->|No| D[Action 2]
+				// 		C --> E[End]
+				// 		D --> E
+				// `;
+				// document.getElementById('codeBlock').innerHTML = graphDefinition;
+				// let res = await mermaid.render('', graphDefinition);
+
+				// document.getElementById('codeRender').innerHTML = res.svg;
+
+				// console.log({
+				// 	res: res,
+				// });
+
+			},
+			renderDiagram: function () {
+				const code = document.getElementById('mermaid-code').value;
+				const output = document.getElementById('diagram-output');
+				try {
+					mermaid.render('diagram', code).then(({ svg }) => {
+						output.innerHTML = svg;
+					}).catch(err => {
+						output.innerHTML = `<p style="color: red;">Error rendering diagram: ${err.message}</p>`;
+					});
+				} catch (err) {
+					output.innerHTML = `<p style="color: red;">Invalid Mermaid code: ${err.message}</p>`;
+				}
 			}
 		};
 		$(document).ready(() => mt.init());

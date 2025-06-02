@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA QR Scanner</title>
+  <style>
+    video { max-width: 100%; }
+    canvas { display: none; }
+    #result { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>QR Code Scanner</h1>
+  <video id="video" autoplay></video>
+  <canvas id="canvas"></canvas>
+  <div id="result">Kết quả: Chưa quét được mã QR</div>
+  <button onclick="startScanning()">Bắt đầu quét</button>
+
+  <!-- Thêm thư viện jsQR -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script>
+    let video = document.getElementById('video');
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let resultDiv = document.getElementById('result');
+    let scanning = false;
+
+    async function startScanning() {
+      if (scanning) return;
+      scanning = true;
+
+      try {
+        // Truy cập camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' } // Sử dụng camera sau
+        });
+
+        video.srcObject = stream;
+        video.play();
+
+        // Đặt kích thước canvas bằng với video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Bắt đầu quét
+        scanQR();
+      } catch (error) {
+        resultDiv.textContent = 'Lỗi: ' + error.message;
+        scanning = false;
+      }
+    }
+
+    function scanQR() {
+      if (!scanning) return;
+
+      // Vẽ frame từ video lên canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Lấy dữ liệu hình ảnh từ canvas
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Phân tích mã QR bằng jsQR
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+      if (code) {
+        // Tìm thấy mã QR
+        resultDiv.textContent = `Kết quả: ${code.data}`;
+        scanning = false;
+        stopCamera();
+      } else {
+        // Tiếp tục quét
+        requestAnimationFrame(scanQR);
+      }
+    }
+
+    function stopCamera() {
+      const stream = video.srcObject;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+      }
+    }
+
+    // Dừng camera khi đóng trang
+    window.addEventListener('beforeunload', stopCamera);
+
+  </script>
+</body>
+</html>

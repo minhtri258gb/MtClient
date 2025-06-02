@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <title>Hello World PWA</title>
+
+  <link rel="stylesheet" href="/pwa/styles.css">
+  <link rel="manifest" href="/pwa/manifest.json">
+  <link rel="apple-touch-icon" href="/pwa/icon-192x192.png">
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Hello World!</h1>
+    <p>This is a simple Progressive Web App.</p>
+    <button id="install-button" style="display: none;">Install App</button>
+  </div>
+  <div class="container">
+    <video autoplay></video>
+    <button onclick="mt.accessCamera()">Bật Camera</button>
+    <button onclick="mt.accessLocation()">Lấy Vị trí</button>
+  </div>
+  <script src="/pwa/script.js"></script>
+</body>
+</html>

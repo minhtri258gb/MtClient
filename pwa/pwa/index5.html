@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA với Deeplink</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            margin-bottom: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+        #content {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PWA với Deeplink</h1>
+    <nav>
+        <a href="/home">Trang chủ</a>
+        <a href="/about">Giới thiệu</a>
+        <a href="/products">Sản phẩm</a>
+    </nav>
+    <div id="content"></div>
+
+    <script>
+        // Hàm xử lý deeplink
+        function handleDeepLink() {
+            const path = window.location.pathname;
+            const contentDiv = document.getElementById('content');
+
+            switch (path) {
+                case '/home':
+                case '/':
+                    contentDiv.innerHTML = '<h2>Chào mừng đến với Trang chủ</h2><p>Đây là trang chính của ứng dụng.</p>';
+                    break;
+                case '/about':
+                    contentDiv.innerHTML = '<h2>Giới thiệu</h2><p>Thông tin về chúng tôi.</p>';
+                    break;
+                case '/products':
+                    contentDiv.innerHTML = '<h2>Sản phẩm</h2><p>Danh sách các sản phẩm.</p>';
+                    break;
+                default:
+                    contentDiv.innerHTML = '<h2>404 - Không tìm thấy</h2><p>Trang bạn yêu cầu không tồn tại.</p>';
+            }
+        }
+
+        // Xử lý khi tải trang
+        window.addEventListener('load', () => {
+            handleDeepLink();
+
+            // Đăng ký service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            }
+        });
+
+        // Xử lý khi URL thay đổi (cho SPA navigation)
+        window.addEventListener('popstate', handleDeepLink);
+
+        // Xử lý click vào link để ngăn reload trang
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const href = link.getAttribute('href');
+                window.history.pushState({}, '', href);
+                handleDeepLink();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>PWA Notification Demo</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>PWA Notification Demo</h1>
+    <button id="localNotifyBtn">Tạo thông báo cục bộ</button>
+    <button id="subscribeBtn">Đăng ký thông báo đẩy</button>
+    <p id="status">Kiểm tra quyền thông báo...</p>
+
+    <script>
+        // Kiểm tra hỗ trợ Service Worker và Push API
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            document.getElementById('status').textContent = 'Trình duyệt không hỗ trợ PWA hoặc Push API';
+            document.getElementById('subscribeBtn').disabled = true;
+            document.getElementById('localNotifyBtn').disabled = true;
+        }
+
+        // Đăng ký Service Worker
+        async function registerServiceWorker() {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('Service Worker đăng ký thành công:', registration);
+                return registration;
+            } catch (error) {
+                console.error('Lỗi khi đăng ký Service Worker:', error);
+                document.getElementById('status').textContent = 'Lỗi khi đăng ký Service Worker';
+            }
+        }
+
+        // Kiểm tra quyền thông báo
+        async function checkNotificationPermission() {
+            const permission = await Notification.requestPermission();
+            const status = document.getElementById('status');
+            if (permission === 'granted') {
+                status.textContent = 'Quyền thông báo đã được cấp';
+                document.getElementById('localNotifyBtn').disabled = false;
+                document.getElementById('subscribeBtn').disabled = false;
+            } else if (permission === 'denied') {
+                status.textContent = 'Quyền thông báo bị từ chối';
+                document.getElementById('localNotifyBtn').disabled = true;
+                document.getElementById('subscribeBtn').disabled = true;
+            } else {
+                status.textContent = 'Vui lòng cấp quyền thông báo';
+                document.getElementById('localNotifyBtn').disabled = true;
+                document.getElementById('subscribeBtn').disabled = false;
+            }
+        }
+
+        // Tạo thông báo cục bộ
+        function createLocalNotification() {
+            new Notification('Thông báo cục bộ', {
+                body: 'Đây là một thông báo cục bộ từ PWA!',
+                icon: 'icon.png'
+            });
+        }
+
+        // Chuyển public key VAPID sang dạng phù hợp
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // Đăng ký nhận thông báo đẩy
+        async function subscribeToPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const publicKey = 'YOUR_VAPID_PUBLIC_KEY'; // Thay bằng VAPID public key của bạn
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+                console.log('Đã đăng ký push:', subscription);
+
+                // Gửi subscription đến server
+                await fetch('/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify(subscription),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                document.getElementById('status').textContent = 'Đã đăng ký nhận thông báo đẩy!';
+            } catch (error) {
+                console.error('Lỗi khi đăng ký push:', error);
+                document.getElementById('status').textContent = 'Lỗi khi đăng ký thông báo đẩy';
+            }
+        }
+
+        // Khởi tạo
+        async function init() {
+            await registerServiceWorker();
+            await checkNotificationPermission();
+
+            // Xử lý sự kiện nút tạo thông báo cục bộ
+            document.getElementById('localNotifyBtn').addEventListener('click', createLocalNotification);
+
+            // Xử lý sự kiện nút đăng ký thông báo đẩy
+            document.getElementById('subscribeBtn').addEventListener('click', subscribeToPush);
+        }
+
+        init();
+    </script>
+</body>
+</html>

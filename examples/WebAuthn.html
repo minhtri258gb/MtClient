@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>WebAuthn PWA Login</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="manifest" href="/PWA/manifest.json">
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			max-width: 600px;
+			margin: 0 auto;
+			padding: 20px;
+			text-align: center;
+		}
+		input, button {
+			margin: 10px;
+			padding: 10px;
+			font-size: 16px;
+		}
+		button {
+			cursor: pointer;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+		}
+		button:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</head>
+<body>
+
+	<h1>Đăng ký và Đăng nhập với WebAuthn</h1>
+	<div>Host: <span id="host"></span></div>
+	<div>Hỗ trợ WebAuthn: <span id="issupport"></span></div>
+	<input id="username" type="text" placeholder="Tên người dùng" required>
+	<br>
+	<button onclick="register()">Đăng ký</button>
+	<button onclick="login()">Đăng nhập</button>
+
+	<script>
+		// Đăng ký Service Worker
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('/PWA/service-worker.js')
+					.then(reg => console.log('Service Worker registered'))
+					.catch(err => console.log('Service Worker registration failed:', err));
+			});
+		}
+
+		// Hàm hỗ trợ mã hóa/giải mã Base64
+		function bufferDecode(base64String) {
+			return Uint8Array.from(atob(base64String), c => c.charCodeAt(0));
+		}
+
+		function bufferEncode(buffer) {
+			// return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)));
+			return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+				.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+
+		// var hostBE = 'http://192.168.1.242:7721'; // Host Site 6.0
+		var hostBE = 'https://hinnova.vn:7721'; // Host Site 6.0
+		// var hostBE = 'http://localhost:22743';
+		// var hostBE = 'http://localhost:5000';
+		// var hostBE = 'https://localhost:5001';
+		// var hostBE = 'https://192.168.1.45:5001';
+		var username = "12345";
+
+		document.getElementById('host').innerText = hostBE;
+
+		// Kiểm tra hỗ trợ
+		document.getElementById('issupport').innerText = window.PublicKeyCredential ? "Có" : "Không";
+
+		// Hàm đăng ký
+		async function register() {
+			// const username = document.getElementById('username').value;
+			// if (!username) {
+			// 	alert('Vui lòng nhập tên người dùng!');
+			// 	return;
+			// }
+
+			try {
+
+				// Gửi yêu cầu lấy tùy chọn đăng ký
+				let paramsURL = new URLSearchParams();
+				paramsURL.append('username', username);
+				const response = await fetch(hostBE+'/api/services/app/UserWebAuthn/GetRegisterOptions?'+paramsURL.toString(), {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+				});
+				if (!response.ok)
+					throw new Error('Không thể lấy tùy chọn đăng ký');
+				let responseJson = await response.json();
+				const publicKey = responseJson?.result?.data || {};
+
+				// Chuyển đổi dữ liệu sang định dạng WebAuthn
+				publicKey.challenge = bufferDecode(publicKey.challenge);
+				publicKey.user.id = bufferDecode(publicKey.user.id);
+				if (publicKey.excludeCredentials) {
+					publicKey.excludeCredentials = publicKey.excludeCredentials.map(cred => ({
+						...cred,
+						id: bufferDecode(cred.id)
+					}));
+				}
+				if (publicKey.pubKeyCredParams) {
+					publicKey.pubKeyCredParams = publicKey.pubKeyCredParams.map(item => ({
+						...item,
+						type: 'public-key' // Sửa "0" thành "public-key"
+					}));
+				}
+				if (publicKey.authenticatorSelection) {
+					publicKey.authenticatorSelection = {
+						authenticatorAttachment: "platform", // Chỉ sử dụng authenticator của thiết bị (Touch ID/FaceID)
+						residentKey: "required", // Chỉ sử dụng authenticator có chứa thông tin lưu trữ
+						userVerification: "preferred", // Yêu cầu xác minh người dùng (sinh trắc học)
+					}
+				}
+				// Map Enum publicKey.attestation
+				if (publicKey.attestation != null) {
+					let mapVal = ['none', 'indirect', 'direct', 'enterprise']; // Map Enum
+					publicKey.attestation = mapVal[publicKey.attestation];
+				}
+				// Xóa icon nếu ko có, ko để null
+				if (publicKey.rp.icon == null)
+					delete publicKey.rp.icon;
+				console.log('[LOG register] publicKey:', publicKey);
+
+				// Gọi WebAuthn API để tạo thông tin xác thực
+				const credential = await navigator.credentials.create({ publicKey });
+				console.log('[LOG register] credential:', credential);
+
+				const attestationResponse = {
+					id: credential.id,
+					rawId: coerceToBase64Url(credential.rawId),
+					type: credential.type,
+					// extensions: credential.getClientExtensionResults(),
+					attestationObject: coerceToBase64Url(credential.response.attestationObject),
+					clientDataJSON: coerceToBase64Url(credential.response.clientDataJSON),
+					// transports: credential.response.getTransports()
+				};
+				console.log('[LOG register] attestationResponse:', attestationResponse);
+
+				// Gửi phản hồi tới server
+				const completeResponse = await fetch(hostBE+'/api/services/app/UserWebAuthn/Registration', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(attestationResponse),
+					credentials: 'include',
+				});
+
+				const result = await completeResponse.json();
+				console.log('[LOG register] result:', result);
+
+				if (result?.result?.data != null) {
+					alert('Đăng ký thành công!');
+				} else {
+					alert('Đăng ký thất bại: ' + result.errorMessage);
+				}
+			} catch (error) {
+				console.error('Lỗi đăng ký:', error);
+				alert('Đăng ký thất bại: ' + error.message);
+			}
+		}
+
+		// Hàm đăng nhập
+		async function login() {
+			// const username = document.getElementById('username').value;
+			// if (!username) {
+			// 	alert('Vui lòng nhập tên người dùng!');
+			// 	return;
+			// }
+
+			try {
+
+				// Gửi yêu cầu lấy tùy chọn đăng nhập
+				let paramsURL = new URLSearchParams();
+				paramsURL.append('username', username);
+				const response = await fetch(hostBE+'/api/services/app/UserWebAuthn/GetLoginOptions?'+paramsURL.toString(), {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+				});
+				if (!response.ok)
+					throw new Error('Không thể lấy tùy chọn đăng nhập');
+				let responseJson = await response.json();
+				if (responseJson.result.isSucceeded == false) {
+					alert('Đăng nhập thất bại: ' + responseJson.result.message);
+					return;
+				}
+
+				const publicKey = responseJson?.result?.data || {};
+
+				// Chuyển ENUM publicKey.userVerification
+				if (publicKey.userVerification != null) {
+					let mapVal = ['required', 'preferred', 'discouraged']; // Map Enum
+					publicKey.userVerification = mapVal[publicKey.userVerification];
+				}
+
+				// Chuyển đổi dữ liệu
+				publicKey.challenge = coerceToArrayBuffer(publicKey.challenge);
+				if (publicKey.allowCredentials) {
+					publicKey.allowCredentials = publicKey.allowCredentials.map(cred => ({
+						id: coerceToArrayBuffer(cred.id),
+						type: 'public-key',
+						transports: cred.transports || []
+					}));
+				}
+				console.log('[LOG login] publicKey:', publicKey);
+
+				// Gọi WebAuthn API để xác thực
+				const credential = await navigator.credentials.get({ publicKey });
+				console.log('[LOG login] credential:', credential);
+
+				// Chuẩn bị dữ liệu gửi lại server
+				const assertionResponse = {
+					id: credential.id,
+					rawId: coerceToBase64Url(credential.rawId),
+					type: credential.type,
+					authenticatorData: coerceToBase64Url(credential.response.authenticatorData),
+					clientDataJSON: coerceToBase64Url(credential.response.clientDataJSON),
+					signature: coerceToBase64Url(credential.response.signature),
+					userHandle: credential.response.userHandle ? coerceToBase64Url(credential.response.userHandle) : null
+				};
+				console.log('[LOG login] assertionResponse:', assertionResponse);
+
+				// Gửi phản hồi tới server
+				const completeResponse = await fetch(hostBE+'/api/services/app/UserWebAuthn/Login', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(assertionResponse),
+					credentials: 'include',
+				});
+				const result = await completeResponse.json();
+				console.log('[LOG login] result:', result);
+
+				if (result?.result?.data?.status === 'ok') {
+					alert('Đăng nhập thành công!');
+				} else {
+					alert('Đăng nhập thất bại: ' + result.errorMessage);
+				}
+			} catch (error) {
+				console.error('Lỗi đăng nhập:', error);
+				alert('Đăng nhập thất bại: ' + error.message);
+			}
+		}
+		coerceToArrayBuffer = function (thing, name) {
+			if (typeof thing === "string") {
+				// base64url to base64
+				thing = thing.replace(/-/g, "+").replace(/_/g, "/");
+
+				// base64 to Uint8Array
+				var str = window.atob(thing);
+				var bytes = new Uint8Array(str.length);
+				for (var i = 0; i < str.length; i++) {
+						bytes[i] = str.charCodeAt(i);
+				}
+				thing = bytes;
+			}
+
+			// Array to Uint8Array
+			if (Array.isArray(thing)) {
+				thing = new Uint8Array(thing);
+			}
+
+			// Uint8Array to ArrayBuffer
+			if (thing instanceof Uint8Array) {
+				thing = thing.buffer;
+			}
+
+			// error if none of the above worked
+			if (!(thing instanceof ArrayBuffer)) {
+				throw new TypeError("could not coerce '" + name + "' to ArrayBuffer");
+			}
+
+			return thing;
+		};
+		coerceToBase64Url = function (thing) {
+				// Array or ArrayBuffer to Uint8Array
+				if (Array.isArray(thing)) {
+						thing = Uint8Array.from(thing);
+				}
+
+				if (thing instanceof ArrayBuffer) {
+						thing = new Uint8Array(thing);
+				}
+
+				// Uint8Array to base64
+				if (thing instanceof Uint8Array) {
+						var str = "";
+						var len = thing.byteLength;
+
+						for (var i = 0; i < len; i++) {
+								str += String.fromCharCode(thing[i]);
+						}
+						thing = window.btoa(str);
+				}
+
+				if (typeof thing !== "string") {
+						throw new Error("could not coerce to string");
+				}
+
+				// base64 to base64url
+				// NOTE: "=" at the end of challenge is optional, strip it off here
+				thing = thing.replace(/\+/g, "-").replace(/\//g, "_").replace(/=*$/g, "");
+
+				return thing;
+		};
+	</script>
+</body>
+</html>

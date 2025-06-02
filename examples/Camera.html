@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>PWA Camera App</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Permissions-Policy" content="camera=(self)">
+
+	<link rel="manifest" href="manifest.json">
+
+<style>
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+			background-color: #f0f0f0;
+		}
+		video {
+			width: 100%;
+			max-width: 600px;
+			border: 2px solid #333;
+			border-radius: 8px;
+		}
+		button {
+			margin-top: 10px;
+			padding: 10px 20px;
+			font-size: 16px;
+			cursor: pointer;
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+		}
+		button:hover {
+			background-color: #0056b3;
+		}
+	</style>
+</head>
+<body>
+	<!-- <video id="video" autoplay playsinline></video> -->
+	<button onclick="startCamera()">Bật Camera</button>
+	<button onclick="stopCamera()">Tắt Camera</button>
+
+	<script>
+
+		let stream = null;
+
+		async function startCamera() {
+			try {
+
+				// let a = await navigator.mediaDevices.getSupportedConstraints();
+				// console.log(a);
+
+				stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+				// const video = document.getElementById('video');
+				// video.srcObject = stream;
+			} catch (err) {
+				console.error('Lỗi khi truy cập camera:', err);
+				alert('Không thể truy cập camera. Vui lòng kiểm tra quyền hoặc thiết bị.');
+			}
+		}
+
+		function stopCamera() {
+			if (stream) {
+				stream.getTracks().forEach(track => track.stop());
+				// const video = document.getElementById('video');
+				// video.srcObject = null;
+				stream = null;
+			}
+		}
+	</script>
+</body>
+</html>

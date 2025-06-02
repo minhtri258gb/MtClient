@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PWA Camera & Location</title>
+</head>
+<body>
+  <video autoplay></video>
+  <button onclick="accessCamera()">Bật Camera</button>
+  <button onclick="accessLocation()">Lấy Vị trí</button>
+
+  <script>
+    async function accessCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.querySelector('video').srcObject = stream;
+      } catch (error) {
+        alert('Không thể truy cập camera: ' + error.message);
+      }
+    }
+
+    function accessLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            alert(`Vị trí: Lat ${position.coords.latitude}, Lon ${position.coords.longitude}`);
+          },
+          (error) => {
+            alert('Lỗi vị trí: ' + error.message);
+          }
+        );
+      } else {
+        alert('Geolocation không được hỗ trợ.');
+      }
+    }
+  </script>
+</body>
+</html>

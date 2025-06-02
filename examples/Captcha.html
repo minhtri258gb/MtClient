@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Captcha</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="permissions-policy" content="camera=(self)">
+
+	<link rel="manifest" href="/PWA/manifest.json">
+</head>
+<body>
+
+	<h1>Captcha</h1>
+	<button onclick="createCaptcha()">Create Captcha</button>
+
+	<canvas id="canvas"></canvas>
+
+	<p>Kết quả: <span id="result"></span></p>
+
+	<script>
+
+		// Hàm tạo captcha
+		function createCaptcha() {
+
+			// Random text
+			let type = ''; // number, char
+			const lengthCaptcha = 6;
+
+			// document.getElementById(this.textbox.dataField).innerHTML = "";
+			var captcha = [];
+			for (var i = 0; i < lengthCaptcha; i++) {
+				if (type == "number") {
+					captcha[i] = Math.floor(Math.random() * 10 + 0);
+				}
+				else if (type == "char") {
+					captcha[i] = String.fromCharCode(Math.floor(Math.random() * 26 + 65));
+				}
+				else {
+					if (i % 2 == 0) {
+						captcha[i] = String.fromCharCode(Math.floor(Math.random() * 26 + 65));
+					}
+					else {
+						captcha[i] = Math.floor(Math.random() * 10 + 0);
+					}
+				}
+			}
+
+			let captchaResult = captcha.join("");
+
+			var canv = document.getElementById('canvas');
+			canv.width = 140;
+			canv.height = 35;
+			var ctx = canv.getContext("2d");
+
+			// Chèn màu nền
+			function getRandomLightColor() {
+				const hue = Math.floor(Math.random() * 360); // Sắc độ ngẫu nhiên
+				const saturation = Math.floor(Math.random() * 30) + 20; // Độ bão hòa 20-50%
+				const lightness = Math.floor(Math.random() * 20) + 70; // Độ sáng 70-90%
+				return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+			}
+			const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+			gradient.addColorStop(0, getRandomLightColor());
+			gradient.addColorStop(0.5, getRandomLightColor());
+			gradient.addColorStop(1, getRandomLightColor());
+			ctx.fillStyle = gradient;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+			// Điền chữ
+			ctx.font = "30px Georgia";
+			ctx.strokeText(captchaResult, 10, 30);
+
+			// Hiển thị kết quả
+			document.getElementById('result').innerHTML = captchaResult;
+		}
+
+		// Bắt đầu
+		document.addEventListener('DOMContentLoaded', createCaptcha);
+	</script>
+</body>
+</html>

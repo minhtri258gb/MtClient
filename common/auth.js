@@ -55,8 +55,12 @@ mt.auth = {
 				// Call API - Authen
 				fetch('/authorize', {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ password: new String(password) })
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						password: new String(password)
+					})
 				}).then((response) => {
 					response.json().then((res) => {
 
