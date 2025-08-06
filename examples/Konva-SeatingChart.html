@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Konva - seating chart</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script src="https://cdn.jsdelivr.net/npm/konva@8.4.3/konva.min.js"></script>
+
+	<style>
+		#seatingCanvas {
+			border: 1px solid #ccc;
+			margin: 20px auto;
+			display: block;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="seatingCanvas"></div>
+
+	<script>
+		const gridSizeX = 70;
+		const gridSizeY = 50;
+		const rows = 5;
+		const cols = 6;
+
+		const stage = new Konva.Stage({
+			container: 'seatingCanvas',
+			width: cols * gridSizeX + 100,
+			height: rows * gridSizeY + 100
+		});
+
+		const layer = new Konva.Layer();
+		stage.add(layer);
+
+		// Vẽ lưới để nhìn rõ
+		for (let i = 0; i <= cols; i++) {
+			layer.add(new Konva.Line({
+				points: [i * gridSizeX, 0, i * gridSizeX, stage.height()],
+				stroke: '#ddd',
+				strokeWidth: 1
+			}));
+		}
+
+		for (let j = 0; j <= rows; j++) {
+			layer.add(new Konva.Line({
+				points: [0, j * gridSizeY, stage.width(), j * gridSizeY],
+				stroke: '#ddd',
+				strokeWidth: 1
+			}));
+		}
+
+		// Tạo ghế ngồi (Group gồm Rect và Text)
+		for (let row = 0; row < rows; row++) {
+			for (let col = 0; col < cols; col++) {
+				const x = col * gridSizeX + 10;
+				const y = row * gridSizeY + 10;
+
+				const group = new Konva.Group({
+					x: x,
+					y: y,
+					draggable: true
+				});
+
+				const rect = new Konva.Rect({
+					width: 60,
+					height: 40,
+					fill: '#A2D5F2',
+					stroke: 'black',
+					cornerRadius: 5
+				});
+
+				const label = new Konva.Text({
+					text: `R${row+1}C${col+1}`,
+					fontSize: 14,
+					fill: 'black',
+					width: 60,
+					height: 40,
+					align: 'center',
+					verticalAlign: 'middle'
+				});
+
+				group.add(rect);
+				group.add(label);
+
+				// Snap vào lưới khi kéo xong
+				group.on('dragend', function () {
+					const pos = group.position();
+					group.position({
+						x: Math.round(pos.x / gridSizeX) * gridSizeX + 10,
+						y: Math.round(pos.y / gridSizeY) * gridSizeY + 10
+					});
+					layer.draw();
+				});
+
+				layer.add(group);
+			}
+		}
+
+		layer.draw();
+	</script>
+</body>
+</html>

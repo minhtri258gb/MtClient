@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>lit</title>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://lit.dev/
+	-->
+
+	<simple-greeting />
+
+	<script type="module">
+		import { LitElement, html, css } from '/lib/lit/core/lit-core.min.js';
+
+		class SimpleGreeting extends LitElement {
+
+			static properties = {
+				name: {},
+				article: { attribute: false },
+			};
+			// Define scoped styles right with your component, in plain CSS
+			static styles = css`
+				:host {
+					color: blue;
+				}
+			`;
+
+			constructor() {
+				super();
+				// Declare reactive properties
+				this.name = 'World';
+				this.article = {
+					title: 'My Nifty Article',
+					text: 'Some witty text.',
+				};
+			}
+
+			connectedCallback() {
+				super.connectedCallback()
+				// window.addEventListener('keydown', this._handleKeydown);
+			}
+			disconnectedCallback() {
+				super.disconnectedCallback()
+				// window.removeEventListener('keydown', this._handleKeydown);
+			}
+
+			headerTemplate() {
+				return html`<header>${this.article.title}</header>`;
+			}
+			articleTemplate() {
+				return html`<article>${this.article.text}</article>`;
+			}
+			footerTemplate() {
+				return html`<footer>Your footer here.</footer>`;
+			}
+
+			// Render the UI as a function of component state
+			render() {
+				return html`
+					${this.headerTemplate()}
+					${this.articleTemplate()}
+					${this.footerTemplate()}
+				`;
+				// return html`<p>Hello, ${this.name}!</p>`;
+			}
+		}
+		customElements.define('simple-greeting', SimpleGreeting);
+	</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Lite Graph</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Permissions-Policy" content="camera=(self)">
+
+	<link rel="stylesheet" type="text/css" href="/lib/litegraph/litegraph.css">
+	<script type="text/javascript" src="/lib/litegraph/litegraph.js"></script>
+
+	<style>
+		body {
+			margin: 0px;
+			width:100%;
+			height:100%;
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://github.com/jagenjo/litegraph.js
+		https://tamats.com/projects/litegraph/editor/
+	-->
+
+	<canvas id='mycanvas' width='1024' height='720' style='border: 1px solid'></canvas>
+
+	<script type="module">
+		var mt = {
+			m_graph: null,
+			m_canvas: null,
+
+			init: function() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Init
+				this.initGraph();
+			},
+			initGraph: function() {
+
+				this.m_graph = new LGraph();
+
+				this.m_canvas = new LGraphCanvas("#mycanvas", this.m_graph);
+
+				var node_const = LiteGraph.createNode("basic/const");
+				node_const.pos = [200,200];
+				this.m_graph.add(node_const);
+				node_const.setValue(4.5);
+
+				var node_watch = LiteGraph.createNode("basic/watch");
+				node_watch.pos = [700,200];
+				this.m_graph.add(node_watch);
+
+				node_const.connect(0, node_watch, 0 );
+
+				this.m_graph.start()
+			},
+		};
+		mt.init();
+	</script>
+</body>
+</html>

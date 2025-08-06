@@ -107,10 +107,10 @@ var mt = {
 			else if (mt.cut.isOpen)
 				mt.cut.close();
 		},
-		onResizeRight: function() { // #TODO position
-			if (mt.new.isOpen)
-				mt.new.c_list.resize();
-		},
+		// onResizeRight: function() { // #TODO position
+		// 	if (mt.new.isOpen)
+		// 		mt.new.c_list.resize();
+		// },
 	},
 	mgr: { // Quản lý
 		musics: [], // List music from server
@@ -502,16 +502,16 @@ var mt = {
 	event: { // #TODO chuyển đi hết
 		_focus: true,
 		init: function() {
-			this.resize();
+			// this.resize();
 			this.keypress();
 			this.onfocus();
 			// this.media();
 		},
-		resize: function() {
-			window.addEventListener('resize', function (event) {
+		// resize: function() {
+		// 	window.addEventListener('resize', function (event) {
 
-			});
-		},
+		// 	});
+		// },
 		keypress: function() {
 			// window.addEventListener('keyup', function(event) {});
 			window.addEventListener('keydown', function(event) {
@@ -1235,7 +1235,7 @@ var mt = {
 			mt.gui.layout.layout('expand','east');
 
 			// Auto refresh on open
-			this.c_list.resize();
+			// this.c_list.resize();
 			this.refresh();
 			
 		},
@@ -1340,9 +1340,9 @@ var mt = {
 				lst.splice(index, 1);
 				this.component.datagrid('loadData', lst);
 			},
-			resize: function() {
-				this.component.datagrid('resize');
-			},
+			// resize: function() {
+			// 	this.component.datagrid('resize');
+			// },
 		},
 	},
 	cut: { // Cắt soundtrack

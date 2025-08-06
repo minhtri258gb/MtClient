@@ -44,6 +44,7 @@
 	<button onclick="login()">Đăng nhập</button>
 
 	<script>
+
 		// Đăng ký Service Worker
 		if ('serviceWorker' in navigator) {
 			window.addEventListener('load', () => {
@@ -64,13 +65,10 @@
 				.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 		}
 
-		// var hostBE = 'http://192.168.1.242:7721'; // Host Site 6.0
-		var hostBE = 'https://hinnova.vn:7721'; // Host Site 6.0
-		// var hostBE = 'http://localhost:22743';
+		var hostBE = 'https://hinnova.vn:7721'; // Host Portal Dev
 		// var hostBE = 'http://localhost:5000';
-		// var hostBE = 'https://localhost:5001';
-		// var hostBE = 'https://192.168.1.45:5001';
-		var username = "12345";
+		// var hostBE = 'http://192.168.1.242:7721'; // Host Site 6.0
+		var username = "admin";
 
 		document.getElementById('host').innerText = hostBE;
 
@@ -87,18 +85,32 @@
 
 			try {
 
-				// Gửi yêu cầu lấy tùy chọn đăng ký
+				// Check window.atob
+				if (window.atob == null) {
+					alert('Chưa profill: window.atob');
+					return;
+				}
+
 				let paramsURL = new URLSearchParams();
 				paramsURL.append('username', username);
-				const response = await fetch(hostBE+'/api/services/app/UserWebAuthn/GetRegisterOptions?'+paramsURL.toString(), {
+				// let url = hostBE+'/api/services/app/UserWebAuthn/GetRegisterOptions?'+paramsURL.toString();
+				let url = hostBE+'/api/TokenAuth/GetRegisterOptions?'+paramsURL.toString();
+
+				// Gửi yêu cầu lấy tùy chọn đăng ký
+				const response = await fetch(url, {
 					method: 'GET',
 					headers: { 'Content-Type': 'application/json' },
-					credentials: 'include',
+					// credentials: 'include',
 				});
 				if (!response.ok)
 					throw new Error('Không thể lấy tùy chọn đăng ký');
+
 				let responseJson = await response.json();
-				const publicKey = responseJson?.result?.data || {};
+				if (!responseJson.success || !responseJson.result || !responseJson.result.isSucceeded)
+					throw new Error(responseJson.error || responseJson?.result?.message || 'Không thể lấy tùy chọn đăng ký');
+
+				let publicKey = responseJson?.result?.data || {};
+				const registerOptionStr = JSON.stringify(publicKey);
 
 				// Chuyển đổi dữ liệu sang định dạng WebAuthn
 				publicKey.challenge = bufferDecode(publicKey.challenge);
@@ -109,12 +121,12 @@
 						id: bufferDecode(cred.id)
 					}));
 				}
-				if (publicKey.pubKeyCredParams) {
-					publicKey.pubKeyCredParams = publicKey.pubKeyCredParams.map(item => ({
-						...item,
-						type: 'public-key' // Sửa "0" thành "public-key"
-					}));
-				}
+				// if (publicKey.pubKeyCredParams) {
+				// 	publicKey.pubKeyCredParams = publicKey.pubKeyCredParams.map(item => ({
+				// 		...item,
+				// 		type: 'public-key' // Sửa "0" thành "public-key"
+				// 	}));
+				// }
 				if (publicKey.authenticatorSelection) {
 					publicKey.authenticatorSelection = {
 						authenticatorAttachment: "platform", // Chỉ sử dụng authenticator của thiết bị (Touch ID/FaceID)
@@ -123,10 +135,10 @@
 					}
 				}
 				// Map Enum publicKey.attestation
-				if (publicKey.attestation != null) {
-					let mapVal = ['none', 'indirect', 'direct', 'enterprise']; // Map Enum
-					publicKey.attestation = mapVal[publicKey.attestation];
-				}
+				// if (publicKey.attestation != null) {
+				// 	let mapVal = ['none', 'indirect', 'direct', 'enterprise']; // Map Enum
+				// 	publicKey.attestation = mapVal[publicKey.attestation];
+				// }
 				// Xóa icon nếu ko có, ko để null
 				if (publicKey.rp.icon == null)
 					delete publicKey.rp.icon;
@@ -144,16 +156,22 @@
 					attestationObject: coerceToBase64Url(credential.response.attestationObject),
 					clientDataJSON: coerceToBase64Url(credential.response.clientDataJSON),
 					// transports: credential.response.getTransports()
+					registerOption: registerOptionStr,
 				};
 				console.log('[LOG register] attestationResponse:', attestationResponse);
 
 				// Gửi phản hồi tới server
-				const completeResponse = await fetch(hostBE+'/api/services/app/UserWebAuthn/Registration', {
+				url = hostBE+'/api/TokenAuth/Registration';
+				// url = hostBE+'/api/services/app/UserWebAuthn/Registration';
+				const completeResponse = await fetch(url, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(attestationResponse),
-					credentials: 'include',
+					// credentials: 'include',
 				});
+				console.log('[LOG register] completeResponse:', completeResponse);
+				if (!completeResponse.ok)
+					throw new Error('Lỗi đăng ký');
 
 				const result = await completeResponse.json();
 				console.log('[LOG register] result:', result);
@@ -163,7 +181,8 @@
 				} else {
 					alert('Đăng ký thất bại: ' + result.errorMessage);
 				}
-			} catch (error) {
+			}
+			catch (error) {
 				console.error('Lỗi đăng ký:', error);
 				alert('Đăng ký thất bại: ' + error.message);
 			}
@@ -179,36 +198,40 @@
 
 			try {
 
-				// Gửi yêu cầu lấy tùy chọn đăng nhập
 				let paramsURL = new URLSearchParams();
 				paramsURL.append('username', username);
-				const response = await fetch(hostBE+'/api/services/app/UserWebAuthn/GetLoginOptions?'+paramsURL.toString(), {
+				// let url = hostBE+'/api/services/app/UserWebAuthn/GetLoginOptions?'+paramsURL.toString();
+				let url = hostBE+'/api/TokenAuth/GetLoginOptions?'+paramsURL.toString();
+
+				// Gửi yêu cầu lấy tùy chọn đăng nhập
+				const response = await fetch(url, {
 					method: 'GET',
 					headers: { 'Content-Type': 'application/json' },
-					credentials: 'include',
+					// credentials: 'include',
 				});
 				if (!response.ok)
 					throw new Error('Không thể lấy tùy chọn đăng nhập');
-				let responseJson = await response.json();
-				if (responseJson.result.isSucceeded == false) {
-					alert('Đăng nhập thất bại: ' + responseJson.result.message);
-					return;
-				}
 
-				const publicKey = responseJson?.result?.data || {};
+				let responseJson = await response.json();
+				if (!responseJson.success || !responseJson.result || !responseJson.result.isSucceeded)
+					throw new Error(responseJson.error || responseJson?.result?.message || 'Không thể lấy tùy chọn đăng nhập');
+
+				let publicKey = responseJson?.result?.data || {};
+				const loginOptionStr = JSON.stringify(publicKey);
 
 				// Chuyển ENUM publicKey.userVerification
-				if (publicKey.userVerification != null) {
-					let mapVal = ['required', 'preferred', 'discouraged']; // Map Enum
-					publicKey.userVerification = mapVal[publicKey.userVerification];
-				}
+				// if (publicKey.userVerification != null) {
+				// 	let mapVal = ['required', 'preferred', 'discouraged']; // Map Enum
+				// 	publicKey.userVerification = mapVal[publicKey.userVerification];
+				// }
 
 				// Chuyển đổi dữ liệu
 				publicKey.challenge = coerceToArrayBuffer(publicKey.challenge);
 				if (publicKey.allowCredentials) {
 					publicKey.allowCredentials = publicKey.allowCredentials.map(cred => ({
+						...cred,
 						id: coerceToArrayBuffer(cred.id),
-						type: 'public-key',
+						// type: 'public-key',
 						transports: cred.transports || []
 					}));
 				}
@@ -226,26 +249,43 @@
 					authenticatorData: coerceToBase64Url(credential.response.authenticatorData),
 					clientDataJSON: coerceToBase64Url(credential.response.clientDataJSON),
 					signature: coerceToBase64Url(credential.response.signature),
-					userHandle: credential.response.userHandle ? coerceToBase64Url(credential.response.userHandle) : null
+					userHandle: credential.response.userHandle ? coerceToBase64Url(credential.response.userHandle) : null,
+					loginOption: loginOptionStr,
+					username: username,
 				};
 				console.log('[LOG login] assertionResponse:', assertionResponse);
 
 				// Gửi phản hồi tới server
-				const completeResponse = await fetch(hostBE+'/api/services/app/UserWebAuthn/Login', {
+				// url = hostBE+'/api/services/app/UserWebAuthn/Login';
+				url = hostBE+'/api/TokenAuth/LoginWebAuthn';
+				const completeResponse = await fetch(url, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(assertionResponse),
-					credentials: 'include',
+					// credentials: 'include',
 				});
+				console.log('[LOG login] completeResponse:', completeResponse);
+				if (!completeResponse.ok)
+					throw new Error('Lỗi đăng nhập');
+
 				const result = await completeResponse.json();
 				console.log('[LOG login] result:', result);
 
-				if (result?.result?.data?.status === 'ok') {
-					alert('Đăng nhập thành công!');
-				} else {
+				if (!result
+					|| !result.success
+					|| !result.result
+					|| !result.result.isSucceeded
+					|| !result.result.data
+				) {
 					alert('Đăng nhập thất bại: ' + result.errorMessage);
+					return;
 				}
-			} catch (error) {
+
+				console.log('[LOG login] final', result.result.data);
+
+				alert('Đăng nhập thành công!');
+			}
+			catch (error) {
 				console.error('Lỗi đăng nhập:', error);
 				alert('Đăng nhập thất bại: ' + error.message);
 			}

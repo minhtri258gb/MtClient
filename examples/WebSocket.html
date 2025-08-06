@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Web Socket</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+<body>
+
+	<h1>Web Socket</h1>
+	<button onclick="mt.connect()">Connect</button>
+	<input id="input"></input>
+	<button onclick="mt.sendMsg()">Send</button>
+	<div id="contents"></div>
+
+	<script type="module">
+		var mt = {
+
+			h_host: 'ws://localhost:5000/chatHub',
+
+			p_ws: null,
+			e_input: null,
+			e_content: null,
+
+			m_isConnect: false,
+
+			init: function() {
+				try {
+
+					// Bind
+					window.mt = mt;
+
+
+					// Element
+					mt.e_content = document.getElementById('contents');
+					mt.e_input = document.getElementById('input');
+					mt.e_input.addEventListener('keypress', function(event) {
+						if (event.charCode != 13)
+							return;
+						mt.sendMsg();
+					});
+				}
+				catch (err) {
+					console.log('EXCEPTION: ', err);
+				}
+			},
+
+			connect: function() {
+				// Web Socket
+				mt.p_ws = new WebSocket(mt.h_host);
+				mt.p_ws.onopen = (event) => {
+					mt.m_isConnect = true;
+					console.log('WebSocket connected:', event);
+				};
+				mt.p_ws.onmessage = (event) => {
+					console.log('Received:', event.data);
+				};
+				mt.p_ws.onerror = (error) => {
+					mt.m_isConnect = false;
+					console.error('WebSocket error:', error);
+				};
+				mt.p_ws.onclose = (event) => {
+					mt.m_isConnect = false;
+					console.log('WebSocket closed:', event.code, event.reason);
+				};
+			},
+			sendMsg: function() {
+				if (!mt.m_isConnect)
+					return;
+				let text = mt.e_input.value;
+				if (text.length > 0)
+					mt.p_ws.send(JSON.stringify({
+						ChannelChatId: 'A2D0395C-7BCA-46AE-45BC-08D86F5E4705',
+						ChatGroupId: '6ADF4CEE-7333-494B-98DA-33E1AC9E8040',
+						Message: text,
+					}));
+				console.log('Send message: ', text);
+			},
+		};
+		document.addEventListener('DOMContentLoaded', mt.init);
+	</script>
+</body>
+</html>

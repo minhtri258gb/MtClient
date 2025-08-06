@@ -1,0 +1,31 @@
+# @host=http://localhost:5000
+@host=https://hinnova.vn:7721
+# @hostDHD=https://hinnova.vn:44447
+@host60=http://localhost:5002
+
+
+# @name WebAuthn_RegisterOpt
+GET {{host}}/api/TokenAuth/GetRegisterOptions
+?username=tk01
+
+###
+
+# @name WebAuthn_Registration
+POST {{host}}/api/TokenAuth/Registration
+Content-Type: application/json
+
+{
+    "id": "CFlPzw5zV_vpNxtQkZ6RYg",
+    "rawId": "CFlPzw5zV_vpNxtQkZ6RYg",
+    "type": "public-key",
+    "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViUSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NdAAAAAOqbjWZNAR0hPOS2tIy1ddQAEAhZT88Oc1f76TcbUJGekWKlAQIDJiABIVgg_7D-48kCJ0J56uwJ5qVtmn_Jm8HepLWBOy9uY5i70rEiWCBkaxXkL3GrVn9GMo8sHHor48oXh5ReVtJel4u4fUVOzg",
+    "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoibWV5OE1ETE9ncVJPR05jNExlVFVJdyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MjU4IiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ",
+    "registerOption": "{\"rp\":{\"id\":\"localhost\",\"name\":\"HinPortal\"},\"user\":{\"name\":\"12345\",\"id\":\"MTIzNDU\",\"displayName\":\"12345\"},\"challenge\":\"mey8MDLOgqROGNc4LeTUIw\",\"pubKeyCredParams\":[{\"type\":\"public-key\",\"alg\":-7},{\"type\":\"public-key\",\"alg\":-257},{\"type\":\"public-key\",\"alg\":-37},{\"type\":\"public-key\",\"alg\":-35},{\"type\":\"public-key\",\"alg\":-258},{\"type\":\"public-key\",\"alg\":-38},{\"type\":\"public-key\",\"alg\":-36},{\"type\":\"public-key\",\"alg\":-259},{\"type\":\"public-key\",\"alg\":-39},{\"type\":\"public-key\",\"alg\":-8}],\"timeout\":60000,\"attestation\":\"none\",\"authenticatorSelection\":{\"requireResidentKey\":false,\"userVerification\":\"preferred\"},\"excludeCredentials\":[],\"status\":\"ok\",\"errorMessage\":\"\"}"
+}
+
+###
+
+# @name WebAuthn_LoginOpt
+GET {{host}}/API/GetLoginOptions?username=tk01
+
+###

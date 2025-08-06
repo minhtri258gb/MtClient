@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>ToneJS</title>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script type="text/javascript" src="/lib/tone/Tone.js"></script>
+
+	<link rel="stylesheet" href="/lib/codemirror5-5.65.18/lib/codemirror.css">
+	<link rel="stylesheet" href="/lib/codemirror5-5.65.18/addon/fold/foldgutter.css" />
+	<script src="/lib/codemirror5-5.65.18/lib/codemirror.js"></script>
+	<script src="/lib/codemirror5-5.65.18/addon/fold/foldcode.js"></script>
+	<script src="/lib/codemirror5-5.65.18/addon/fold/foldgutter.js"></script>
+
+	<style>
+		body { padding: 16px; }
+		button { padding: 10px 20px; font-size: 16px; }
+
+		/* Code */
+		.CodeMirror {border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;}
+		.cm-midi-note { color: #0000FF; font-weight: bold; } /* Màu xanh cho nốt */
+		.cm-midi-rest { color: #FF0000; font-weight: bold; } /* Màu đỏ cho nốt trống */
+		.cm-midi-duration { color: #008000; } /* Màu xanh lá cho thời lượng */
+		.cm-midi-comment { color: #808080; font-style: italic; } /* Màu xám cho comment */
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://github.com/jagenjo/litegraph.js
+		https://tamats.com/projects/litegraph/editor/
+	-->
+
+	<h1>Music Composer</h1>
+	<p>Enter notes in the format: [Note, Octave, Duration], one per line.<br>
+			Example: C4:4n E4:4n G4:2n
+		Tên nốt (C, D, E, F, G, A, B, thêm # hoặc b nếu cần, ví dụ: C#, Bb).
+	</p>
+
+	<textarea id="notesInput">
+		C4:16n B3:16n A3:16n R:16n
+		C4:16n B3:16n A3:16n R:16n
+		C4:8n A3:8n E4:8n G4:8n G4:5n E4:5n A4:4n R:4n
+
+		A4:16n B4:16n C5:16n B4:16n A4:16n R:16n
+		C5:16n B4:16n A4:16n R:16n
+		C5:8n D5:16n E5:8n G5:8n G5:5n E5:5n A5:4n
+	</textarea><br>
+	<button onclick="mt.playMusic()">Play Music</button>
+
+	<script type="module">
+		var mt = {
+
+			tone: { // ToneJS
+				m_synth: null,
+				p_BPM: 120,
+
+				init() {
+					this.m_synth = new Tone.Synth().toDestination();
+					Tone.Transport.bpm.value = this.p_BPM; // Set BPM
+				},
+				processCode(input) {
+
+					// Process Text to Note
+					let lines = input
+						.trim()
+						.split('\n')
+						.map(line => {
+							if (line.length == 0 || line.startsWith(';'))
+								return null;
+							return line.trim();
+						})
+						.filter(line => line !== null)
+						;
+					let notes = lines
+						.join(' ') // Join các line lại
+						.trim()
+						.split(' ') // Cắt từng note
+						.map(line => {
+							if (line.length == 0)
+								return null;
+							return line.split(':');
+						})
+						.filter(note => note !== null);
+					console.log('notes:', notes);
+
+
+					// Process Event
+					let currentTime = 0; // Thời gian bắt đầu (tính bằng giây)
+					const noteEvents = notes.map(note => {
+						if (note[0] === 'R' || note[0] === 'r') { // Note nghỉ
+							currentTime += Tone.Time(note[1]).toSeconds();
+							return null;
+						}
+						else {
+							const event = { time: currentTime, note: note[0], duration: note[1] };
+							currentTime += Tone.Time(note[1]).toSeconds();
+							return event;
+						}
+					}).filter(event => event !== null);
+
+
+					// Tính thời gian và đặt các note vào lịch trình
+					Tone.Transport.cancel(0); // Reset lịch trình
+					const part = new Tone.Part((time, value) => {
+						this.m_synth.triggerAttackRelease(value.note, value.duration, time);
+					}, noteEvents);
+					part.start(0);
+
+				},
+				async playMidi() {
+
+					// Bắt đầu phát
+					await Tone.start();
+					Tone.Transport.stop();
+					Tone.Transport.start();
+				},
+			},
+			editor: { // CodeMirror
+				m_editor: null,
+				e_textarea: null,
+
+				init() {
+
+					// Highlight MIDI
+					CodeMirror.defineMode("midi", function(config) {
+						return {
+							token: function(stream) {
+								if (stream.sol() && stream.match(/;.*/))
+									return "midi-comment";
+								if (stream.match(/[A-G][b#]?[0-8]/))
+									return "midi-note";
+								if (stream.match(/[Rr]/))
+									return "midi-rest";
+								if (stream.match(/:[0-9]+n/))
+									return "midi-duration";
+								stream.next();
+								return null;
+							}
+						};
+					});
+
+					// Fold MIDI
+					CodeMirror.registerHelper("fold", "midi", function(cm, start) {
+
+						let lineCount = cm.lineCount(); // Tổng số dòng
+						const startLine = start.line; // Dòng hiện tại
+
+						// Validate dòng hiện tại
+						if (startLine >= lineCount)
+							return undefined; // Không fold dòng lỗi
+
+						let lineStartStr = cm.getLine(startLine);
+
+						// Kiểm tra dòng bắt đầu có nội dung
+						if (lineStartStr.trim().length === 0)
+							return undefined; // Không fold nếu dòng trống
+
+						// Nếu dòng trên là code thì ko fold dòng này
+						if (startLine > 0) {
+							let strPreLine = cm.getLine(startLine-1);
+							if (strPreLine.length > 0)
+								return undefined; // Không fold dòng chèn giữa
+						}
+
+						// Tìm dòng cuối của fold (dừng khi gặp dòng trống hoặc hết tài liệu)
+						let endLine = startLine;
+						for (let i = startLine + 1; i < lineCount; i++) {
+							if (cm.getLine(i).trim().length === 0)
+								break; // Ngắt fold khi gặp dòng trống
+							endLine = i;
+						}
+
+						// Nếu có ít nhất một dòng để fold, trả về phạm vi fold
+						if (endLine >= startLine) {
+							return {
+								from: { line: startLine, ch: 0 },
+								to: { line: endLine, ch: cm.getLine(endLine).length }
+							};
+						}
+
+						return undefined; // Không fold nếu không có phạm vi hợp lệ
+					});
+
+					// TextArea Element
+					this.e_textarea = document.getElementById('notesInput');
+					let val = this.e_textarea.value;
+					val = val.trim().split('\n').map(v => v.trim()).join('\n');
+					this.e_textarea.value = val;
+
+					// Init Editor
+					this.m_editor = CodeMirror.fromTextArea(this.e_textarea, {
+						mode: "midi",
+						lineNumbers: true,
+						lineWrapping: true,
+						extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+						foldGutter: true,
+						gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+					});
+					this.m_editor.foldCode(CodeMirror.Pos(13, 0));
+				},
+				getCode() {
+					return this.e_textarea.value;
+				},
+			},
+
+			init() { // Hàm khởi tạo
+				window.mt = this; // Bind Global
+				this.editor.init(); // Khởi tạo Editor
+				this.tone.init(); // Khởi tạo synthesizer
+			},
+			playMusic() { // Hàm bắt đầu phát nhạc
+				let code = this.editor.getCode();
+				this.tone.processCode(code);
+				this.tone.playMidi();
+			},
+		};
+		mt.init();
+	</script>
+</body>
+</html>
