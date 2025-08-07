@@ -17,7 +17,13 @@
 		https://lit.dev/
 	-->
 
-	<simple-greeting />
+	<p>simple-greeting</p>
+	<simple-greeting></simple-greeting>
+	<br>
+
+	<p>mt-form</p>
+	<mt-form></mt-form>
+	<br>
 
 	<script type="module">
 		import { LitElement, html, css } from '/lib/lit/core/lit-core.min.js';
@@ -75,6 +81,85 @@
 			}
 		}
 		customElements.define('simple-greeting', SimpleGreeting);
+
+		class MtFormElement extends LitElement {
+
+			static properties = {
+				name: {},
+				article: { attribute: false },
+			};
+			// Define scoped styles right with your component, in plain CSS
+			static styles = css`
+				:host {
+					color: blue;
+				}
+				.mt-form-wrap {
+					border: 1px solid #000;
+					padding: 8px;
+				}
+			`;
+
+			constructor() {
+				super();
+				// Declare reactive properties
+				this.name = 'World';
+				this.article = {
+					title: 'My Nifty Article',
+					text: 'Some witty text.',
+				};
+			}
+
+			connectedCallback() {
+				super.connectedCallback()
+				// window.addEventListener('keydown', this._handleKeydown);
+			}
+			disconnectedCallback() {
+				super.disconnectedCallback()
+				// window.removeEventListener('keydown', this._handleKeydown);
+			}
+
+			headerTemplate() {
+				return html`<header>${this.article.title}</header>`;
+			}
+			articleTemplate() {
+				return html`<article>${this.article.text}</article>`;
+			}
+			footerTemplate() {
+				return html`<footer>Your footer here.</footer>`;
+			}
+
+			// Render the UI as a function of component state
+			render() {
+				return html`
+					<div class="mt-form-wrap">
+						<input type="button"></input>
+						<input type="checkbox"></input>
+						<input type="color"></input>
+						<input type="date"></input>
+						<input type="datetime-local"></input>
+						<input type="email"></input>
+						<input type="file"></input>
+						<input type="hidden"></input>
+						<input type="image"></input>
+						<input type="month"></input>
+						<input type="number"></input>
+						<input type="password"></input>
+						<input type="radio"></input>
+						<input type="range"></input>
+						<input type="reset"></input>
+						<input type="search"></input>
+						<input type="submit"></input>
+						<input type="tel"></input>
+						<input type="text"></input>
+						<input type="time"></input>
+						<input type="url"></input>
+						<input type="week"></input>
+					</div>
+				`;
+				// return html`<p>Hello, ${this.name}!</p>`;
+			}
+		}
+		customElements.define('mt-form', MtFormElement);
 	</script>
 </body>
 </html>

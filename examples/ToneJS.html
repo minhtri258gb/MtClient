@@ -41,15 +41,7 @@
 		Tên nốt (C, D, E, F, G, A, B, thêm # hoặc b nếu cần, ví dụ: C#, Bb).
 	</p>
 
-	<textarea id="notesInput">
-		C4:16n B3:16n A3:16n R:16n
-		C4:16n B3:16n A3:16n R:16n
-		C4:8n A3:8n E4:8n G4:8n G4:5n E4:5n A4:4n R:4n
-
-		A4:16n B4:16n C5:16n B4:16n A4:16n R:16n
-		C5:16n B4:16n A4:16n R:16n
-		C5:8n D5:16n E5:8n G5:8n G5:5n E5:5n A5:4n
-	</textarea><br>
+	<textarea id="notesInput"></textarea><br>
 	<button onclick="mt.playMusic()">Play Music</button>
 
 	<script type="module">
@@ -58,10 +50,12 @@
 			tone: { // ToneJS
 				m_synth: null,
 				p_BPM: 120,
+				p_volumn: -10,
 
 				init() {
 					this.m_synth = new Tone.Synth().toDestination();
 					Tone.Transport.bpm.value = this.p_BPM; // Set BPM
+					Tone.Destination.volume.value = this.p_volumn; // Set Volumn
 				},
 				processCode(input) {
 
@@ -186,14 +180,9 @@
 						return undefined; // Không fold nếu không có phạm vi hợp lệ
 					});
 
-					// TextArea Element
-					this.e_textarea = document.getElementById('notesInput');
-					let val = this.e_textarea.value;
-					val = val.trim().split('\n').map(v => v.trim()).join('\n');
-					this.e_textarea.value = val;
-
 					// Init Editor
-					this.m_editor = CodeMirror.fromTextArea(this.e_textarea, {
+					let textarea = document.getElementById('notesInput');
+					this.m_editor = CodeMirror.fromTextArea(textarea, {
 						mode: "midi",
 						lineNumbers: true,
 						lineWrapping: true,
@@ -201,10 +190,23 @@
 						foldGutter: true,
 						gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 					});
-					this.m_editor.foldCode(CodeMirror.Pos(13, 0));
+					this.setCode(`
+						;C4:16n B3:16n A3:16n R:16n
+						;C4:16n B3:16n A3:16n R:16n
+						;C4:8n A3:8n E4:8n G4:8n G4:5n E4:5n A4:4n R:4n
+
+						;A4:16n B4:16n C5:16n B4:16n A4:16n R:16n
+						;C5:16n B4:16n A4:16n R:16n
+						;C5:8n D5:16n E5:8n G5:8n G5:5n E5:5n A5:4n R:4n
+
+						A5:16n B5:16n C4:16n B3:16n A3:16n
+					`.trim().split('\n').map(v => v.trim()).join('\n'));
+				},
+				setCode(code) {
+					this.m_editor.setValue(code);
 				},
 				getCode() {
-					return this.e_textarea.value;
+					return this.m_editor.getValue();
 				},
 			},
 

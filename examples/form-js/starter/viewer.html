@@ -1,0 +1,128 @@
+<html>
+<head>
+
+  <title>Form Viewer</title>
+
+  <link rel="stylesheet" href="/lib/form-js/form-js.css">
+
+  <style>
+    #form {
+      max-width: 800px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="form"></div>
+
+  <script src="/lib/form-js/form-viewer.umd.js"></script>
+  <script type="module">
+    var mt = {
+      m_viewer: null,
+
+      async init() {
+        window.mt = this;
+
+        this.m_viewer = await FormViewer.createForm({
+          container: document.querySelector('#form'),
+          schema: {
+            "components": [
+                {
+                    "subtype": "date",
+                    "dateLabel": "Date",
+                    "type": "datetime",
+                    "layout": {
+                        "row": "Row_1u0tbzp",
+                        "columns": null
+                    },
+                    "id": "Field_16o4w93",
+                    "key": "datetime_vbj487"
+                },
+                {
+                    "label": "Checkbox group",
+                    "values": [
+                        {
+                            "label": "Value",
+                            "value": "value"
+                        }
+                    ],
+                    "type": "checklist",
+                    "layout": {
+                        "row": "Row_1u0tbzp",
+                        "columns": null
+                    },
+                    "id": "Field_1khvrqh",
+                    "key": "checklist_pcxfm4"
+                },
+                {
+                    "label": "Tag list",
+                    "values": [
+                        {
+                            "label": "Value",
+                            "value": "value"
+                        }
+                    ],
+                    "type": "taglist",
+                    "layout": {
+                        "row": "Row_0vpjtqu",
+                        "columns": null
+                    },
+                    "id": "Field_0yr6e8h",
+                    "key": "taglist_3es2em"
+                },
+                {
+                    "label": "Radio group",
+                    "values": [
+                        {
+                            "label": "Value",
+                            "value": "value"
+                        }
+                    ],
+                    "type": "radio",
+                    "layout": {
+                        "row": "Row_0vpjtqu",
+                        "columns": null
+                    },
+                    "id": "Field_0d5vfxn",
+                    "key": "radio_4w9c8p"
+                },
+                {
+                    "label": "Radio group",
+                    "values": [
+                        {
+                            "label": "Value",
+                            "value": "value"
+                        }
+                    ],
+                    "type": "radio",
+                    "layout": {
+                        "row": "Row_0vpjtqu",
+                        "columns": null
+                    },
+                    "id": "Field_0s1brq5",
+                    "key": "radio_gjxxir"
+                },
+                {
+                    "text": "# File an Invoice\n\n__Lorem ipsum dolor__ sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Arcu bibendum at [varius vel pharetra vel](http://foo) turpis nunc eget.\n\nAenean et tortor at risus. Ligula ullamcorper malesuada proin libero nunc consequat. Volutpat maecenas volutpat blandit aliquam etiam. Sodales neque sodales ut etiam sit amet nisl purus. Dictumst vestibulum rhoncus est pellentesque elit. \n\n# Another issue\n\n## Sub-heading\n\nArcu bibendum at varius vel pharetra vel turpis nunc eget.\n\n1. Scelerisque varius morbi enim nunc faucibus a. Senectus et netus et malesuada fames ac. \n2. Lorem sed risus ultricies tristique nulla aliquet. \n\nScelerisque felis imperdiet proin fermentum. \n\n* Purus semper eget duis at tellus at. \n* Imperdiet sed euismod nisi porta lorem mollis aliquam. \n* Dictum non consectetur a erat nam at lectus urna duis.\n\n\n## Images\n\n![some small image](https://via.placeholder.com/400x150)\n![ſome big image](https://via.placeholder.com/1000x150)",
+                    "type": "text",
+                    "id": "Field_1mt8g3j",
+                    "layout": {
+                        "row": "Row_11u4qnd"
+                    }
+                }
+            ],
+            "schemaVersion": 18,
+            "exporter": {
+              "name": "form-js",
+              "version": "0.1.0"
+            },
+            "type": "default",
+            "id": "Form_03d5bgq"
+          }
+        });
+      },
+    };
+    mt.init();
+  </script>
+</body>
+</html>
