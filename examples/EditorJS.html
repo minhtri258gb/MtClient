@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>EditorJS</title>
+
+	<link rel="stylesheet" href="/lib/onsenui-2.12.8/css/onsenui.min.css">
+	<link rel="stylesheet" href="/lib/onsenui-2.12.8/css/onsen-css-components.min.css">
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<script src="/lib/onsenui-2.12.8/js/onsenui.min.js"></script>
+
+	<style>
+		body {
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+
+	<a href="https://onsen.io/v2/guide/index.html" target="_blank">Document</a>
+
+	<ons-button onclick="alert('Hello World!')">Click Me</ons-button>
+
+	<script type="module">
+
+		var mt = {
+
+			l_editor: EditorJS,
+
+			init: function() {
+
+				// Bind Global
+				window.mt = mt;
+
+				// Init EditorJS
+			},
+		};
+		$(document).ready(() => mt.init());
+	</script>
+</body>
+</html>

@@ -1,18 +1,337 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-	<title>Calendar</title>
-	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
-	<link rel="stylesheet" href="/lib/calendarjs-2.12.2/calendar.js.min.css">
-	<script type="text/javascript" src="/lib/calendarjs-2.12.2/translations/calendar.translations.vi.js"></script>
-	<script type="text/javascript" src="/lib/calendarjs-2.12.2/calendar.min.js"></script>
-	<script type="text/javascript" src="/calendar/script.js"></script>
+
+	<title>FullCalendar</title>
+
+	<meta charset='utf-8' />
+
+	<script src='/lib/fullcalendar-6.1.18/index.global.min.js'></script>
+	<!-- <script src='/lib/fullcalendar-scheduler-6.1.18/index.global.min.js'></script> -->
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+			display: flex;
+		}
+		#calendar {
+			flex: 1;
+			margin: 16px;
+		}
+		form {
+			padding: 32px 4px;
+			background-color: beige;
+		}
+	</style>
 </head>
 <body>
-	<div id="calendar" style="width:100%;height:100%;"></div>
+
+	<div id='calendar'></div>
+
+	<form onsubmit="mt.saveForm(event)">
+		<input type="hidden" id="form_id" name="id" required><br><br>
+		<label for="title">Tiêu đề</label><br>
+		<input type="text" id="form_title" name="title" required><br><br>
+		<label for="startDate">Ngày bắt đầu</label><br>
+		<input type="date" id="form_startDate" name="startDate" required><br><br>
+		<!-- <label for="startTime">Giờ bắt đầu</label><br> -->
+		<!-- <input type="time" id="form_startTime" name="startTime"><br><br> -->
+		<!-- <label for="endDate">Ngày kết thúc</label><br> -->
+		<!-- <input type="date" id="form_endDate" name="endDate"><br><br> -->
+		<!-- <label for="endTime" >Giờ kết thúc</label><br> -->
+		<!-- <input type="time" id="form_endTime" name="endTime"><br><br> -->
+		<!-- <label for="allDay">
+			<input type="checkbox" id="form_allDay" name="allDay">
+			Cả ngày
+		</label><br><br> -->
+		<div style="width:100%;display:flex;justify-content:space-evenly">
+			<button type="reset">Đặt lại</button>
+			<button type="submit">Lưu</button>
+		</div>
+	</form>
+
 	<script type="module">
-		mt.init();
+		import mtAuthen from '/common/authen.js';
+		var mt = {
+			h_debug: false,
+			h_host: 'http://localhost:958/',
+			m_authn: mtAuthen,
+			d_event: {},
+
+			calendar: {
+				m_calendar: null,
+
+				// Method
+				init() {
+
+					let calendarEl = document.getElementById('calendar');
+					this.m_calendar = new FullCalendar.Calendar(calendarEl, {
+						initialView: 'dayGridMonth',
+						initialDate: '2024-12-08', // #DEBUG
+						locale: 'vi',
+						timeZone: 'Asia/Ho_Chi_Minh',
+						// Toolbar
+						headerToolbar: {
+							left: 'prev,next today',
+							center: 'title',
+							right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+						},
+						// UI Setting
+						firstDay: 1,
+						weekNumbers: true,
+						businessHours: false, // Sẫm màu 2 ngày cuối tuần
+						showNonCurrentDates: false, // Sâm 4màu các ngày ko thuộc tháng
+						buttonText: { // Phiên dịch
+							today: 'Hôm nay',
+							month: 'Tháng',
+							week: 'Tuần',
+							day: 'Ngày',
+							list: 'Sự kiện'
+						},
+						// Other
+						editable: false,
+						selectable: true,
+						dayMaxEvents: true, // allow "more" link when too many events
+						// Data
+						events: [],
+						// Register Event
+						datesSet: (info) => this.changeDate(info),
+						eventClick: (info) => this.eventClick(info),
+						dateClick: () => this.dateClick(),
+					});
+					this.m_calendar.render();
+				},
+				changeDate(info) { // khi đổi tháng, kiểu view, ngày, ...
+
+					// Lấy thông tin tháng hiện tại
+					var currentMonth = info.view.currentStart.getMonth() + 1;
+					var currentYear = info.view.currentStart.getFullYear();
+					mt.loadData(currentMonth, currentYear); // No Await
+				},
+				eventClick(info) { // khi Click vào sự kiện
+					mt.h_debug && console.log('eventClick:', info.event);
+
+					mt.form.set(info.event.extendedProps); // Load event lên Form
+				},
+				dateClick() { // khi Click vào ngày
+					// alert('a day has been clicked!');
+				},
+			},
+			form: {
+				e_field: {},
+
+				// Method
+				init() {
+					this.e_field = {
+						id: document.getElementById("form_id"),
+						title: document.getElementById("form_title"),
+						startDate: document.getElementById("form_startDate"),
+						// startTime: document.getElementById("form_startTime"),
+						// endDate: document.getElementById("form_endDate"),
+						// endTime: document.getElementById("form_endTime"),
+						// allDay: document.getElementById("form_allDay"),
+					};
+				},
+				get() {
+					let raw = {
+						id: this.e_field['id'].value,
+						title: this.e_field['title'].value,
+						startDate: this.e_field['startDate'].value,
+						// startTime: this.e_field['startTime'].value,
+						// endDate: this.e_field['endDate'].value,
+						// endTime: this.e_field['endTime'].value,
+						// allDay: this.e_field['allDay'].checked,
+					};
+					let dateEvent = mt.convert_dateCalendarToEvent(raw.startDate);
+					return {
+						id: Number.parseInt(raw.id),
+						name: raw.title,
+						...dateEvent,
+					};
+				},
+				set(data) {
+					let raw = {
+						id: data.id,
+						title: data.name,
+						startDate: mt.convert_dateEventToCalendar(data),
+					};
+					this.e_field['id'].value = raw.id;
+					this.e_field['title'].value = raw.title;
+					this.e_field['startDate'].value = raw.startDate;
+					// this.e_field['startTime'].value = raw.startTime;
+					// this.e_field['endDate'].value = raw.endDate;
+					// this.e_field['endTime'].value = raw.endTime;
+					// this.e_field['allDay'].checked = raw.allDay;
+				},
+			},
+
+			// Method
+			async init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Authn
+				await this.initAuthn();
+
+				// Form
+				this.form.init();
+
+				// Init Calendar
+				this.calendar.init();
+			},
+			async initAuthn() {
+
+				// Load Session
+				this.m_authn.init();
+
+				if (this.m_authn.checkAuthn())
+					return;
+
+				// Input
+				const password = prompt('Nhập mật khẩu:', '');
+				if (password == null || password.length == 0)
+					return;
+
+				// Login
+				try {
+					await this.m_authn.login(password);
+				}
+				catch (e) {
+					alert("Lỗi đăng nhập");
+					console.error(e);
+				}
+			},
+			async loadData(month, year) { // Tải dữ liệu sự kiện
+
+				if (month == null || year == null) {
+					let viewDate = this.getViewDate();
+					month = viewDate.getMonth()+1;
+					year = viewDate.getFullYear();
+				}
+
+				// Kiểm tra có data chưa
+				let keyData = `${year}_${month}`;
+				let listEventAvailable = this.d_event[keyData];
+				if (listEventAvailable != null)
+					return; // Đã có data
+
+				// Check Authn
+				if (!this.m_authn.checkAuthn())
+					return;
+
+				// Call API
+				const response = await fetch('/database/query', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + this.m_authn.getToken(),
+					},
+					body: JSON.stringify({
+						"database": "calendar",
+						"sql": `
+							SELECT id, name, day, month, year
+							FROM calendar
+							WHERE month = ${month} AND year = ${year}
+						`
+					}),
+				});
+				const listCalendar = await response.json();
+				this.h_debug && console.log('listCalendar', listCalendar);
+
+				// Lưu lại
+				this.d_event[keyData] = listCalendar;
+
+				// Load to calendar
+				let listEvent = listCalendar.map(e => {
+					return {
+						id: e.id,
+						title: e.name,
+						start: this.convert_dateEventToCalendar(e),
+						extendedProps: e,
+					};
+				});
+				this.h_debug && console.log('listEvent', listEvent);
+
+				// Thêm vào lịch để hiển thị
+				this.calendar.m_calendar.addEventSource(listEvent);
+			},
+			saveForm(event) {
+				event.preventDefault(); // Ngăn form reload trang
+
+				const dataObject = this.form.get();
+				console.log("Dữ liệu từ form (FormData):", dataObject);
+
+				// // Lấy giá trị từ form
+				// var title = document.getElementById('title').value;
+				// var startDate = document.getElementById('startDate').value;
+				// var startTime = document.getElementById('startTime').value;
+				// var endDate = document.getElementById('endDate').value;
+				// var endTime = document.getElementById('endTime').value;
+				// var allDay = document.getElementById('allDay').checked;
+
+				// // Tạo đối tượng sự kiện
+				// var event = {
+				// 	title: title,
+				// 	allDay: allDay
+				// };
+
+				// // Xử lý ngày giờ bắt đầu
+				// if (allDay) {
+				// 	event.start = startDate;
+				// 	if (endDate) {
+				// 		// Thêm 1 ngày cho endDate nếu là sự kiện cả ngày
+				// 		var endDateObj = new Date(endDate);
+				// 		endDateObj.setDate(endDateObj.getDate() + 1);
+				// 		event.end = endDateObj.toISOString().split('T')[0];
+				// 	}
+				// }
+				// else {
+				// 	event.start = startDate + (startTime ? 'T' + startTime + ':00' : 'T00:00:00');
+				// 	if (endDate && endTime) {
+				// 		event.end = endDate + 'T' + endTime + ':00';
+				// 	} else if (endDate) {
+				// 		event.end = endDate + 'T00:00:00';
+				// 	}
+				// }
+
+				// // Thêm sự kiện vào FullCalendar
+				// calendar.addEvent(event);
+
+				// // Reset form
+				// document.getElementById('eventForm').reset();
+			},
+
+			// Get / Set
+			getViewDate() { // Lấy thời gian đang xem của lịch (class Date)
+				return this.m_calendar.getDate();
+			},
+
+			// Utils
+			convert_dateEventToCalendar(event) { // Chuyển date event thành date calendar
+				if (event == null)
+					return '';
+
+				const formattedMonth = event.month < 10 ? `0${event.month}` : event.month;
+				const formattedDay = event.day < 10 ? `0${event.day}` : event.day;
+
+				return `${event.year}-${formattedMonth}-${formattedDay}`;
+			},
+			convert_dateCalendarToEvent(date) { // Chuyển date calendar thành date event
+				if (date == null || date.length == 0)
+					return null;
+
+				return {
+					day: Number.parseInt(date.substr(8, 2)),
+					month: Number.parseInt(date.substr(5, 2)),
+					year: Number.parseInt(date.substr(0, 4)),
+				};
+			},
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
 	</script>
+
 </body>
 </html>
