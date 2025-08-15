@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>AG Grid</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script src="/lib/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+	<!-- <link href="/lib/ag-grid-community/styles/ag-grid-no-native-widgets.min.css" rel="stylesheet" /> -->
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+
+		button { padding: 10px 20px; font-size: 16px; }
+
+		div.wrapcontent {
+			width: 100%;
+			height: 100%;
+			margin-top: 16px;
+			flex: 1;
+			display: flex;
+		}
+		div.leftcontent {
+			flex: 1;
+			background-color: #588363;
+		}
+		div.rightcontent {
+			flex: 1;
+			background-color: #6c5883;
+		}
+
+		/* Code */
+		.CodeMirror { height: 100%; }
+		.cm-midi-note { color: #0000FF; font-weight: bold; } /* Màu xanh cho nốt */
+		.cm-midi-rest { color: #FF0000; font-weight: bold; } /* Màu đỏ cho nốt trống */
+		.cm-midi-duration { color: #008000; } /* Màu xanh lá cho thời lượng */
+		.cm-midi-comment { color: #808080; font-style: italic; } /* Màu xám cho comment */
+	</style>
+
+</head>
+<body>
+
+	<div id="myGrid" style="height: 500px"></div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Grid Options: Contains all of the Data Grid configurations
+				const gridOptions = {
+					rowData: [
+						{ make: "Tesla", model: "Model Y", price: 64950, electric: true },
+						{ make: "Ford", model: "F-Series", price: 33850, electric: false },
+						{ make: "Toyota", model: "Corolla", price: 29600, electric: false },
+					],
+					columnDefs: [
+						{ field: "make", editable: true },
+						{ field: "model", editable: true },
+						{ field: "price", editable: true },
+						{ field: "electric", editable: true }
+					]
+				};
+
+				// Your Javascript code to create the Data Grid
+				const myGridElement = document.querySelector('#myGrid');
+				agGrid.createGrid(myGridElement, gridOptions);
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

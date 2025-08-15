@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Markdown Editor</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script src="/lib/marked-16.1.2/marked.umd.js"></script>
+	<script src="/lib/mermaid-11.6.0/mermaid.min.js"></script>
+
+	<link href="/lib/simplemde-1.11.2-0/simplemde.min.css" rel="stylesheet">
+	<script src="/lib/simplemde-1.11.2-0/simplemde.min.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		simplemde: https://github.com/sparksuite/simplemde-markdown-editor
+		marked.js: https://marked.js.org
+		mermaid.js: https://mermaid.js.org
+		MathJax/KaTeX
+		Chart.js
+		LilyPond/ABC.js
+	 -->
+
+	<textarea id="markdownEditor"></textarea>
+
+	<script type="module">
+		import * as marked from '/lib/marked-16.1.2/marked.esm.js';
+		var mt = {
+			m_editor: null,
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+
+
+				// Marmaid
+				mermaid.initialize({
+					startOnLoad: false,
+					theme: 'default'
+				});
+				// mermaid.run()
+
+
+
+				// Marked
+				const renderer = new marked.Renderer();
+				renderer.code = (params) => {
+					// Kiểm tra nếu ngôn ngữ của khối mã là 'mermaid'
+					if (params.lang === 'mermaid')
+						return '<div class="mermaid">' + params.text + '</div>';
+					// Đối với các loại mã khác, sử dụng renderer mặc định của Marked.js
+					return '<pre><code class="' + params.lang + '">' + params.text + '</code></pre>';
+				};
+				marked.setOptions({ renderer: renderer });
+
+
+
+				// SimpleMDE
+				var toggleState = false;
+				this.m_editor = new SimpleMDE({
+					element: document.getElementById("markdownEditor"),
+					spellChecker: false,
+					status: false,
+					tabSize: 4,
+					toolbar: [
+						'bold','italic','strikethrough','|',
+						'heading','heading-1','heading-2','heading-3','|',
+						'code','quote','unordered-list','ordered-list','clean-block','|',
+						'link','image','table','horizontal-rule','|',
+						{ name: "mermaid", title: "Insert Mermaid Diagram", className: "fa fa-area-chart", action: (editor) => {
+
+							toggleState = !toggleState; // Đảo trạng thái
+
+							// // Ví dụ: thay đổi nội dung hoặc style theo trạng thái
+							// if (toggleState) {
+							// 		editor.codemirror.setOption("theme", "monokai"); // bật theme tối
+							// 		alert("Toggle ON");
+							// } else {
+							// 		editor.codemirror.setOption("theme", "default"); // tắt
+							// 		alert("Toggle OFF");
+							// }
+
+							// // Cập nhật icon / style của nút trên toolbar
+							// let toolbarButton = editor.toolbarElements.mermaid;
+							// if (!toolbarButton)
+							// 	return;
+
+							// if (toggleState)
+							// 	toolbarButton.classList.add("active");
+							// else
+							// 	toolbarButton.classList.remove("active");
+
+							editor.codemirror.replaceSelection('```mermaid\ngraph TD;\n    A-->B;\n```\n');
+						}},'|',
+						'preview','side-by-side','fullscreen','|',
+						'guide',
+					],
+					previewRender: (plainText, preview) => {
+						preview.innerHTML = marked.parse(plainText);
+						setTimeout(() => mermaid.run({ querySelector: '.mermaid' }), 0);
+						return preview.innerHTML;
+					},
+				});
+
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

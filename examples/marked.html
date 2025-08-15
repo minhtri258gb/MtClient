@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Marked</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- <script src='/lib/marked-16.1.2/marked.umd.js'></script> -->
+
+	<link rel="stylesheet" href="/lib/codemirror5-5.65.18/lib/codemirror.css">
+	<link rel="stylesheet" href="/lib/codemirror5-5.65.18/addon/fold/foldgutter.css" />
+	<script src="/lib/codemirror5-5.65.18/lib/codemirror.js"></script>
+	<script src="/lib/codemirror5-5.65.18/addon/fold/foldcode.js"></script>
+	<script src="/lib/codemirror5-5.65.18/addon/fold/foldgutter.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+
+		button { padding: 10px 20px; font-size: 16px; }
+
+		div.wrapcontent {
+			width: 100%;
+			height: 100%;
+			margin-top: 16px;
+			flex: 1;
+			display: flex;
+		}
+		div.leftcontent {
+			flex: 1;
+			background-color: #588363;
+		}
+		div.rightcontent {
+			flex: 1;
+			background-color: #6c5883;
+		}
+
+		/* Code */
+		.CodeMirror { height: 100%; }
+		.cm-midi-note { color: #0000FF; font-weight: bold; } /* Màu xanh cho nốt */
+		.cm-midi-rest { color: #FF0000; font-weight: bold; } /* Màu đỏ cho nốt trống */
+		.cm-midi-duration { color: #008000; } /* Màu xanh lá cho thời lượng */
+		.cm-midi-comment { color: #808080; font-style: italic; } /* Màu xám cho comment */
+	</style>
+
+</head>
+<body>
+
+	<h1>Markdown Editor</h1>
+
+	<button onclick="mt.convert()">Render</button>
+
+	<div class="wrapcontent">
+		<div class="leftcontent">
+			<textarea id="markdownEditor"></textarea>
+		</div>
+		<div class="rightcontent">
+			<div id="content"></div>
+		</div>
+	</div>
+
+	<script type="module">
+		import * as marked from '/lib/marked-16.1.2/marked.esm.js';
+		var mt = {
+
+			editor: {
+				m_editor: null,
+
+				init() {
+
+					// Init Editor
+					let textarea = document.getElementById('markdownEditor');
+					this.m_editor = CodeMirror.fromTextArea(textarea, {
+						// mode: "markdown",
+						// lineNumbers: true,
+						// lineWrapping: true,
+						// extraKeys: {"Ctrl-W": function(cm){ cm.foldCode(cm.getCursor()); }},
+						// foldGutter: true,
+						// gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+						mode: 'javascript',
+						theme: 'default',
+						lineNumbers: true,
+						lineWrapping: true
+					});
+
+					// First Init
+					this.setCode('# Marked in the browser\n\nRendered by **marked**.');
+				},
+				setCode(code) {
+					this.m_editor.setValue(code);
+				},
+				getCode() {
+					return this.m_editor.getValue();
+				},
+			},
+			marked: {
+				e_content: null,
+
+				init() {
+					this.e_content = document.getElementById('content');
+				},
+				render(code) {
+					this.e_content.innerHTML = marked.parse(code);
+				},
+			},
+
+			init() {
+				window.mt = this; // Bind Global
+
+				// Init
+				this.editor.init();
+				this.marked.init();
+
+				// Render
+				this.convert();
+			},
+			convert() {
+				let code = this.editor.getCode();
+				this.marked.render(code);
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

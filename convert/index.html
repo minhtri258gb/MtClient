@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Convert</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+			font-family: MONOSPACE;
+		}
+	</style>
+
+</head>
+<body>
+
+	<h1>Search convert</h1>
+	<input type="text" />
+
+	<div id="convertBase64">
+		<h2 id="labelBase64">Text -> Base64</h2>
+		<input id="directBase64" type="hidden" value="1" />
+		<button onclick="mt.switch('Base64')">Switch</button>
+		<input id="inputBase64" type="text" />
+		<button onclick="mt.convert('Base64')">Convert</button>
+		<span id="outputBase64"></span>
+	</div>
+
+	<div id="convertURL">
+		<h2 id="labelURL">URL -> ParamURL</h2>
+		<input id="directURL" type="hidden" value="1" />
+		<button onclick="mt.switch('URL')">Switch</button>
+		<select id="typeConvertURL">
+			<option value="all">All</option>
+			<option value="keep">Keep struct</option>
+		</select>
+		<input id="inputURL" type="text" />
+		<button onclick="mt.convert('URL')">Convert</button>
+		<span id="outputURL"></span>
+	</div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+			},
+			convert(type) {
+				switch (type) {
+					case 'URL':
+						let directURL = $('#directURL').val() == '1';
+						let typeConvertURL = $('#typeConvertURL').val();
+						let valueURL = $('#inputURL').val();
+						let resURL = '';
+						if (directURL) { // Kiểm tra chiều encode / decode
+							if (typeConvertURL == 'all')
+								resURL = encodeURIComponent(valueURL);
+							else if (typeConvertURL == 'keep')
+								resURL = encodeURI(valueURL)
+						}
+						else {
+							if (typeConvertURL == 'all')
+								resURL = decodeURIComponent(valueURL);
+							else if (typeConvertURL == 'keep')
+								resURL = decodeURI(valueURL)
+						}
+						$('#outputURL').html(resURL);
+						break;
+					case 'Base64':
+						let directBase64 = $('#directBase64').val() == '1';
+						let valueBase64 = $('#inputBase64').val();
+						let resBase64 = '';
+						if (directBase64) // Kiểm tra chiều encode / decode
+							resBase64 = btoa(valueBase64);
+						else
+							resBase64 = atob(valueBase64);
+						$('#outputBase64').html(resBase64);
+						break;
+					default:
+						console.error('type:', type);
+						alert('Lỗi convert! Ko có type tương ứng!');
+				}
+			},
+			switch(type) {
+				switch(type) {
+					case 'URL':
+						let directURL = $('#directURL').val() == '1';
+						directURL = !directURL; // Toggle
+						$('#directURL').val(directURL ? '1' : '0');
+						$('#labelURL').html(directURL ? 'URL -> ParamURL' : 'ParamURL -> URL');
+						break;
+					case 'Base64':
+						let directBase64 = $('#directBase64').val() == '1';
+						directBase64 = !directBase64; // Toggle
+						$('#directBase64').val(directBase64 ? '1' : '0');
+						$('#labelBase64').html(directBase64 ? 'Text -> Base64' : 'Base64 -> Text');
+						break;
+					default:
+						console.error('type:', type);
+						alert('Lỗi swtich! Ko có type tương ứng!');
+				}
+			},
+			search() {
+				// #TODO
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
