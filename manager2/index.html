@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Manager</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/nanogallery2/css/nanogallery2.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/test/style.css"> -->
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
+	<!-- <script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/lib/nanogallery2/jquery.nanogallery2.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
+	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
+</head>
+<body>
+	<h1>gallery made with nanogallery2</h1>
+	<div class="ui input">
+		<input type="text" placeholder="Search...">
+	</div>
+	<button class="ui button">Follow</button>
+
+	<table class="ui very compact table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Status</th>
+				<th>Another Status</th>
+				<th>Notes</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>John</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>None</td>
+			</tr>
+			<tr>
+				<td>Jamie</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>Requires call</td>
+			</tr>
+			<tr>
+				<td>John</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>None</td>
+			</tr>
+			<tr>
+				<td>Jamie</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>Requires call</td>
+			</tr>
+			<tr>
+				<td>John</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>None</td>
+			</tr>
+			<tr>
+				<td>Jamie</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>Requires call</td>
+			</tr>
+			<tr>
+				<td>John</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>None</td>
+			</tr>
+			<tr>
+				<td>Jamie</td>
+				<td>Approved</td>
+				<td>Approved</td>
+				<td>Requires call</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<div id="tab" class="ui top attached tabular menu">
+		<a class="item active" data-tab="first">First</a>
+		<a class="item" data-tab="second">Second</a>
+		<a class="item" data-tab="third">Third</a>
+	</div>
+	<div class="ui bottom attached tab segment active" data-tab="first">
+		First
+	</div>
+	<div class="ui bottom attached tab segment" data-tab="second">
+		Second
+	</div>
+	<div class="ui bottom attached tab segment" data-tab="third">
+		Third
+	</div>
+	
+	<script>
+		$('#tab .item').tab(); // Init tab
+	</script>
+</body>
+</html>

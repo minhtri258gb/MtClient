@@ -3,10 +3,11 @@ import mtAuthen from '/common/authen.js';
 import mtUtil from '/common/util.js';
 
 var mt = {
+	// h_endpoint: 'https://api.jikan.moe/v4/top/anime',
 	h_endpoint: '/database/tabulator',
 	p_authen: mtAuthen,
 	c_table: null,
-	m_database: 'contact',
+	m_database: 'manager',
 	d_row: '', // Row đang lưu
 	d_sql: '', // SQL
 
@@ -53,7 +54,7 @@ var mt = {
 			filterMode: 'remote', // Filter
 			headerFilterLiveFilterDelay: 600,
 			sortMode: 'remote', // Sort
-			initialSort: [{column: 'first_name', dir: 'asc'}],
+			// initialSort: [{column: 'time', dir: 'desc'}],
 			ajaxURL: this.h_endpoint, // Ajax
 			ajaxConfig: {
 				method: 'POST',
@@ -66,10 +67,10 @@ var mt = {
 				body: (url, config, params) => {
 					return JSON.stringify({
 						database: this.m_database,
-						select: 'id,first_name,last_name,special_name,gender,birthday,phone,email,tag,address,address_lat,address_lng',
-						from: 'person',
+						select: 'id,name,graphic,audio,gameplay,story,review,muliplayer,end,updateTime,field11,field12',
+						from: 'game',
 						where: '',
-						sort: 'first_name DESC',
+						sort: 'updateTime DESC',
 						...params,
 					});
 				}
@@ -406,6 +407,7 @@ var mt = {
 
 		if (!response.ok) {
 			alert('[ERROR] ' + jsonData.message);
+			console.error('[ERROR] ', jsonData);
 			return;
 		}
 
@@ -436,6 +438,5 @@ var mt = {
 		$codeBlock.text(this.d_sql);
 		Prism.highlightElement($codeBlock[0]);
 	},
-
 };
 $(document).ready(() => mt.init());

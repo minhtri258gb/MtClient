@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vuetify</title>
+  <script src="/lib/vue/vue.global.prod.js"></script>
+  <script src="/lib/vuetify/vuetify.min.js"></script>
+  <link href="/lib/vuetify/css/vuetify.min.css" type="text/css" rel="stylesheet"/>
+  <link href="/lib/vuetify/css/materialdesignicons.min.css" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <v-card>
+        <v-tabs v-model="tab" bg-color="primary" align-tabs="center" stacked>
+          <v-tab v-for="item in listTabShow" :key="item" :value="item"><v-icon>{{mapIcons[item]}}</v-icon>{{item}}</v-tab>
+        </v-tabs>
+      <v-window v-model="tab">
+        <v-window-item key="manager" value="manager">
+          <v-btn density="default" @click="addTab('anime')">anime</v-btn>
+          <v-btn density="default" @click="addTab('game')">game</v-btn>
+          <v-btn density="default" @click="addTab('movie')">movie</v-btn>
+          <v-btn density="default" @click="addTab('film')">film</v-btn>
+          <v-btn density="default" @click="addTab('manga')">manga</v-btn>
+          <v-btn density="default" @click="addTab('account')">account</v-btn>
+        </v-window-item>
+        <v-window-item key="anime" value="anime">
+          <mt-tab-anime></mt-tab-anime>
+        </v-window-item>
+        <v-window-item key="game" value="game">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+        <v-window-item key="movie" value="movie">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+        <v-window-item key="film" value="film">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+        <v-window-item key="manga" value="manga">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+        <v-window-item key="account" value="account">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+      </v-window>
+    </v-card>
+  </div>
+  <script src="./script.js" type="module"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-var mtMap = {
+var mt = {
 
 	m_time_update: 10000,
 
@@ -15,7 +15,10 @@ var mtMap = {
 
 
 	init: async function() {
-		
+
+		// Bind Global
+		window.mt = mt;
+
 		// Tạo vòng lặp update
 		// this.frm_update_location(); // Gọi lần đầu
 		// this.frm_update_location = setInterval(this.frm_update_location, this.m_time_update);
@@ -112,8 +115,8 @@ var mtMap = {
 
 	// frm_update_location: function() { // Loop get newest location
 	// 	navigator.geolocation.getCurrentPosition(function(pos) {
-	// 		mtMap.m_lat = pos.coords.latitude;
-	// 		mtMap.m_lng = pos.coords.longitude;
+	// 		mt.m_lat = pos.coords.latitude;
+	// 		mt.m_lng = pos.coords.longitude;
 	// 	});
 	// },
 
@@ -122,7 +125,7 @@ var mtMap = {
 		let self = this;
 
 		if (navigator == null || navigator.geolocation == null)
-			throw("[mtMap:btnLocation] navigator.geolocation is null");
+			throw("[mt:btnLocation] navigator.geolocation is null");
 
 		navigator.geolocation.getCurrentPosition(function(pos) {
 			self.m_lat = pos.coords.latitude;
@@ -141,4 +144,5 @@ var mtMap = {
 	btnContact: function() {
 		console.log("btnContact");
 	},
-}
+};
+$(document).ready(() => mt.init());

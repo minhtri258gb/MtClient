@@ -2,18 +2,18 @@
 <html>
 <head>
 	<title>3D</title>
-	
 	<meta charset="utf-8">
-	
-	<link rel="stylesheet" type="text/css" href="/3D/css/style.css">
-	
-	<script type="text/javascript" src="/lib/three/three.min.js"></script>
-	<script type="text/javascript" src="/3D/js/engine.js"></script>
-	
+	<link rel="stylesheet" type="text/css" href="/3D/style.css">
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "/lib/threejs/three.module.min.js",
+				"three/addons/": "/lib/threejs/jsm/"
+			}
+		}
+	</script>
 </head>
 <body>
-	<script>
-		engine.init();
-	</script>
+	<script type="module" src="/3D/script.js"></script>
 </body>
 </html>

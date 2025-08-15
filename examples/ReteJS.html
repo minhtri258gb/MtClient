@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ReteJS</title>
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<script src="/lib/retejs-2.0.4/rete.min.js"></script>
+	<script src="/lib/retejs-2.0.4/rete-area-plugin.min.js"></script>
+	<script src="/lib/retejs-2.0.4/rete-connection-plugin.min.js"></script>
+	<script src="/lib/retejs-2.0.4/rete-render-utils.min.js"></script>
+	<script src="/lib/retejs-2.0.4/rete-react-plugin.min.js"></script>
+
+	<style>
+		body {
+			margin: 0;
+		}
+	</style>
+</head>
+<body>
+
+	<a href="https://retejs.org/docs/getting-started" target="_blank">Document</a>
+
+	<div id="editorjs"></div>
+
+	<script type="module">
+
+		var mt = {
+
+			l_editor: EditorJS,
+
+			init: function() {
+
+				// Bind Global
+				window.mt = mt;
+
+			},
+		};
+		$(document).ready(() => mt.init());
+	</script>
+</body>
+</html>
