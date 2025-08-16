@@ -39,13 +39,13 @@ var mt = {
 	m_clientPath: '',
 
 	// Method
-	init: async function() {
+	async init() {
 
 		// Bind Global
 		window.mt = mt;
 
-		// Authen auto
-		await this.p_authen.login('-1393153393');
+		// Authen
+		await this.p_authen.promt();
 
 		// Read config
 		let resClientPath = await fetch('/file/getClientPath', {
@@ -60,7 +60,7 @@ var mt = {
 		this.initUI();
 
 	},
-	initUI: function() {
+	initUI() {
 
 		// Init packgrid
 		mt.pg = $('#packgrid').packery({
@@ -131,7 +131,7 @@ var mt = {
 				$('#jstree').jstree('search', $('#fieldSearch').val());
 		});
 	},
-	processNode: function (data) { // Khi load node con
+	processNode(data) { // Khi load node con
 		for (let i = data.length - 1; i >= 0; i--) {
 			let item = data[i];
 
@@ -153,7 +153,7 @@ var mt = {
 		}
 		return data;
 	},
-	contextmenu: function(node) { // Click phải
+	contextmenu(node) { // Click phải
 		// doc: https://www.jstree.com/api/#/?q=$.jstree.defaults.contextmenu&f=$.jstree.defaults.contextmenu.items
 
 		let options = {};
@@ -198,14 +198,14 @@ var mt = {
 		// 	}
 		// };
 	},
-	doubleClick: function(node) { // Nhấn đúp
+	doubleClick(node) { // Nhấn đúp
 		if (node.type == 'html') {
 			let path = node.original.path;
 			path = path.replaceAll(this.m_clientPath, '');
 			window.open(path, '_blank');
 		}
 	},
-	getType: function(filename) { // Lấy type tương ứng trên JsTree
+	getType(filename) { // Lấy type tương ứng trên JsTree
 		let pos = filename.indexOf('.');
 		let ext = filename.substring(pos+1);
 		if (this.config.h_lstExt.includes(ext))

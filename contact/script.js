@@ -16,8 +16,8 @@ var mt = {
 		// Bind Global
 		window.mt = mt;
 
-		// Authen auto
-		await this.p_authen.login('-1393153393');
+		// Authen
+		await this.p_authen.promt();
 
 		// Init
 		this.initUI();

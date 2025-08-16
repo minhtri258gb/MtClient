@@ -25,6 +25,31 @@ var mtAuthen = {
 		else
 			throw { error: true, msg: "Lỗi đăng nhập" };
 	},
+	async promt(force) {
+
+		if (force !== false) {
+
+			// Load Session
+			this.init();
+
+			if (this.checkAuthn())
+				return;
+		}
+
+		// Input
+		const password = prompt('Nhập mật khẩu:', '');
+		if (password == null || password.length == 0)
+			return;
+
+		// Login
+		try {
+			await this.login(password);
+		}
+		catch (e) {
+			alert("Lỗi đăng nhập");
+			console.error(e);
+		}
+	},
 
 	// Get / Set
 	getToken() {

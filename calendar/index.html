@@ -57,7 +57,7 @@
 		var mt = {
 			h_debug: false,
 			h_host: 'http://localhost:958/',
-			m_authn: mtAuthen,
+			p_authen: mtAuthen,
 			d_event: {},
 
 			calendar: {
@@ -173,36 +173,14 @@
 				// Bind Global
 				window.mt = this;
 
-				// Authn
-				await this.initAuthn();
+				// Authen
+				await this.p_authen.promt();
 
 				// Form
 				this.form.init();
 
 				// Init Calendar
 				this.calendar.init();
-			},
-			async initAuthn() {
-
-				// Load Session
-				this.m_authn.init();
-
-				if (this.m_authn.checkAuthn())
-					return;
-
-				// Input
-				const password = prompt('Nhập mật khẩu:', '');
-				if (password == null || password.length == 0)
-					return;
-
-				// Login
-				try {
-					await this.m_authn.login(password);
-				}
-				catch (e) {
-					alert("Lỗi đăng nhập");
-					console.error(e);
-				}
 			},
 			async loadData(month, year) { // Tải dữ liệu sự kiện
 
@@ -219,7 +197,7 @@
 					return; // Đã có data
 
 				// Check Authn
-				if (!this.m_authn.checkAuthn())
+				if (!this.p_authen.checkAuthn())
 					return;
 
 				// Call API
@@ -227,7 +205,7 @@
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + this.m_authn.getToken(),
+						'Authorization': 'Bearer ' + this.p_authen.getToken(),
 					},
 					body: JSON.stringify({
 						"database": "calendar",

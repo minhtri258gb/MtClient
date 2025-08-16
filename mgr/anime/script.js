@@ -1,4 +1,3 @@
-
 import mtAuthen from '/common/authen.js';
 import mtUtil from '/common/util.js';
 
@@ -12,19 +11,19 @@ var mt = {
 	d_sql: '', // SQL
 
 	// Method
-	init: async function() {
+	async init() {
 
 		// Bind Global
 		window.mt = mt;
 
-		// Authen auto
-		await this.p_authen.login('-1393153393');
+		// Authen
+		await this.p_authen.promt();
 
 		// Init
 		this.initUI();
 
 	},
-	initUI: function() {
+	initUI() {
 
 		// Rating Prop
 		let ratingProp = {
@@ -149,7 +148,7 @@ var mt = {
 			debugMode: false,
 		});
 	},
-	rowContextMenu: function(event, row) {
+	rowContextMenu(event, row) {
 		let actions = [];
 
 		let rowData = row.getData();
@@ -217,7 +216,7 @@ var mt = {
 
 		return actions;
 	},
-	cellEdited: function(cell) { // Sau khi sửa
+	cellEdited(cell) { // Sau khi sửa
 
 		let row = cell.getRow(); // Cột đã chỉnh sửa
 		let rowData = row.getData(); // Dữ liệu của hàng
@@ -271,10 +270,10 @@ var mt = {
 			row.getElement().classList.add('highlight-row-edit');
 		}
 	},
-	cellDblClick: function(event, cell) { // Open Editor
+	cellDblClick(event, cell) { // Open Editor
 		cell.edit(true);
 	},
-	actionAdd: function(row) {
+	actionAdd(row) {
 		this.c_table.addData([{ id: -1}], true)
 			.then((row) => {
 
@@ -282,7 +281,7 @@ var mt = {
 				row[0].getElement().classList.add('highlight-row-add');
 			});
 	},
-	actionSave: function(row) {
+	actionSave(row) {
 
 		// Lấy dữ liệu của hàng
 		let rowData = row.getData();
@@ -368,7 +367,7 @@ var mt = {
 		this.d_row = row;
 		this.d_sql = sql;
 	},
-	actionRevert: function(row) {
+	actionRevert(row) {
 		let rowData = row.getData();
 		let origin = rowData._origin;
 		if (origin != null) {
@@ -381,10 +380,10 @@ var mt = {
 			row.getElement().classList.remove('highlight-row-edit');
 		}
 	},
-	actionRemove: function(row) {
+	actionRemove(row) {
 		row.delete();
 	},
-	actionExeccute: async function() {
+	async actionExeccute() {
 
 		let isInsert = this.d_sql.startsWith('INSERT');
 
@@ -422,7 +421,7 @@ var mt = {
 		let highlightClass = 'highlight-row-' + (isInsert ? 'add' : 'edit');
 		this.d_row.getElement().classList.remove(highlightClass);
 	},
-	eventCbkTime: function() { // Modal SQL - Checkbox Update Time
+	eventCbkTime() { // Modal SQL - Checkbox Update Time
 
 		// Kiểm tra giá trị checkbox
 		if ($('#cbxUpdateTime').is(':checked')) {
@@ -439,4 +438,4 @@ var mt = {
 		Prism.highlightElement($codeBlock[0]);
 	},
 };
-$(document).ready(() => mt.init());
+mt.init();
