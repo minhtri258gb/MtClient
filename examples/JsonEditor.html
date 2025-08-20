@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Json Editor</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- <link href="/lib/bootstrap-3.4.1/css/bootstrap.min.css" type="text/css" rel="stylesheet"> -->
+
+	<link href="/lib/fontawesome-5.15.4/css/all.min.css" type="text/css" rel="stylesheet">
+
+	<!-- <script src="/lib/json-editor-0.7.28/jsoneditor.min.js"></script> -->
+	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+		}
+
+		/* ============
+		 * JSON Editor
+		 * ============ */
+		#json_editor {
+			/* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; */
+		}
+		div[data-schematype="object"] h3,
+		div[data-schematype="array"] h3 {
+			/* display: flex; */
+			/* gap: 4px; */
+		}
+		div.row {
+			margin: 4px 0;
+		}
+		#json_editor label {
+			/* font-weight: 600; */
+			/* margin-bottom: 5px; */
+			/* display: block; */
+			/* color: #333; */
+			margin-right: 8px;
+		}
+		#json_editor input[type="text"],
+		#json_editor input[type="email"],
+		#json_editor input[type="number"],
+		#json_editor select,
+		#json_editor textarea {
+			/* width: 100%; */
+			/* padding: 8px 12px; */
+			/* border: 1px solid #ccc; */
+			/* border-radius: 4px; */
+			/* font-size: 14px; */
+			/* margin-bottom: 10px; */
+		}
+		#json_editor button {
+			/* background: #007bff; */
+			/* color: white; */
+			/* border: none; */
+			/* padding: 8px 16px; */
+			/* border-radius: 4px; */
+			/* cursor: pointer; */
+			/* margin-right: 5px; */
+			/* margin-bottom: 5px; */
+		}
+		#json_editor button:hover {
+			/* background: #0056b3; */
+		}
+		#json_editor button.btn-danger,
+		#json_editor button[title*="Delete"] {
+			/* background: #dc3545; */
+		}
+		#json_editor button.btn-danger:hover {
+			/* background: #c82333; */
+		}
+		#json_editor > div {
+			/* margin-bottom: 15px; */
+			/* padding: 15px; */
+			/* border: 1px solid #e9ecef; */
+			/* border-radius: 6px; */
+			/* background: #f8f9fa; */
+		}
+		#json_editor .error {
+			/* color: #dc3545; */
+			/* font-size: 12px; */
+			/* margin-top: 5px; */
+		}
+		.form-control {
+			/* display: block; */
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://github.com/jdorn/json-editor
+		https://github.com/json-editor/json-editor
+	-->
+
+	<div id="json_editor"></div>
+
+	<script type="module">
+		var mt = {
+			m_editor: null,
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// JsonEditor
+				const element = document.getElementById('json_editor');
+				this.m_editor = new JSONEditor(element, {
+					use_name_attributes: false,
+					theme: 'barebones',
+					iconlib: 'fontawesome5',
+					disable_edit_json: false,
+					disable_properties: false,
+					disable_collapse: false,
+					schema: {
+						title: 'Person',
+						type: 'object',
+						required: [
+							'name',
+							'age',
+							'date',
+							'favorite_color',
+							'gender',
+							'location',
+							'pets'
+						],
+						properties: {
+							'name': {
+								type: 'string',
+								description: 'First and Last name',
+								minLength: 4,
+								default: 'Jeremy Dorn'
+							},
+							'age': {
+								type: 'integer',
+								default: 25,
+								minimum: 18,
+								maximum: 99
+							},
+							'favorite_color': {
+								type: 'string',
+								'format': 'color',
+								'title': 'favorite color',
+								'default': '#ffa500'
+							},
+							'gender': {
+								type: 'string',
+								enum: [
+									'male',
+									'female',
+									'other'
+								]
+							},
+							'date': {
+								type: 'string',
+								format: 'date',
+								options: {
+									'flatpickr': {}
+								}
+							},
+							'location': {
+								type: 'object',
+								title: 'Location',
+								properties: {
+									'city': {
+										type: 'string',
+										default: 'San Francisco'
+									},
+									'state': {
+										type: 'string',
+										default: 'CA'
+									},
+									'citystate': {
+										type: 'string',
+										description: 'This is generated automatically from the previous two fields',
+										template: '{{city}}, {{state}}',
+										watch: {
+											'city': 'location.city',
+											'state': 'location.state'
+										}
+									}
+								}
+							},
+							'pets': {
+								title: 'Pets',
+								type: 'array',
+								format: 'table',
+								uniqueItems: true,
+								items: {
+									title: 'Pet',
+									type: 'object',
+									properties: {
+										'type': {
+											type: 'string',
+											enum: ['cat', 'dog', 'bird', 'reptile', 'other'],
+											default: 'dog'
+										},
+										'name': {
+											type: 'string'
+										}
+									}
+								},
+								default: [
+									{
+										'type': 'dog',
+										'name': 'Walter'
+									}
+								]
+							},
+							// 'new1': {
+							// 	"type": "string",
+							// 	"format": "markdown"
+							// },
+						}
+					}
+				});
+
+				// editor.setValue({name: "John Smith"});
+				// const value = editor.getValue();
+				// const name = editor.getEditor('root.name');
+
+			},
+			getForm() {
+				return this.m_editor.getValue();
+			},
+			setForm(data) {
+				this.m_editor.setValue(data);
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
