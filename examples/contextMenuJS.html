@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Context Menu</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+	<script src="/lib/contextMenuJS/contextMenu.min.js" type="text/javascript"></script>
+	<link href="/lib/contextMenuJS/contextMenu.min.css" rel="stylesheet">
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				var menuItems = [
+					{ text: "Item 1", icon: "&#9819;", sub: [{ text: "Sub Item 1", enabled: false }] },
+					{ text: "Item 2", events: { click: function(e) { console.log("Clicked Item 2"); } } }
+				];
+				var menu = new ContextMenu(menuItems);
+				document.addEventListener('contextmenu', function(e) {
+					menu.display(e);
+				});
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

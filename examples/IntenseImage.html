@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Intense Image</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/intense-images-1.0.7//intense.min.js"></script>
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- https://github.com/tholman/intense-images -->
+
+	<img class="intense" src="/res/images/image_holder.jpg" />
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				Intense(document.querySelectorAll('.intense'));
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

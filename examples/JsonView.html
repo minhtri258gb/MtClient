@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Json View</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/jsonview/jsonview.js" type="text/javascript"></script>
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="content"></div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// get json data
+				const data = '{"name": "json-view","version": "1.0.0"}';
+
+				const tree = jsonview.create(data); // create json tree object
+				jsonview.render(tree, document.querySelector('#content')); // render tree into dom element
+
+				// you can render json data without creating tree
+				// const tree2 = jsonview.renderJSON(data, document.querySelector('#content'));
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

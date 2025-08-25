@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Slick</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<script src="/lib/slick-1.8.0/slick.min.js"></script>
+	<link href="/lib/slick-1.8.0/slick.css" rel="stylesheet" />
+	<link href="/lib/slick-1.8.0/slick-theme.css" rel="stylesheet" />
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<!--
+		https://kenwheeler.github.io/slick
+		https://github.com/kenwheeler/slick
+	-->
+
+	<div class="slider">
+		<div><img src="/res/images/image_holder.jpg" /></div>
+		<div><img src="/res/images/image_holder.jpg" /></div>
+	</div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				$('.slider').slick({
+					slidesToShow: 3,
+					slidesToScroll: 1,
+					autoplay: true,
+					autoplaySpeed: 2000,
+				});
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

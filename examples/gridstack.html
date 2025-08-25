@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>GridStack</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/lib/gridstack-12.3.3/gridstack.min.css" rel="stylesheet"/>
+	<script src="/lib/gridstack-12.3.3/gridstack-all.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+		}
+
+		/* GridStack */
+		.grid-stack-item {
+			background-color: aquamarine;
+			box-shadow: 1px 1px 4px 0px;
+		}
+		.grid-stack-static {
+			.grid-stack-item {
+				background-color: rgb(243, 243, 243);
+			}
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://github.com/gridstack/gridstack.js
+		https://gridstackjs.com/doc/html
+	-->
+	
+	<button onclick="mt.dashboard.addWidget()">Add Widget</button>
+	<button onclick="mt.dashboard.editDashboard()">Edit Dashboard</button>
+
+	<div class="grid-stack"></div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// GridStack
+				this.dashboard.init();
+			},
+			dashboard: {
+				p_grid: null,
+				m_isEdit: true,
+
+				init() {
+
+					this.p_grid = GridStack.init({
+						staticGrid: !this.m_isEdit,
+						float: true,
+						cellHeight: 70,
+						acceptWidgets: true,
+						removable: true,
+					});
+
+					// this.p_grid.addWidget({w: 2, content: 'item 1'});
+
+					const serializedData = [
+						{x: 0, y: 0, w: 2, h: 2},
+						{x: 2, y: 3, w: 3, content: 'item 2'},
+						{x: 1, y: 3},
+
+						{x: 0, y: 0, w: 2, h: 2, id: '0'},
+						{x: 3, y: 1, h: 2, id: 'no_move', noMove: true, content: 'no move'},
+						{x: 4, y: 1, id: '2'},
+						{x: 2, y: 3, w: 3, id: 'no_resize', noResize: true, content: 'no resize'},
+						{x: 1, y: 3, id: 'locked', locked: true, content: 'locked'}
+					];
+
+					this.p_grid.load(serializedData);
+				},
+				editDashboard() {
+					this.m_isEdit = !this.m_isEdit;
+					this.p_grid.setStatic(!this.m_isEdit);
+				},
+				addWidget() {
+					this.p_grid.addWidget({x: 0, y: 0, content: "new item"});
+				},
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
