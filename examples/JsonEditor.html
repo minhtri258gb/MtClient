@@ -11,8 +11,20 @@
 
 	<link href="/lib/fontawesome-5.15.4/css/all.min.css" type="text/css" rel="stylesheet">
 
-	<!-- <script src="/lib/json-editor-0.7.28/jsoneditor.min.js"></script> -->
+	<link href="/lib/json-editor-2.15.2/mt-style.css" type="text/css" rel="stylesheet">
 	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<!-- <script src="/lib/vanilla-picker-2.0.1/vanilla-picker.min.js"></script> -->
+
+	<!-- <link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet"> -->
+	<!-- <script src="/lib/flatpickr/flatpickr.min.js"></script> -->
+
+	<!-- <link href="/lib/autocomplete/style.css" type="text/css" rel="stylesheet"> -->
+	<!-- <script src="/lib/autocomplete/autocomplete.min.js"></script> -->
+
+	<!-- <link href="/lib/choicesjs-11.1.0/base.min.css" type="text/css" rel="stylesheet"> -->
+	<!-- <link href="/lib/choicesjs-11.1.0/choices.min.css" type="text/css" rel="stylesheet"> -->
+	<!-- <script src="/lib/choicesjs-11.1.0/choices.min.js"></script> -->
 
 	<style>
 		body {
@@ -20,75 +32,6 @@
 			margin: 0;
 			padding: 16px;
 			height: 100vh;
-		}
-
-		/* ============
-		 * JSON Editor
-		 * ============ */
-		#json_editor {
-			/* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; */
-		}
-		div[data-schematype="object"] h3,
-		div[data-schematype="array"] h3 {
-			/* display: flex; */
-			/* gap: 4px; */
-		}
-		div.row {
-			margin: 4px 0;
-		}
-		#json_editor label {
-			/* font-weight: 600; */
-			/* margin-bottom: 5px; */
-			/* display: block; */
-			/* color: #333; */
-			margin-right: 8px;
-		}
-		#json_editor input[type="text"],
-		#json_editor input[type="email"],
-		#json_editor input[type="number"],
-		#json_editor select,
-		#json_editor textarea {
-			/* width: 100%; */
-			/* padding: 8px 12px; */
-			/* border: 1px solid #ccc; */
-			/* border-radius: 4px; */
-			/* font-size: 14px; */
-			/* margin-bottom: 10px; */
-		}
-		#json_editor button {
-			/* background: #007bff; */
-			/* color: white; */
-			/* border: none; */
-			/* padding: 8px 16px; */
-			/* border-radius: 4px; */
-			/* cursor: pointer; */
-			/* margin-right: 5px; */
-			/* margin-bottom: 5px; */
-		}
-		#json_editor button:hover {
-			/* background: #0056b3; */
-		}
-		#json_editor button.btn-danger,
-		#json_editor button[title*="Delete"] {
-			/* background: #dc3545; */
-		}
-		#json_editor button.btn-danger:hover {
-			/* background: #c82333; */
-		}
-		#json_editor > div {
-			/* margin-bottom: 15px; */
-			/* padding: 15px; */
-			/* border: 1px solid #e9ecef; */
-			/* border-radius: 6px; */
-			/* background: #f8f9fa; */
-		}
-		#json_editor .error {
-			/* color: #dc3545; */
-			/* font-size: 12px; */
-			/* margin-top: 5px; */
-		}
-		.form-control {
-			/* display: block; */
 		}
 	</style>
 
@@ -100,9 +43,10 @@
 		https://github.com/json-editor/json-editor
 	-->
 
-	<div id="json_editor"></div>
+	<div id="json-editor" class="json-editor"></div>
 
 	<script type="module">
+		import JsonEditorEX from '/lib/json-editor-2.15.2/mt-script.js';
 		var mt = {
 			m_editor: null,
 
@@ -112,7 +56,8 @@
 				window.mt = this;
 
 				// JsonEditor
-				const element = document.getElementById('json_editor');
+				JsonEditorEX.RateRegister();
+				const element = document.getElementById('json-editor');
 				this.m_editor = new JSONEditor(element, {
 					use_name_attributes: false,
 					theme: 'barebones',
@@ -121,76 +66,244 @@
 					disable_properties: false,
 					disable_collapse: false,
 					schema: {
-						title: 'Person',
+						title: 'Form Json',
 						type: 'object',
 						required: [
-							'name',
-							'age',
-							'date',
-							'favorite_color',
-							'gender',
-							'location',
-							'pets'
+							'propString',
+							'propNumber',
+							'propSelectBox',
+							'propDate',
+							'propColor',
+							'propArray',
+							'propObject',
 						],
 						properties: {
-							'name': {
+							'propHidden': {
+								title: 'Field Hidden',
 								type: 'string',
-								description: 'First and Last name',
-								minLength: 4,
-								default: 'Jeremy Dorn'
+								format: 'hidden',
 							},
-							'age': {
+							'propString': {
+								title: 'Field String',
+								type: 'string',
+								format: 'text',
+								minLength: 0,
+								default: 'someText',
+								// description: 'Property String',
+							},
+							'propEmail': {
+								title: 'Field Email',
+								type: 'string',
+								format: 'email',
+								default: 'trinm@gmail.com',
+							},
+							'propPassword': {
+								title: 'Field Password',
+								type: 'string',
+								format: 'password',
+								default: 'password',
+							},
+							'propTelephone': {
+								title: 'Field Telephone',
+								type: 'string',
+								format: 'tel',
+							},
+							'propURL': {
+								title: 'Field URL',
+								type: 'string',
+								format: 'url',
+								default: 'http://www.google.com',
+							},
+							'propSearch': {
+								title: 'Field Search',
+								type: 'string',
+								format: 'search',
+							},
+							'propNumber': {
+								title: 'Field Number',
+								type: 'string',
+								format: 'number',
+								default: 123,
+								minimum: 0,
+								maximum: 9999,
+							},
+							'propInteger': {
+								title: 'Field Integer',
 								type: 'integer',
-								default: 25,
-								minimum: 18,
-								maximum: 99
+								default: 123,
+								minimum: 0,
+								maximum: 9999,
 							},
-							'favorite_color': {
+							'propDecimal': {
+								title: 'Field Decimal',
+								type: 'number',
+								default: 123.555,
+								minimum: 0,
+								maximum: 9999,
+							},
+							'propRange': {
+								title: 'Field Range',
+								type: 'integer',
+								format: 'range',
+								default: 8,
+								minimum: 0,
+								maximum: 10,
+								multipleOf: 2,
+								// description: 'Property Number',
+							},
+							'propCheckbox': {
+								title: 'Field Checkbox',
 								type: 'string',
-								'format': 'color',
-								'title': 'favorite color',
-								'default': '#ffa500'
+								format: 'checkbox',
 							},
-							'gender': {
+							'propButton': {
+								title: 'Field Button',
 								type: 'string',
-								enum: [
-									'male',
-									'female',
-									'other'
-								]
+								format: 'button',
 							},
-							'date': {
+							'propReset': {
+								title: 'Field Reset',
+								type: 'string',
+								format: 'reset',
+							},
+							'propSubmit': {
+								title: 'Field Submit',
+								type: 'string',
+								format: 'submit',
+							},
+							// 'propAutoComplete': {
+							// 	title: 'Field AutoComplete',
+							// 	type: 'string',
+							// 	format: 'autocomplete',
+							// 	enum: ["Việt Nam", "Hoa Kỳ", "Nhật Bản", "Hàn Quốc", "Singapore"],
+							// 	options: {
+							// 		// enum_titles: ["Việt Nam", "Hoa Kỳ", "Nhật Bản", "Hàn Quốc", "Singapore"],
+							// 		autocomplete: {
+							// 			search: (text) => {
+							// 				console.log('search:', text);
+							// 			},
+							// 			onSubmit: () => {
+							// 				console.log('onSubmit');
+							// 			},
+							// 		},
+							// 	},
+							// 	// description: 'Property String',
+							// },
+							// 'propColor2': { // LIB: vanilla-picker
+							// 	title: 'Field Color 2',
+							// 	type: 'string',
+							// 	format: 'color',
+							// 	default: '#ffa500',
+							// 	options: {
+							// 		colorpicker: {
+							// 			alpha: true,
+							// 			// editorFormat: 'rgb', // rgb, hls
+							// 			// popup: false, // top, right, left, false
+							// 		}
+							// 	}
+							// },
+							'propSelectBox': {
+								title: 'Field SelectBox',
+								type: 'string',
+								enum: ['male','female','other'],
+								// description: 'Property SelectBox',
+							},
+							'propRadio': {
+								title: 'Field Radio',
+								type: 'string',
+								format: 'radio',
+								enum: ['male','female','other'],
+							},
+							// 'propChoice': {
+							// 	title: 'Field Choice',
+							// 	type: 'string',
+							// 	format: 'choices',
+							// 	enum: ['male','female','other'],
+							// 	// description: 'Property SelectBox',
+							// },
+							'propDate': {
+								title: 'Field Date',
 								type: 'string',
 								format: 'date',
+								default: '2025-08-20',
 								options: {
-									'flatpickr': {}
-								}
-							},
-							'location': {
-								type: 'object',
-								title: 'Location',
-								properties: {
-									'city': {
-										type: 'string',
-										default: 'San Francisco'
+									inputAttributes: {
+										lang: 'vi'
 									},
-									'state': {
-										type: 'string',
-										default: 'CA'
-									},
-									'citystate': {
-										type: 'string',
-										description: 'This is generated automatically from the previous two fields',
-										template: '{{city}}, {{state}}',
-										watch: {
-											'city': 'location.city',
-											'state': 'location.state'
-										}
-									}
-								}
+									// 	flatpickr: {}
+								},
 							},
-							'pets': {
-								title: 'Pets',
+							'propDateTime': {
+								title: 'Field DateTime',
+								type: 'string',
+								format: 'datetime-local',
+								default: '2025-08-07T16:59',
+								// options: {
+								// 	flatpickr: {}
+								// },
+								// description: 'Property Date',
+							},
+							'propTime': {
+								title: 'Field Time',
+								type: 'string',
+								format: 'time',
+								default: '2025-08-20',
+								// options: {
+								// 	flatpickr: {}
+								// },
+								// description: 'Property Time',
+							},
+							'propMonth': {
+								title: 'Field Month',
+								type: 'string',
+								format: 'month',
+							},
+							'propWeek': {
+								title: 'Field Week',
+								type: 'string',
+								format: 'week',
+							},
+							// 'propDate2': { // LIB: flatpickr
+							// 	title: 'Field Date 2',
+							// 	type: 'string',
+							// 	format: 'date',
+							// 	default: '2025-08-20',
+							// 	options: {
+							// 		flatpickr: {}
+							// 	},
+							// 	// description: 'Property Date',
+							// },
+							'propColor': {
+								title: 'Field Color',
+								type: 'string',
+								format: 'color',
+								default: '#ffa500',
+								// description: 'Property Color',
+							},
+							'propImage': {
+								title: 'Field Image',
+								type: 'string',
+								format: 'image',
+							},
+							'propFile': {
+								title: 'Field File',
+								type: 'string',
+								format: 'file',
+							},
+							'propTextarea': {
+								title: 'Field Textarea',
+								type: 'string',
+								format: 'textarea',
+								minLength: 0,
+								default: 'someText',
+								// description: 'Property String',
+							},
+							// 'propMarkdown': {
+							// 	type: 'string',
+							// 	format: 'markdown'
+							// },
+							'propArray': {
+								title: 'Field Array',
 								type: 'array',
 								format: 'table',
 								uniqueItems: true,
@@ -215,12 +328,37 @@
 									}
 								]
 							},
-							// 'new1': {
-							// 	"type": "string",
-							// 	"format": "markdown"
-							// },
+							'propObject': {
+								title: 'Field Object',
+								type: 'object',
+								properties: {
+									'city': {
+										type: 'string',
+										default: 'San Francisco'
+									},
+									'state': {
+										type: 'string',
+										default: 'CA'
+									},
+									'citystate': {
+										type: 'string',
+										// description: 'This is generated automatically from the previous two fields',
+										template: '{{city}}, {{state}}',
+										watch: {
+											'city': 'location.city',
+											'state': 'location.state'
+										}
+									}
+								}
+							},
+							'propRate': {
+								title: 'Field Rate',
+								type: 'integer',
+								format: 'rate',
+								default: 3,
+							},
 						}
-					}
+					},
 				});
 
 				// editor.setValue({name: "John Smith"});

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>SplitJS</title>
+
+	<meta charset="UTF-8">
+
+	<script src="/lib/splitjs/split.min.js"></script>
+
+	<style>
+
+		/* Layout */
+		html, body {height: 100%; margin: 0; overflow: hidden;}
+		.split {height: 100%; display: flex; flex-direction: row;}
+		.split div {overflow: auto;}
+		.gutter {background: #ddd;}
+		.gutter.gutter-horizontal {width: 1px !important; cursor: col-resize;}
+		.gutter.gutter-vertical {height: 1px !important; cursor: row-resize;}
+
+		/* Toolbar */
+		.toolbar { display:flex;align-items:center;gap:.25rem;padding:.25rem .5rem;border:1px solid #ddd;border-radius:.75rem;background:#fff}
+		.tb { border:0;background:transparent;padding:.4rem .6rem;border-radius:.6rem;cursor:pointer}
+		.tb:focus { outline:2px solid #7aa7ff;outline-offset:2px}
+		.sep {width:1px;height:1.25rem;background:#e5e7eb;margin:0 .25rem}
+		.spacer {flex:1}
+		#moreMenu {position:absolute;list-style:none;margin:.25rem 0 0;padding:.25rem 0;border:1px solid #ddd;border-radius:.6rem;background:#fff;min-width:8rem}
+		#moreMenu li {padding:.4rem .75rem;cursor:pointer}
+		#moreMenu li:focus {outline:none;background:#f3f4f6}
+
+	</style>
+</head>
+<body>
+
+	<div id="main" class="split">
+		<div id="sidebar">Sidebar</div>
+		<div class="split" style="flex-direction: column;">
+			<div id="editor">
+
+				<div class="toolbar" role="toolbar" aria-label="Editor actions">
+					<button class="tb" aria-label="Bold"><span>Bold</span></button>
+					<button class="tb" aria-label="Italic"><span>Italic</span></button>
+					<button class="tb" aria-label="Underline"><span>U</span></button>
+					<div role="separator" aria-orientation="vertical" class="sep"></div>
+					<button class="tb" aria-label="Link">Link</button>
+					<button class="tb" aria-label="Code">Code</button>
+					<div class="spacer"></div>
+					<button class="tb" aria-label="More" id="moreBtn" aria-haspopup="menu" aria-expanded="false">⋯</button>
+				</div>
+
+				<ul id="moreMenu" role="menu" hidden>
+					<li role="menuitem" tabindex="-1">Find</li>
+					<li role="menuitem" tabindex="-1">Replace</li>
+				</ul>
+
+				Editor
+
+			</div>
+			<div id="terminal">Terminal</div>
+		</div>
+	</div>
+
+	<script>
+
+		// Layout
+		// Chia ngang: sidebar | (editor+terminal)
+		Split(['#sidebar', '#main > .split'], {
+			sizes: [20, 80], // %
+			minSize: 100
+		});
+
+		// Chia dọc: editor | terminal
+		Split(['#editor', '#terminal'], {
+			direction: 'vertical',
+			sizes: [70, 30], // %
+			minSize: 100
+		});
+
+		// Toolbar
+		(function(){
+			const buttons = Array.from(document.querySelectorAll('.toolbar .tb'));
+			// roving tabindex
+			let idx = 0; buttons.forEach((b,i)=>b.tabIndex = (i===0?0:-1));
+			function focusAt(i){ idx = (i+buttons.length)%buttons.length; buttons.forEach(b=>b.tabIndex=-1); buttons[idx].tabIndex=0; buttons[idx].focus(); }
+			document.querySelector('.toolbar').addEventListener('keydown', e=>{
+				if (['ArrowRight','ArrowLeft','Home','End'].includes(e.key)){
+					e.preventDefault();
+					if(e.key==='ArrowRight') focusAt(idx+1);
+					if(e.key==='ArrowLeft')  focusAt(idx-1);
+					if(e.key==='Home')       focusAt(0);
+					if(e.key==='End')        focusAt(buttons.length-1);
+				}
+			});
+
+			// simple menu
+			const moreBtn = document.getElementById('moreBtn');
+			const menu = document.getElementById('moreMenu');
+			moreBtn.addEventListener('click', ()=>{
+				const open = menu.hidden === false;
+				menu.hidden = open ? true : false;
+				moreBtn.setAttribute('aria-expanded', String(!open));
+				if(!open){
+					const r = moreBtn.getBoundingClientRect();
+					menu.style.left = r.left+'px'; menu.style.top = (r.bottom+4)+'px';
+					menu.querySelector('[role=menuitem]').focus();
+				}
+			});
+			menu.addEventListener('keydown', e=>{
+				const items = Array.from(menu.querySelectorAll('[role=menuitem]'));
+				let i = items.indexOf(document.activeElement);
+				if (e.key==='ArrowDown'){ e.preventDefault(); items[(i+1)%items.length].focus(); }
+				if (e.key==='ArrowUp'){ e.preventDefault(); items[(i-1+items.length)%items.length].focus(); }
+				if (e.key==='Escape'){ menu.hidden=true; moreBtn.focus(); }
+			});
+		})();
+	</script>
+</body>
+</html>

@@ -1,62 +1,48 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head lang="vi">
 
 	<title>FullCalendar</title>
 
 	<meta charset='utf-8' />
+	<meta name="locale" content="vi-VN">
 
 	<script src='/lib/fullcalendar-6.1.18/index.global.min.js'></script>
 	<!-- <script src='/lib/fullcalendar-scheduler-6.1.18/index.global.min.js'></script> -->
+
+	<link href="/lib/fontawesome-5.15.4/css/all.min.css" type="text/css" rel="stylesheet">
+
+	<link href="/lib/json-editor-2.15.2/mt-style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<link href="/lib/tingle/tingle.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/tingle/mt-style.css" type="text/css" rel="stylesheet">
+	<script src='/lib/tingle/tingle.min.js'></script>
 
 	<style>
 		body {
 			margin: 0;
 			padding: 0;
 			height: 100vh;
-			display: flex;
 		}
 		#calendar {
-			flex: 1;
 			margin: 16px;
-		}
-		form {
-			padding: 32px 4px;
-			background-color: beige;
 		}
 	</style>
 </head>
 <body>
 
-	<div id='calendar'></div>
+	<!--
+		https://fontawesome.com/v5/search
+	 -->
 
-	<form onsubmit="mt.saveForm(event)">
-		<input type="hidden" id="form_id" name="id" required><br><br>
-		<label for="title">Tiêu đề</label><br>
-		<input type="text" id="form_title" name="title" required><br><br>
-		<label for="startDate">Ngày bắt đầu</label><br>
-		<input type="date" id="form_startDate" name="startDate" required><br><br>
-		<!-- <label for="startTime">Giờ bắt đầu</label><br> -->
-		<!-- <input type="time" id="form_startTime" name="startTime"><br><br> -->
-		<!-- <label for="endDate">Ngày kết thúc</label><br> -->
-		<!-- <input type="date" id="form_endDate" name="endDate"><br><br> -->
-		<!-- <label for="endTime" >Giờ kết thúc</label><br> -->
-		<!-- <input type="time" id="form_endTime" name="endTime"><br><br> -->
-		<!-- <label for="allDay">
-			<input type="checkbox" id="form_allDay" name="allDay">
-			Cả ngày
-		</label><br><br> -->
-		<div style="width:100%;display:flex;justify-content:space-evenly">
-			<button type="reset">Đặt lại</button>
-			<button type="submit">Lưu</button>
-		</div>
-	</form>
+	<div id='calendar'></div>
 
 	<script type="module">
 		import mtAuthen from '/common/authen.js';
+		import JsonEditorEX from '/lib/json-editor-2.15.2/mt-script.js';
 		var mt = {
 			h_debug: false,
-			h_host: 'http://localhost:958/',
 			p_authen: mtAuthen,
 			d_event: {},
 
@@ -114,56 +100,93 @@
 					mt.h_debug && console.log('eventClick:', info.event);
 
 					mt.form.set(info.event.extendedProps); // Load event lên Form
+					mt.form.open();
 				},
 				dateClick() { // khi Click vào ngày
 					// alert('a day has been clicked!');
 				},
 			},
 			form: {
-				e_field: {},
+				m_modal: null, // Tingle Modal
+				m_editor: null, // Json Editor
 
 				// Method
 				init() {
-					this.e_field = {
-						id: document.getElementById("form_id"),
-						title: document.getElementById("form_title"),
-						startDate: document.getElementById("form_startDate"),
-						// startTime: document.getElementById("form_startTime"),
-						// endDate: document.getElementById("form_endDate"),
-						// endTime: document.getElementById("form_endTime"),
-						// allDay: document.getElementById("form_allDay"),
+
+					// Init Modal
+					this.m_modal = new tingle.modal({
+						footer: false,
+						stickyFooter: false,
+						closeMethods: ['button', 'escape'], // 'overlay'
+						closeLabel: "Đóng",
+						onOpen: function() {
+							// console.log('modal opened');
+						},
+						onClose: function() {
+							// console.log('modal closed');
+						},
+						beforeClose: function() {
+							// Return true to close the modal, false to prevent closing
+							return true;
+						}
+					});
+					this.m_modal.setContent('<div id="modalContent" class="json-editor"></div>');
+
+					// Init Editor
+					// JsonEditorEX.RateRegister();
+					JSONEditor.defaults.callbacks = {
+						button: {
+							'onSave': (jseditor, e) => this.onSave(jseditor, e),
+						}
 					};
+					const element = document.getElementById('modalContent');
+					this.m_editor = new JSONEditor(element, {
+						use_name_attributes: false,
+						theme: 'barebones',
+						iconlib: 'fontawesome5',
+						disable_edit_json: true,
+						disable_properties: true,
+						disable_collapse: false,
+						schema: {
+							title: 'Event Calendar',
+							type: 'object',
+							required: [],
+							properties: {
+								'id': { title: ' ', type: 'string', format: 'hidden' },
+								'name': { title: 'Name', type: 'string', format: 'text' },
+								'date': { title: 'Date', type: 'string', format: 'date' },
+								'btnSave': { title: 'Save', type: 'string', format: 'button', options: { button: {
+									text: 'Save', icon: 'sd-card', action: 'onSave', validated: true
+								}}},
+							}
+						},
+					});
 				},
 				get() {
-					let raw = {
-						id: this.e_field['id'].value,
-						title: this.e_field['title'].value,
-						startDate: this.e_field['startDate'].value,
-						// startTime: this.e_field['startTime'].value,
-						// endDate: this.e_field['endDate'].value,
-						// endTime: this.e_field['endTime'].value,
-						// allDay: this.e_field['allDay'].checked,
-					};
-					let dateEvent = mt.convert_dateCalendarToEvent(raw.startDate);
+					let raw = this.m_editor.getValue();
+					let dateEvent = mt.convert_dateCalendarToEvent(raw.date);
 					return {
 						id: Number.parseInt(raw.id),
-						name: raw.title,
+						name: raw.name,
 						...dateEvent,
 					};
 				},
 				set(data) {
-					let raw = {
+					this.m_editor.setValue({
 						id: data.id,
-						title: data.name,
-						startDate: mt.convert_dateEventToCalendar(data),
-					};
-					this.e_field['id'].value = raw.id;
-					this.e_field['title'].value = raw.title;
-					this.e_field['startDate'].value = raw.startDate;
-					// this.e_field['startTime'].value = raw.startTime;
-					// this.e_field['endDate'].value = raw.endDate;
-					// this.e_field['endTime'].value = raw.endTime;
-					// this.e_field['allDay'].checked = raw.allDay;
+						name: data.name,
+						date: mt.convert_dateEventToCalendar(data),
+					});
+				},
+				open() {
+					this.m_modal.open();
+				},
+				close() {
+					this.m_modal.close();
+				},
+				onSave(jseditor, e) {
+					let data = this.get();
+					console.log(data);
 				},
 			},
 
@@ -288,14 +311,15 @@
 			},
 
 			// Utils
-			convert_dateEventToCalendar(event) { // Chuyển date event thành date calendar
-				if (event == null)
+			convert_dateEventToCalendar(data) { // Chuyển date event thành date calendar
+				if (data == null)
 					return '';
 
-				const formattedMonth = event.month < 10 ? `0${event.month}` : event.month;
-				const formattedDay = event.day < 10 ? `0${event.day}` : event.day;
+				// const formattedMonth = event.month < 10 ? `0${event.month}` : event.month;
+				// const formattedDay = event.day < 10 ? `0${event.day}` : event.day;
 
-				return `${event.year}-${formattedMonth}-${formattedDay}`;
+				// return `${event.year}-${formattedMonth}-${formattedDay}`;
+				return `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
 			},
 			convert_dateCalendarToEvent(date) { // Chuyển date calendar thành date event
 				if (date == null || date.length == 0)
