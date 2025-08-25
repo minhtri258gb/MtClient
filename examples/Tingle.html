@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Tingle</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/lib/tingle/tingle.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/tingle/mt-style.css" type="text/css" rel="stylesheet">
+	<script src='/lib/tingle/tingle.min.js'></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://simple-notify.github.io/simple-notify/
+	-->
+
+	<button onclick="mt.openModal()">Open Modal</button>
+
+	<script type="module">
+		var mt = {
+			m_modal: null,
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Init Modal
+				this.m_modal = new tingle.modal({
+					footer: false,
+					stickyFooter: false,
+					closeMethods: ['button', 'escape'], // 'overlay'
+					closeLabel: "Đóng",
+					onOpen: function() {
+						// console.log('modal opened');
+					},
+					onClose: function() {
+						// console.log('modal closed');
+					},
+					beforeClose: function() {
+						// Return true to close the modal, false to prevent closing
+						return true;
+					},
+				});
+				this.m_modal.setContent('<div>ABC 123 XYZ</div>');
+			},
+			openModal() {
+				this.m_modal.open();
+			},
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
