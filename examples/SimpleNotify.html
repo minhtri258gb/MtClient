@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Simple Notify</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/lib/simple-notify-1.0.5/simple-notify.css" type="text/css" rel="stylesheet">
+	<script src="/lib/simple-notify-1.0.5/simple-notify.min.js"></script>
+
+	<style>
+		body {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 16px;
+			height: 100vh;
+		}
+		.sn-notifications-container {
+			box-sizing: border-box; /* Làm cho khung screen ko vượt quá viền */
+		}
+	</style>
+
+</head>
+<body>
+
+	<!--
+		https://simple-notify.github.io/simple-notify/
+	-->
+
+	<button onclick="mt.notify('info', 'Thông báo có phiên bản mới')">Notify Info</button>
+	<button onclick="mt.notify('success', 'Lưu thành công')">Notify Success</button>
+	<button onclick="mt.notify('warning', 'Cảnh báo chưa nhập trường Email')">Notify Warning</button>
+	<button onclick="mt.notify('error', 'Không kết nối được máy chủ!')">Notify Error</button>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+			},
+			notify(type, msg) {
+
+				if ([].includes(type)) {
+					this.noti('error', "Type không hợp lệ!");
+					return;
+				}
+
+				let title = '';
+				switch (type) {
+					case 'info':
+						title = "Thông báo";
+						break;
+					case 'success':
+						title = "Thành công";
+						break;
+					case 'warning':
+						title = "Cảnh báo";
+						break;
+					case 'error':
+						title = "Lỗi";
+						break;
+				}
+
+				// Prepare
+				let opts = {
+					status: type,
+					title: title,
+					text: msg,
+					effect: 'slide',
+					speed: 300,
+					customClass: '',
+					customIcon: '',
+					showIcon: true,
+					showCloseButton: true,
+					autoclose: true,
+					autotimeout: 3000,
+					notificationsGap: null,
+					notificationsPadding: null,
+					type: 'outline',
+					position: 'right bottom',
+					customWrapper: '',
+				};
+
+				// Show Toast
+				new Notify(opts);
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
