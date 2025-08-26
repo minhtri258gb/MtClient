@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>FancyBox</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/fancyapps-ui-6.0.22/fancybox/fancybox.umd.js"></script>
+	<link href="/lib/fancyapps-ui-6.0.22/fancybox/fancybox.css" rel="stylesheet" />
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- https://fancyapps.com/fancybox/get-started/installation/ -->
+
+	<a data-fancybox="gallery" href="/res/images/image_holder.jpg">
+		<img src="/res/images/image_holder.jpg" />
+	</a>
+	<a data-fancybox="gallery" href="/res/images/image_holder.jpg">
+		<img src="/res/images/image_holder.jpg" />
+	</a>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				Fancybox.bind("[data-fancybox]", {
+					// Your custom options
+				});
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

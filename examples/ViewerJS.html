@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>ViewerJS</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/viewerjs-1.11.7/viewer.min.js"></script>
+	<link href="/lib/viewerjs-1.11.7/viewer.min.css" rel="stylesheet" />
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- https://fancyapps.com/fancybox/get-started/installation/ -->
+
+	<div id="gallery">
+		<img src="/res/images/image_holder.jpg" alt="Image 1" />
+		<img src="/res/images/image_holder.jpg" alt="Image 2" />
+	</div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				const gallery = new Viewer(document.getElementById('gallery'));
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

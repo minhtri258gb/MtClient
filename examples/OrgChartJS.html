@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Org Chart JS</title>
+
+	<meta charset='utf-8' />
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js" type="text/javascript"></script>
+	<script src="/lib/OrgChart-5.0.0/dist/js/jquery.orgchart.min.js" type="text/javascript"></script>
+	<link href="/lib/OrgChart-5.0.0/dist/css/jquery.orgchart.min.css" rel="stylesheet">
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="chart-container"></div>
+
+	<script type="module">
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				var datascource = {
+					'name': 'Lao Lao',
+					'title': 'general manager',
+					'children': [
+						{ 'name': 'Bo Miao', 'title': 'department manager' },
+						{ 'name': 'Su Miao', 'title': 'department manager',
+							'children': [
+								{ 'name': 'Tie Hua', 'title': 'senior engineer' },
+								{ 'name': 'Hei Hei', 'title': 'senior engineer' }
+							]
+						},
+						{ 'name': 'Hong Miao', 'title': 'department manager' },
+						{ 'name': 'Chun Miao', 'title': 'department manager' }
+					]
+				};
+				$('#chart-container').orgchart({
+					'data' : datascource,
+					'nodeContent': 'title',
+					'direction': 'b2t'
+				});
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>

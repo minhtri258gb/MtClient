@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>PhotoSwipe</title>
+
+	<meta charset='utf-8' />
+
+	<!-- <script src="/lib/PhotoSwipe-5.4.4/photoswipe.esm.min.js" type="text/javascript"></script> -->
+	<!-- <script src="/lib/PhotoSwipe-5.4.4/photoswipe-lightbox.esm.min.js" type="text/javascript"></script> -->
+	<link href="/lib/PhotoSwipe-5.4.4/photoswipe.css" rel="stylesheet">
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+
+	<!-- https://github.com/dimsemenov/photoswipe -->
+
+	<div class="pswp-gallery" id="gallery">
+		<a href="/res/images/image_holder.jpg" data-pswp-width="1200" data-pswp-height="800">
+			<img src="/res/images/image_holder.jpg" alt="" />
+		</a>
+		<a href="/res/images/image_holder.jpg" data-pswp-width="1200" data-pswp-height="800">
+			<img src="/res/images/image_holder.jpg" alt="" />
+		</a>
+	</div>
+
+	<script type="module">
+		import PhotoSwipe from '/lib/PhotoSwipe-5.4.4/photoswipe.esm.js';
+		import PhotoSwipeLightbox from '/lib/PhotoSwipe-5.4.4/photoswipe-lightbox.esm.min.js';
+		var mt = {
+
+			init() {
+				window.mt = this; // Bind Global
+
+				const gallery = new PhotoSwipeLightbox({
+					gallery: '#gallery',
+					children: 'a',
+					pswpModule: PhotoSwipe
+				});
+				gallery.init();
+			}
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
