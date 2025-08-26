@@ -1,0 +1,38 @@
+
+/* General */
+.tingle-modal {
+	background-color: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(6px);
+}
+.tingle-modal--overflow {
+	padding-top: 2rem;
+}
+
+/* Close Button */
+.tingle-modal .tingle-modal__close {
+	top: 2rem;
+	right: 2rem;
+	background: #ffffff;
+	border-radius: 50%;
+	color: #a9a9a9;
+	width: 30px;
+	height: 30px;
+}
+.tingle-modal .tingle-modal__close svg {
+	width: 10px;
+	height: 10px;
+	margin-top: 2px;
+}
+.tingle-modal .tingle-modal__close:hover {
+	color: #000;
+}
+
+/* Content */
+.tingle-modal .tingle-modal-box {
+	width: 80%;
+	border: 1px solid #aaa;
+	border-radius: 8px;
+}
+.tingle-modal .tingle-modal-box .tingle-modal-box__content {
+	padding: 1rem;
+}
