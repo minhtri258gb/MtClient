@@ -78,6 +78,9 @@
 								title: 'Field Hidden',
 								type: 'string',
 								format: 'hidden',
+								options: {
+									titleHidden: true
+								},
 							},
 							'propString': {
 								title: 'Field String',
@@ -291,7 +294,9 @@
 								format: 'textarea',
 								minLength: 0,
 								default: 'someText',
-								// description: 'Property String',
+								options: {
+									input_height : '52px',
+								},
 							},
 							// 'propMarkdown': {
 							// 	type: 'string',
