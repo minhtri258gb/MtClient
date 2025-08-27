@@ -10,7 +10,7 @@
 	<script src='/lib/fullcalendar-6.1.18/index.global.min.js'></script>
 	<!-- <script src='/lib/fullcalendar-scheduler-6.1.18/index.global.min.js'></script> -->
 
-	<link href="/lib/fontawesome-5.15.4/css/all.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
 
 	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
 	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
@@ -34,13 +34,14 @@
 
 	<!--
 		https://fontawesome.com/v5/search
+		https://fontawesome.com/v6/search?o=r
 	 -->
 
 	<div id='calendar'></div>
 
 	<script type="module">
 		import mtAuthen from '/common/authen.js';
-		import JsonEditorEX from '/lib/json-editor-2.15.2/mt-script.js';
+		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 		var mt = {
 			h_debug: false,
 			p_authen: mtAuthen,
@@ -156,7 +157,7 @@
 								'name': { title: 'Name', type: 'string', format: 'text' },
 								'date': { title: 'Date', type: 'string', format: 'date' },
 								'btnSave': { title: 'Save', type: 'string', format: 'button', options: { button: {
-									text: 'Save', icon: 'sd-card', action: 'onSave', validated: true
+									text: 'Save', icon: 'floppy-disk', action: 'onSave', validated: true
 								}}},
 							}
 						},

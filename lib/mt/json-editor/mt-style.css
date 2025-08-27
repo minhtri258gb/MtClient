@@ -17,18 +17,6 @@ div.row {
 	/* color: #333; */
 	/* margin-right: 8px; */
 }
-.json-editor input[type="text"],
-.json-editor input[type="email"],
-.json-editor input[type="number"],
-.json-editor select,
-.json-editor textarea {
-	width: 100%;
-	/* padding: 8px 12px; */
-	/* border: 1px solid #ccc; */
-	/* border-radius: 4px; */
-	/* font-size: 14px; */
-	/* margin-bottom: 10px; */
-}
 .json-editor button {
 	/* background: #007bff; */
 	/* color: white; */
@@ -65,8 +53,42 @@ div.row {
 	/* display: block; */
 }
 
+/* Field General */
+.json-editor input[type="text"],
+.json-editor input[type="email"],
+.json-editor input[type="number"],
+.json-editor input[type="password"],
+.json-editor input[type="tel"],
+.json-editor input[type="url"],
+.json-editor input[type="search"],
+.json-editor select,
+.json-editor textarea {
+	width: 100%;
+	/* padding: 8px 12px; */
+	/* border: 1px solid #ccc; */
+	/* border-radius: 4px; */
+	/* font-size: 14px; */
+	/* margin-bottom: 10px; */
+}
 
-/* Rate Editor */
+
+/* Field Range */
+.je-range-control {
+	display: flex;
+}
+.je-range-control input {
+	flex: 1;
+	margin-left: 4px;
+}
+
+
+/* Field Object */
+.je-object__controls button {
+	margin-right: 4px;
+}
+
+
+/* Field Rate */
 .rate-stars {
 	margin: 8px 0;
 }
@@ -85,4 +107,27 @@ div.row {
 }
 .rate-star.hover {
 	color: #ffeb3b;
+}
+
+
+/* Field Tagbox */
+.tag-container {
+	padding: 2px;
+	border: 1px solid #ddd;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+.tag-container .tag {
+	padding-left: 4px;
+	background-color: #ddd;
+	border: 1px solid #959595;
+	border-radius: 4px;
+	font-size: small;
+	font-weight: bold;
+}
+.tag-container .tag .tag-close {
+	margin-left: 4px;
+	padding: 0;
+	cursor: pointer;
 }

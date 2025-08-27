@@ -29,20 +29,22 @@
 		https://simple-notify.github.io/simple-notify/
 	-->
 
-	<button onclick="mt.notify('info', 'Thông báo có phiên bản mới')">Notify Info</button>
-	<button onclick="mt.notify('success', 'Lưu thành công')">Notify Success</button>
-	<button onclick="mt.notify('warning', 'Cảnh báo chưa nhập trường Email')">Notify Warning</button>
-	<button onclick="mt.notify('error', 'Không kết nối được máy chủ!')">Notify Error</button>
+	<button onclick="mt.toast('info', 'Thông báo có phiên bản mới')">Toast Info</button>
+	<button onclick="mt.toast('success', 'Lưu thành công')">Toast Success</button>
+	<button onclick="mt.toast('warning', 'Cảnh báo chưa nhập trường Email')">Toast Warning</button>
+	<button onclick="mt.toast('error', 'Không kết nối được máy chủ!')">Toast Error</button>
+	<button onclick="mt.testConfirm()">Confirm</button>
 
 	<script type="module">
 		var mt = {
+			p_confirm: null,
 
 			init() {
 
 				// Bind Global
 				window.mt = this;
 			},
-			notify(type, msg) {
+			toast(type, msg) {
 
 				if ([].includes(type)) {
 					this.noti('error', "Type không hợp lệ!");
@@ -87,7 +89,45 @@
 
 				// Show Toast
 				new Notify(opts);
-			}
+			},
+			confirm(type, title, message, confirm, cancel) {
+
+				if (this.p_confirm != null)
+					return;
+
+				return new Promise((resolve, reject) => {
+					this.p_confirm = { resolve, reject };
+					this.p_confirm.popup = new Notify({
+						status: type,
+						title: title,
+						showCloseButton: false,
+						autoclose: false,
+						position: 'center',
+						text: `
+							<div class="confirm-popup">
+								<p>${message}</p>
+								<div class="group-btn-confirm" style="display:flex;flex-direction:row-reverse;gap:4px;">
+									<button class="btn-cancel" onclick="mt.confirmCallback('cancel')">${cancel}</button>
+									<button class="btn-confirm" onclick="mt.confirmCallback('confirm')">${confirm}</button>
+								</div>
+							</div>
+						`,
+					});
+				});
+			},
+			confirmCallback(buttonCode) {
+
+				if (this.p_confirm == null)
+					return;
+
+				mt.p_confirm.popup.close();
+				mt.p_confirm.resolve(buttonCode);
+				mt.p_confirm = null;
+			},
+			async testConfirm() {
+				let wat = await mt.confirm('warning', 'Xác nhận xóa', 'Có muốn xóa thành tích không?', 'Xóa', 'Đóng');
+				mt.toast('info', 'Your Choice: '+ wat);
+			},
 		};
 		mt.init();
 	</script>
