@@ -1,4 +1,3 @@
-
 import mtAuthen from '/common/authen.js';
 
 var mt = {
@@ -104,7 +103,7 @@ var mt = {
 		window.mt = mt;
 
 		// Authen
-		await this.p_authen.promt();
+		await this.p_authen.init();
 
 		// Read config
 		let resClientPath = await fetch('/file/getClientPath', {

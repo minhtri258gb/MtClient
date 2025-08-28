@@ -17,7 +17,7 @@ var mt = {
 		window.mt = mt;
 
 		// Authen
-		await this.p_authen.promt();
+		await this.p_authen.init();
 
 		// Init
 		this.initUI();

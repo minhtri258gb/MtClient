@@ -1,18 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Calendar</title>
+
+	<title>CalendarJS</title>
+
 	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
-	<link rel="stylesheet" href="/lib/calendarjs-2.12.2/calendar.js.min.css">
-	<script type="text/javascript" src="/lib/calendarjs-2.12.2/translations/calendar.translations.vi.js"></script>
-	<script type="text/javascript" src="/lib/calendarjs-2.12.2/calendar.min.js"></script>
-	<script type="text/javascript" src="/calendar/script.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/lib/semantic/semantic.min.css" type="text/css" rel="stylesheet">
+
+	<link href="/lib/calendarjs-2.12.2/calendar.js.min.css" rel="stylesheet">
+	<script src="/lib/calendarjs-2.12.2/translations/calendar.translations.vi.js" type="text/javascript"></script>
+	<script src="/lib/calendarjs-2.12.2/calendar.min.js" type="text/javascript"></script>
+
 </head>
 <body>
+
+	<!--
+		https://github.com/williamtroup/Calendar.js
+		https://www.calendar-js.com/documentation/index.html
+		Option: https://www.calendar-js.com/documentation/options.html
+		Search: https://www.calendar-js.com/documentation/search-options.html
+		Event: https://www.calendar-js.com/documentation/event.html
+		Holiday: https://www.calendar-js.com/documentation/holiday.html
+		Function: https://www.calendar-js.com/documentation/public-functions.html
+		Bind: https://www.calendar-js.com/documentation/binding-public-functions.html
+		Trigger: https://www.calendar-js.com/documentation/custom-triggers.html
+		Format: https://www.calendar-js.com/documentation/date-format.html
+	-->
+
 	<div id="calendar" style="width:100%;height:100%;"></div>
-	<script type="module">
-		mt.init();
-	</script>
+
+	<script src="/calendar/CalendarJS/script.js" type="module"></script>
+
 </body>
 </html>

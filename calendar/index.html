@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html>
-<head lang="vi">
+<head>
 
-	<title>FullCalendar</title>
+	<title>Full Calendar</title>
 
 	<meta charset='utf-8' />
-	<meta name="locale" content="vi-VN">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/sweetalert2-11.22.4/sweetalert2.css" type="text/css" rel="stylesheet">
+	<script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js"></script>
 	<script src='/lib/fullcalendar-6.1.18/index.global.min.js'></script>
 	<!-- <script src='/lib/fullcalendar-scheduler-6.1.18/index.global.min.js'></script> -->
-
-	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
-
 	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
 	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
-
-	<link href="/lib/tingle/tingle.min.css" type="text/css" rel="stylesheet">
-	<link href="/lib/mt/tingle/mt-style.css" type="text/css" rel="stylesheet">
-	<script src='/lib/tingle/tingle.min.js'></script>
+	<link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet">
+	<script src="/lib/flatpickr/flatpickr.min.js"></script>
 
 	<style>
 		body {
@@ -25,8 +24,15 @@
 			padding: 0;
 			height: 100vh;
 		}
+
+		/* Calendar */
 		#calendar {
 			margin: 16px;
+		}
+
+		/* Modal */
+		.swal2-html-container {
+			text-align: left;
 		}
 	</style>
 </head>
@@ -35,13 +41,30 @@
 	<!--
 		https://fontawesome.com/v5/search
 		https://fontawesome.com/v6/search?o=r
+		https://github.com/json-editor/json-editor
 	 -->
 
 	<div id='calendar'></div>
 
+	<!-- Modal Form -->
+	<!-- <div id="modal-1" aria-hidden="true">
+		<div tabindex="-1" data-micromodal-close>
+			<div role="dialog" aria-modal="true" aria-labelledby="modal-1-title" >
+				<header>
+					<h2 id="modal-1-title">Modal Title</h2>
+					<button aria-label="Close modal" data-micromodal-close></button>
+				</header>
+				<div id="modal-1-content">
+					Modal Content
+				</div>
+			</div>
+		</div>
+	</div> -->
+
 	<script type="module">
 		import mtAuthen from '/common/authen.js';
 		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
+
 		var mt = {
 			h_debug: false,
 			p_authen: mtAuthen,
@@ -100,94 +123,94 @@
 				eventClick(info) { // khi Click vào sự kiện
 					mt.h_debug && console.log('eventClick:', info.event);
 
-					mt.form.set(info.event.extendedProps); // Load event lên Form
-					mt.form.open();
+					let eventData = info.event.extendedProps;
+					mt.form.open(eventData);
 				},
 				dateClick() { // khi Click vào ngày
 					// alert('a day has been clicked!');
 				},
 			},
 			form: {
-				m_modal: null, // Tingle Modal
 				m_editor: null, // Json Editor
 
 				// Method
 				init() {
 
-					// Init Modal
-					this.m_modal = new tingle.modal({
-						footer: false,
-						stickyFooter: false,
-						closeMethods: ['button', 'escape'], // 'overlay'
-						closeLabel: "Đóng",
-						onOpen: function() {
-							// console.log('modal opened');
-						},
-						onClose: function() {
-							// console.log('modal closed');
-						},
-						beforeClose: function() {
-							// Return true to close the modal, false to prevent closing
-							return true;
-						}
-					});
-					this.m_modal.setContent('<div id="modalContent" class="json-editor"></div>');
-
 					// Init Editor
 					// JsonEditorEX.RateRegister();
-					JSONEditor.defaults.callbacks = {
-						button: {
-							'onSave': (jseditor, e) => this.onSave(jseditor, e),
+				},
+				async open(eventData) {
+
+					// Open Modal
+					let result = await Swal.fire({
+						title: 'Sự kiện',
+						html: '<div id="json-editor" class="json-editor"></div>',
+						showCancelButton: true,
+						confirmButtonText: 'Lưu',
+						cancelButtonText: 'Đóng',
+						didOpen: () => this.initForm(eventData),
+						didClose: () => this.m_editor.destroy(),
+						preConfirm: () => {
+							try {
+								let data = this.m_editor.getValue();
+								return this.cv_form2obj(data);
+							}
+							catch (ex) {
+								Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+								console.error('[mt.form.open.preConfirm] Exception:', ex);
+							}
 						}
-					};
-					const element = document.getElementById('modalContent');
+					});
+					if (result.isConfirmed)
+						this.onSave(result.value);
+				},
+				initForm(eventData) {
+
+					// Init Form
+					const element = document.getElementById('json-editor');
 					this.m_editor = new JSONEditor(element, {
 						use_name_attributes: false,
 						theme: 'barebones',
 						iconlib: 'fontawesome5',
 						disable_edit_json: true,
 						disable_properties: true,
-						disable_collapse: false,
+						disable_collapse: true,
 						schema: {
 							title: 'Event Calendar',
 							type: 'object',
 							required: [],
 							properties: {
-								'id': { title: ' ', type: 'string', format: 'hidden' },
+								'id': { title: ' ', type: 'string', format: 'hidden', },
 								'name': { title: 'Name', type: 'string', format: 'text' },
-								'date': { title: 'Date', type: 'string', format: 'date' },
-								'btnSave': { title: 'Save', type: 'string', format: 'button', options: { button: {
-									text: 'Save', icon: 'floppy-disk', action: 'onSave', validated: true
+								'date': { title: 'Date', type: 'string', format: 'date', options: { flatpickr: {
+									altInput: true,
+									altFormat: 'd/m/Y',
+									dateFormat: 'Y-m-d',
 								}}},
-							}
+							},
 						},
+						startval: this.cv_obj2form(eventData),
 					});
 				},
-				get() {
-					let raw = this.m_editor.getValue();
-					let dateEvent = mt.convert_dateCalendarToEvent(raw.date);
+				onSave(data) {
+
+					console.log("Dữ liệu đã nhập:", data);
+					Swal.fire("Đã lưu!", JSON.stringify(data), "success");
+				},
+				cv_obj2form(raw) {
+					return {
+						id: raw.id,
+						name: raw.name,
+						date: mt.cv_event2calendar(raw),
+					};
+				},
+				cv_form2obj(raw) {
+					let dateEvent = mt.cv_calendar2event(raw.date);
 					return {
 						id: Number.parseInt(raw.id),
 						name: raw.name,
 						...dateEvent,
 					};
-				},
-				set(data) {
-					this.m_editor.setValue({
-						id: data.id,
-						name: data.name,
-						date: mt.convert_dateEventToCalendar(data),
-					});
-				},
-				open() {
-					this.m_modal.open();
-				},
-				close() {
-					this.m_modal.close();
-				},
-				onSave(jseditor, e) {
-					let data = this.get();
-					console.log(data);
 				},
 			},
 
@@ -198,12 +221,12 @@
 				window.mt = this;
 
 				// Authen
-				await this.p_authen.promt();
+				await this.p_authen.init();
 
 				// Form
 				this.form.init();
 
-				// Init Calendar
+				// Calendar
 				this.calendar.init();
 			},
 			async loadData(month, year) { // Tải dữ liệu sự kiện
@@ -251,7 +274,7 @@
 					return {
 						id: e.id,
 						title: e.name,
-						start: this.convert_dateEventToCalendar(e),
+						start: this.cv_event2calendar(e),
 						extendedProps: e,
 					};
 				});
@@ -312,17 +335,12 @@
 			},
 
 			// Utils
-			convert_dateEventToCalendar(data) { // Chuyển date event thành date calendar
+			cv_event2calendar(data) { // Chuyển date event thành date calendar
 				if (data == null)
 					return '';
-
-				// const formattedMonth = event.month < 10 ? `0${event.month}` : event.month;
-				// const formattedDay = event.day < 10 ? `0${event.day}` : event.day;
-
-				// return `${event.year}-${formattedMonth}-${formattedDay}`;
 				return `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
 			},
-			convert_dateCalendarToEvent(date) { // Chuyển date calendar thành date event
+			cv_calendar2event(date) { // Chuyển date calendar thành date event
 				if (date == null || date.length == 0)
 					return null;
 

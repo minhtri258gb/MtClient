@@ -1,11 +1,22 @@
+import mtAuthen from '/common/authen.js';
+
 var mt = {
-	dev: function() {
+	h_debug: false,
+	p_authen: mtAuthen,
+
+	dev() {
 		// this.calendar.addEvent();
 		// this.calendar.addHolidate();
 	},
-	init: function() {
+	async init() {
+
+		// Bind Global
+		window.mt = this;
+
+		// Authen
+		await this.p_authen.init();
+
 		this.calendar.init();
-		// this.event.refresh(-2);
 		this.dev();
 	},
 	event: {
@@ -13,7 +24,8 @@ var mt = {
 		lstDateEvent: [],
 		lstTodo: [],
 		lstPeronalLog: [],
-		refresh: function(type) {
+
+		async refresh(type, date) {
 			// Làm mới danh sách
 			if (type == 1 || type == -2) { // Birthday
 				// $.ajax({
@@ -31,19 +43,32 @@ var mt = {
 				// });
 			}
 			if (type == 2 || type == -2) { // Date event
-				$.ajax({
-					type: 'GET',
-					url: '/api/calendar/get',
-					// data: JSON.stringify(data),
-					contentType: 'application/json',
-					success: function(res) {
-						mt.event.lstDateEvent = res;
+
+				if (date == null)
+					date = new Date();
+				let month = date.getMonth() + 1;
+				let year = date.getFullYear();
+
+				// Call API
+				let response = await fetch('/database/query', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
 					},
-					error: function(e) {
-						// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
-						console.error('Fail: '+e);
-					}
+					body: JSON.stringify({
+						'database': 'calendar',
+						'sql': `
+							SELECT id, name, day, month, year
+							FROM calendar
+							WHERE month = ${month} AND year = ${year}
+						`
+					}),
 				});
+				const listCalendar = await response.json();
+				mt.h_debug && console.log('listCalendar', listCalendar);
+
+				this.lstDateEvent = listCalendar;
 			}
 			if (type == 3 || type == -2) { // Todo list
 				// $.ajax({
@@ -78,22 +103,34 @@ var mt = {
 		},
 	},
 	calendar: {
-
 		m_cld: null, // Instance
 
-		init: function() {
+		init() {
 
 			// Thiết lập
 			let options = {
-				manualEditingEnabled: true,
 				showDayNumberOrdinals: false, // Ẩn chữ th trên số
+				dragAndDropForEventsEnabled: false, // Ko cho kéo thả sự kiện
+				manualEditingEnabled: true,
 				autoRefreshTimerDelay: 0, // Ko refresh
 				fullScreenModeEnabled: false, // Ẩn nút toàn màn hình
-				openInFullScreenMode: true, // Bật toàn màn hình
-				minimumYear: 1990,
-				maximumYear: 2050,
 				tooltipDelay: 300,
 				eventTooltipDelay: 300,
+				defaultEventBackgroundColor: '#484848',
+				defaultEventTextColor: '#F5F5F5',
+				defaultEventBorderColor: '#282828',
+				openInFullScreenMode: true, // Bật toàn màn hình
+				workingDays: [0,1,2,3,4],
+				minimumYear: 1990,
+				maximumYear: 2050,
+				startOfWeekDay: 0,
+				workingHoursStart: '08:00',
+				workingHoursEnd: '17:00',
+				events: {
+					onEventsFetch: () => mt.event.refresh(-2),
+					onSetDate: (date) => mt.event.refresh(-2, date),
+					onDatePickerDateChanged: (date) => mt.event.refresh(-2, date),
+				},
 			};
 
 			// Sử dụng ngôn ngữ việt
@@ -102,7 +139,7 @@ var mt = {
 			// Khởi tạo lịch
 			this.m_cld = new calendarJs('calendar', options);
 		},
-		addEvent: function() {
+		addEvent() {
 			let event = {
 				from: new Date(),
 				to: new Date(),
@@ -111,7 +148,7 @@ var mt = {
 			};
 			mt.calendar.m_cld.addEvent(event);
 		},
-		addHolidate: function() {
+		addHolidate() {
 			/** Holidate struct {
 			 *   day: number,
 			 *   month: number,
@@ -133,7 +170,7 @@ var mt = {
 		},
 	},
 	solar: {
-		to: function(date) {
+		to(date) {
 
 			// Phân tích ngày
 			let dd = dateObj.getUTCDate();
@@ -155,8 +192,9 @@ var mt = {
 		},
 	},
 	utils: {
-		str2date: function(str) { // Format 
+		str2date(str) { // Format 
 			return date;
 		},
 	},
 };
+mt.init();

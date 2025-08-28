@@ -1,18 +1,32 @@
+import mtAuthen from '/common/authen.js';
+
 var mt = {
-	dev: function() {
+	h_debug: false,
+	p_authen: mtAuthen,
+
+	dev() {
 		this.calendar.createEvent();
 	},
-	init: function() {
+	async init() {
+
+		// Bind Global
+		window.mt = this;
+
+		// Authen
+		await this.p_authen.init();
+
 		this.calendar.init();
 		this.event.refresh(-2);
 		this.dev();
 	},
+
 	event: {
 		lstBirthday: [],
 		lstDateEvent: [],
 		lstTodo: [],
 		lstPeronalLog: [],
-		refresh: function(type) {
+
+		async refresh(type) {
 			// Làm mới danh sách
 			if (type == 1 || type == -2) { // Birthday
 				// $.ajax({
@@ -30,19 +44,31 @@ var mt = {
 				// });
 			}
 			if (type == 2 || type == -2) { // Date event
-				$.ajax({
-					type: 'GET',
-					url: '/api/calendar/get',
-					// data: JSON.stringify(data),
-					contentType: 'application/json',
-					success: function(res) {
-						mt.event.lstDateEvent = res;
+
+				let sysdate = new Date();
+				let month = sysdate.getMonth() + 1;
+				let year = sysdate.getFullYear();
+
+				// Call API
+				let response = await fetch('/database/query', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
 					},
-					error: function(e) {
-						// anime.c_datagrid.component.datagrid('deleteRow', 0); // #TODO #FIX nếu chỉnh sửa lỗi sẽ xóa dòng 1
-						console.error('Fail: '+e);
-					}
+					body: JSON.stringify({
+						"database": "calendar",
+						"sql": `
+							SELECT id, name, day, month, year
+							FROM calendar
+							WHERE month = ${month} AND year = ${year}
+						`
+					}),
 				});
+				const listCalendar = await response.json();
+				mt.h_debug && console.log('listCalendar', listCalendar);
+
+				this.lstDateEvent = listCalendar;
 			}
 			if (type == 3 || type == -2) { // Todo list
 				// $.ajax({
@@ -77,9 +103,10 @@ var mt = {
 		},
 	},
 	calendar: {
-		_cld: null,
-		init: function() {
-			this._cld = new tui.Calendar('#calendar', {
+		m_cld: null,
+
+		init() {
+			this.m_cld = new tui.Calendar('#calendar', {
 				defaultView: 'month', // week
 				// template: {
 				// 	time(event) {
@@ -102,15 +129,15 @@ var mt = {
 			});
 
 		},
-		changeView: function(type) {
+		changeView(type) {
 			// type: day, week, month
-			this._cld.changeView(type);
+			this.m_cld.changeView(type);
 		},
-		cleanEvent: function() {
-			this._cld.clear();
+		cleanEvent() {
+			this.m_cld.clear();
 		},
-		createEvent: function() { // #TODO
-			this._cld.createEvents([
+		createEvent() { // #TODO
+			this.m_cld.createEvents([
 				{
 					id: '1',
 					calendarId: '1',
@@ -133,7 +160,7 @@ var mt = {
 		},
 	},
 	solar: {
-		to: function(date) {
+		to(date) {
 
 			// Phân tích ngày
 			let dd = dateObj.getUTCDate();
@@ -160,3 +187,4 @@ var mt = {
 		},
 	},
 };
+mt.init();

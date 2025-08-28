@@ -1,5 +1,5 @@
 
-.json-editor {
+.je-ready {
 	/* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; */
 }
 div[data-schematype="object"] h3,
@@ -10,14 +10,14 @@ div[data-schematype="array"] h3 {
 div.row {
 	margin: 4px 0;
 }
-.json-editor label {
+.je-ready label {
 	font-weight: 600;
 	/* margin-bottom: 5px; */
 	display: block;
 	/* color: #333; */
 	/* margin-right: 8px; */
 }
-.json-editor button {
+.je-ready button {
 	/* background: #007bff; */
 	/* color: white; */
 	/* border: none; */
@@ -27,24 +27,24 @@ div.row {
 	/* margin-right: 5px; */
 	/* margin-bottom: 5px; */
 }
-.json-editor button:hover {
+.je-ready button:hover {
 	/* background: #0056b3; */
 }
-.json-editor button.btn-danger,
-.json-editor button[title*="Delete"] {
+.je-ready button.btn-danger,
+.je-ready button[title*="Delete"] {
 	/* background: #dc3545; */
 }
-.json-editor button.btn-danger:hover {
+.je-ready button.btn-danger:hover {
 	/* background: #c82333; */
 }
-.json-editor > div {
+.je-ready > div {
 	/* margin-bottom: 15px; */
 	/* padding: 15px; */
 	/* border: 1px solid #e9ecef; */
 	/* border-radius: 6px; */
 	/* background: #f8f9fa; */
 }
-.json-editor .errmsg {
+.je-ready .errmsg {
 	color: #dc3545;
 	font-size: 12px;
 	/* margin-top: 5px; */
@@ -54,15 +54,15 @@ div.row {
 }
 
 /* Field General */
-.json-editor input[type="text"],
-.json-editor input[type="email"],
-.json-editor input[type="number"],
-.json-editor input[type="password"],
-.json-editor input[type="tel"],
-.json-editor input[type="url"],
-.json-editor input[type="search"],
-.json-editor select,
-.json-editor textarea {
+.je-ready input[type="text"],
+.je-ready input[type="email"],
+.je-ready input[type="number"],
+.je-ready input[type="password"],
+.je-ready input[type="tel"],
+.je-ready input[type="url"],
+.je-ready input[type="search"],
+.je-ready select,
+.je-ready textarea {
 	width: 100%;
 	/* padding: 8px 12px; */
 	/* border: 1px solid #ccc; */

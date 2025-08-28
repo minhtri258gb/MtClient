@@ -2,17 +2,35 @@ var mtAuthen = {
 	m_token: '',
 
 	// Method
-	init() {
-		let token = sessionStorage.getItem('token');
-		if (token != null && token.length > 0)
-			this.m_token = token;
+	async init() {
+
+		// Lấy từ LocalStorage
+		let token = localStorage.getItem('token');
+		if (token == null || token.length == 0)
+			await this.promt();
+		else {
+			let res = await fetch('/checkToken', {
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer '+token,
+				},
+			});
+			if (res.status == 403) {
+				this.m_token = '';
+				await this.promt();
+			}
+			else
+				this.m_token = token;
+		}
 	},
 	async login(password) {
 
 		// Call API - Authen
 		const response = await fetch('/authorize', {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
+			headers: {
+				'Content-Type': 'application/json',
+			},
 			body: JSON.stringify({ password })
 		});
 
@@ -20,21 +38,12 @@ var mtAuthen = {
 		const resultAuth = await response.json();
 		if (resultAuth.result == true) {
 			this.m_token = resultAuth.token;
-			sessionStorage.setItem('token', this.m_token);
+			localStorage.setItem('token', this.m_token);
 		}
 		else
 			throw { error: true, msg: "Lỗi đăng nhập" };
 	},
-	async promt(force) {
-
-		if (force !== false) {
-
-			// Load Session
-			this.init();
-
-			if (this.checkAuthn())
-				return;
-		}
+	async promt() {
 
 		// Input
 		const password = prompt('Nhập mật khẩu:', '');
