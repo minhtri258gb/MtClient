@@ -19,13 +19,18 @@
 		}
 
 		/* GridStack Theme 1 */
-		.grid-stack-item {
-			background-color: aquamarine;
-			box-shadow: 1px 1px 4px 0px;
+		.grid-stack {
+			background: #eee;
+		}
+		.grid-stack-item-content {
+			color: #2c3e50;
+			text-align: center;
+			background-color: #a5c1e5;
+			border: 2px solid #00000080;
 		}
 		.grid-stack-static {
-			.grid-stack-item {
-				background-color: rgb(243, 243, 243);
+			.grid-stack-item-content {
+				background-color: #f3f3f3;
 			}
 		}
 	</style>
@@ -66,6 +71,8 @@
 						cellHeight: 70,
 						acceptWidgets: true,
 						removable: true,
+						lazyLoad: true,
+						margin: 5,
 					});
 
 					// this.p_grid.addWidget({w: 2, content: 'item 1'});

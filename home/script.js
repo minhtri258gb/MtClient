@@ -38,6 +38,65 @@ var mt = {
 	},
 	m_clientPath: '',
 
+	// Module
+	dashboard: {
+		p_grid: null,
+		m_isEdit: false,
+
+		init() {
+
+			// Init GridStack
+			this.p_grid = GridStack.init({
+				staticGrid: !this.m_isEdit,
+				float: true,
+				cellHeight: 70,
+				acceptWidgets: true,
+				removable: true,
+				lazyLoad: true,
+				margin: 5,
+			});
+
+			// this.p_grid.addWidget({w: 2, content: 'item 1'});
+
+			const serializedData = [
+				{x: 0, y: 0, w: 2, h: 2},
+				{x: 2, y: 3, w: 3, content: 'item 2'},
+				{x: 1, y: 3},
+
+				{x: 0, y: 0, w: 2, h: 2, id: '0'},
+				{x: 3, y: 1, h: 2, id: 'no_move', noMove: true, content: 'no move'},
+				{x: 4, y: 1, id: '2'},
+				{x: 2, y: 3, w: 3, id: 'no_resize', noResize: true, content: 'no resize'},
+				{x: 1, y: 3, id: 'locked', locked: true, content: 'locked'}
+			];
+
+			this.p_grid.load(serializedData);
+		},
+		editDashboard() {
+
+			// Đổi cờ
+			this.m_isEdit = !this.m_isEdit;
+
+			// Set GridStack
+			this.p_grid.setStatic(!this.m_isEdit);
+
+			// Đổi icon trên button
+			let iconElm = document.getElementById('btnEditDashboardIcon');
+			let classListElm = iconElm.classList;
+			if (this.m_isEdit) {
+				classListElm.remove('fa-regular');
+				classListElm.add('fa-solid');
+			}
+			else {
+				classListElm.remove('fa-solid');
+				classListElm.add('fa-regular');
+			}
+		},
+		addWidget() {
+			this.p_grid.addWidget({x: 0, y: 0, content: "new item"});
+		},
+	},
+
 	// Method
 	async init() {
 
@@ -57,6 +116,7 @@ var mt = {
 		this.m_clientPath = await resClientPath.json();
 
 		// Init
+		this.dashboard.init();
 		this.initUI();
 
 	},
