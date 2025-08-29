@@ -14,6 +14,7 @@
 	<!-- <script src="/lib/vanilla-picker-2.0.1/vanilla-picker.min.js"></script> -->
 	<link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet">
 	<script src="/lib/flatpickr/flatpickr.min.js"></script>
+	<script src="/lib/flatpickr/l10n/vn.js"></script>
 	<!-- <link href="/lib/choicesjs-11.1.0/base.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <link href="/lib/choicesjs-11.1.0/choices.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <script src="/lib/choicesjs-11.1.0/choices.min.js"></script> -->
@@ -76,7 +77,6 @@
 						],
 						properties: {
 							'propHidden': {
-								title: 'Field Hidden',
 								type: 'string',
 								format: 'hidden',
 								options: {
@@ -268,9 +268,13 @@
 								format: 'date',
 								default: '2025-08-20',
 								options: {
-									flatpickr: {}
+									flatpickr: {
+										locale: 'vn',
+										altInput: true,
+										altFormat: 'd/m/Y',
+										dateFormat: 'Y-m-d',
+									}
 								},
-								// description: 'Property Date',
 							},
 							'propColor': {
 								title: 'Field Color',

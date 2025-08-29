@@ -17,6 +17,7 @@
 	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
 	<link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet">
 	<script src="/lib/flatpickr/flatpickr.min.js"></script>
+	<script src="/lib/flatpickr/l10n/vn.js"></script>
 
 	<style>
 		body {
@@ -148,6 +149,12 @@
 						showCancelButton: true,
 						confirmButtonText: 'Lưu',
 						cancelButtonText: 'Đóng',
+						// showClass: {
+						// 	popup: '',
+						// },
+						// hideClass: {
+						// 	popup: '',
+						// },
 						didOpen: () => this.initForm(eventData),
 						didClose: () => this.m_editor.destroy(),
 						preConfirm: () => {
@@ -180,9 +187,10 @@
 							type: 'object',
 							required: [],
 							properties: {
-								'id': { title: ' ', type: 'string', format: 'hidden', },
+								'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
 								'name': { title: 'Name', type: 'string', format: 'text' },
 								'date': { title: 'Date', type: 'string', format: 'date', options: { flatpickr: {
+									locale: 'vn',
 									altInput: true,
 									altFormat: 'd/m/Y',
 									dateFormat: 'Y-m-d',

@@ -1,0 +1,59 @@
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PWA + Firebase Push (Vanilla JS)</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.webmanifest">
+    <meta name="theme-color" content="#228be6">
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; }
+      .card { max-width: 720px; margin: 0 auto; padding: 24px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+      h1 { margin-top: 0; }
+      code, pre { background: #f5f7fb; padding: 2px 6px; border-radius: 6px; }
+      button { padding: 10px 16px; border: 0; border-radius: 12px; cursor: pointer; }
+      .primary { background: #228be6; color: white; }
+      .muted { opacity: 0.8; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+      .log { background: #0b1220; color: #e6edf3; padding: 12px; border-radius: 12px; min-height: 120px; white-space: pre-wrap; }
+      .token { word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>📣 PWA + Firebase Cloud Messaging (Vanilla JS)</h1>
+      <p>Demo tối giản để nhận thông báo đẩy trên web. Hãy mở DevTools (Console) để xem log chi tiết.</p>
+
+      <ol>
+        <li>Chỉnh <code>firebaseConfig</code> và <code>vapidKey</code> trong <code>app.js</code>.</li>
+        <li>Triển khai (serve) bằng HTTPS (hoặc <code>http://localhost</code> khi dev).</li>
+        <li>Nhấn nút cấp quyền và lấy token.</li>
+        <li>Gửi thử thông báo từ Firebase Console/Server với token đó.</li>
+      </ol>
+
+      <div class="row">
+        <button id="btn-permission" class="primary">1) Xin quyền thông báo</button>
+        <button id="btn-token">2) Lấy FCM token</button>
+        <button id="btn-test">3) Giả lập thông báo foreground</button>
+      </div>
+
+      <h3>FCM Token</h3>
+      <div id="token" class="token muted">(chưa lấy)</div>
+
+      <h3>Log</h3>
+      <div id="log" class="log"></div>
+    </div>
+
+    <!-- App logic -->
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
