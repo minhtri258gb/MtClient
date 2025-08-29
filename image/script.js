@@ -10,7 +10,7 @@ import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 var mt = {
 	h_debug: false,
 	h_path_wallpaper: 'D:/Walpapers', // Link folder on Server
-	h_url_wallpaper: 'res/db/image.json', // Link Data Client
+	h_pathDB: 'res/DB/image.json', // Link Data Client
 	p_authen: mtAuthen,
 	p_editor: null, // JsonEditor
 	p_toast: null, // Sweetalert2 - Toast
@@ -186,19 +186,19 @@ var mt = {
 				return;
 
 			// Call API
-			let response = await fetch('/'+this.h_url_wallpaper, { method: 'GET' });
+			let response = await fetch('/'+this.h_pathDB, { method: 'GET' });
 			if (!response.ok)
 				throw { error: true, msg: await response.text() };
 
 			this.d_wallpaper = await response.json();
 
 			// Log
-			this.h_debug && console.log('[mt.load] d_wallpaper', {
+			this.h_debug && console.log('[mt.loadFromJson] d_wallpaper', {
 				d_wallpaper: this.d_wallpaper,
 			});
 		}
 		catch (ex) {
-			console.error('[mt.load] Exception', ex);
+			console.error('[mt.loadFromJson] Exception', ex);
 		}
 	},
 	async loadFromDisk() {
@@ -310,7 +310,7 @@ var mt = {
 
 		// Call API - Lưu dữ liệu
 		let paramURL = new URLSearchParams();
-		paramURL.set('file', this.m_clientPath + '/' + this.h_url_wallpaper);
+		paramURL.set('file', this.m_clientPath + '/' + this.h_pathDB);
 		paramURL.set('force', true);
 		let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
 			method: 'POST',

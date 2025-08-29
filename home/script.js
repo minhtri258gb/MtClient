@@ -112,7 +112,7 @@ var mt = {
 				'Authorization': 'Bearer '+this.p_authen.getToken(),
 			},
 		});
-		this.m_clientPath = await resClientPath.json();
+		this.m_clientPath = await resClientPath.text();
 
 		// Init
 		this.dashboard.init();
@@ -276,5 +276,4 @@ var mt = {
 		return 'file';
 	},
 };
-
 $(document).ready(() => mt.init());

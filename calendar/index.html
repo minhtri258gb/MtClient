@@ -40,37 +40,102 @@
 <body>
 
 	<!--
-		https://fontawesome.com/v5/search
 		https://fontawesome.com/v6/search?o=r
 		https://github.com/json-editor/json-editor
 	 -->
 
 	<div id='calendar'></div>
 
-	<!-- Modal Form -->
-	<!-- <div id="modal-1" aria-hidden="true">
-		<div tabindex="-1" data-micromodal-close>
-			<div role="dialog" aria-modal="true" aria-labelledby="modal-1-title" >
-				<header>
-					<h2 id="modal-1-title">Modal Title</h2>
-					<button aria-label="Close modal" data-micromodal-close></button>
-				</header>
-				<div id="modal-1-content">
-					Modal Content
-				</div>
-			</div>
-		</div>
-	</div> -->
-
 	<script type="module">
 		import mtAuthen from '/common/authen.js';
 		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 
 		var mt = {
-			h_debug: false,
+			h_debug: true,
+			h_pathDB: 'res/DB/events/', // Link Data Client
 			p_authen: mtAuthen,
 			d_event: {},
 
+			// Module
+			mgr: {
+				m_clientPath: '', // Đường dẫn client
+				d_event: {},
+
+				async loadFromJson(year) {
+					try {
+
+						if (year == null || year < 1000 || year > 3000)
+							year = new Date().getFullYear();
+
+						// Authen
+						if (mt.p_authen.checkAuthn() == false)
+							return;
+
+						// DB Path
+						let listEvent = [];
+						let urlDB = '/' + mt.h_pathDB + year + '.json';
+
+						// Call API
+						let response = await fetch(urlDB, { method: 'GET' });
+						if (!response.ok) {
+							if (response.status == 404) { } // skip
+							else
+								throw { error: true, msg: await response.text() };
+						}
+						else
+							listEvent = await response.json();
+
+						// Log
+						mt.h_debug && console.log('[mt.mgr.loadFromJson]', { listEvent });
+					}
+					catch (ex) {
+						console.error('[mt.mgr.loadFromJson] Exception', ex);
+					}
+				},
+				async saveToJson(year) {
+					try {
+
+						if (year == null || year < 1000 || year > 3000)
+							throw { error: true, msg: "Năm không hợp lệ" };
+
+						// Kiểm tra và lấy client path
+						if (this.m_clientPath.length == 0) {
+							let response = await fetch('/file/getClientPath', {
+								method: 'GET',
+								headers: { 'Authorization': 'Bearer '+this.p_authen.getToken() },
+							});
+							if (!response.ok)
+								throw { error: true, msg: await response.text() };
+
+							this.m_clientPath = await response.text();
+						}
+
+						// Call API - Lưu dữ liệu
+						let paramURL = new URLSearchParams();
+						paramURL.set('file', this.m_clientPath + '/' + this.h_pathDB);
+						paramURL.set('force', true);
+						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'text/plain',
+								'Authorization': 'Bearer '+this.p_authen.getToken(),
+							},
+							body: JSON.stringify(this.d_wallpaper),
+						});
+						if (!responseSave.ok) {
+							let errorMessage = await responseSave.text();
+							this.toast('error', errorMessage);
+							console.error(errorMessage);
+							return;
+						}
+
+						this.toast('success', "Lưu dữ liệu ảnh thành công.");
+					}
+					catch (ex) {
+						console.error('[mt.mgr.saveToJson] Exception', ex);
+					}
+				},
+			},
 			calendar: {
 				m_calendar: null,
 
@@ -221,6 +286,54 @@
 					};
 				},
 			},
+			utils: {
+				p_toast: null, // Sweetalert2 - Toast
+
+				init() {
+
+					// Init Sweetlert2
+					this.p_toast = Swal.mixin({
+						toast: true,
+						position: 'bottom-end',
+						showConfirmButton: false,
+						timer: 3000,
+						timerProgressBar: true,
+						didOpen: (toast) => {
+							toast.onmouseenter = Swal.stopTimer;
+							toast.onmouseleave = Swal.resumeTimer;
+						},
+					});
+				},
+				toast(type, msg) {
+
+					let title = '';
+					switch (type) {
+						case 'info':
+							title = "Thông báo";
+							break;
+						case 'success':
+							title = "Thành công";
+							break;
+						case 'warning':
+							title = "Cảnh báo";
+							break;
+						case 'error':
+							title = "Lỗi";
+							break;
+						default:
+							throw { error: true, msg: "Type không hợp lệ!" };
+					}
+
+					// Prepare
+					let opts = {
+						icon: type,
+						title: msg,
+					};
+
+					// Show Toast
+					this.p_toast.fire(opts);
+				},
+			},
 
 			// Method
 			async init() {
@@ -228,14 +341,14 @@
 				// Bind Global
 				window.mt = this;
 
-				// Authen
+				// Init
 				await this.p_authen.init();
-
-				// Form
 				this.form.init();
-
-				// Calendar
 				this.calendar.init();
+				this.utils.init();
+
+				// First load
+				this.mgr.loadFromJson();
 			},
 			async loadData(month, year) { // Tải dữ liệu sự kiện
 
