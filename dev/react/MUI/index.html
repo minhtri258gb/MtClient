@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+  <!-- <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script> -->
+  <!-- <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script> -->
+  <!-- <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script> -->
+  <!-- <script src="/lib/commonjs/common.js"></script> -->
+  <script src="/lib/react/react.production.min.js"></script>
+  <script src="/lib/react/react-dom.production.min.js"></script>
+  <!-- <script src="/lib/babel/babel.min.js"></script> -->
+  <!-- <script src="/lib/react-custom/react-tabs/lib/index.js"></script> -->
+  
+  <!-- <script src="/lib/react-custom/react-tabs/lib/components/Tab.js"></script> -->
+	<!-- <link href="/lib/react-custom/react-tabs/style/react-tabs.css" type="text/css" rel="stylesheet"> -->
+  <script type="importmap">
+    {"imports":{
+      "react":"/lib/react/react.production.min.js",
+    }}
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <!-- <script src="/dev/react//MUI/script.js" type="text/babel" data-type="module"></script> -->
+  <script type="module">
+    import "/lib/react/react.production.min.js"
+    import "/lib/react/react-dom.production.min.js"
+    // import "/lib/react-custom/react-tabs/esm/helpers/count.js"
+    // import "/lib/react-custom/react-tabs/esm/helpers/propTypes.js"
+    import "/lib/react-custom/react-tabs/esm/index.js"
+    // import reactTabs from 'https://cdn.jsdelivr.net/npm/react-tabs@6.0.2/+esm'
+    // console.log(reactTabs)
+    // document.addEventListener("DOMContentLoaded", () => {
+        
+    //   class App extends React.Component {
+    //     constructor(props) {
+    //       super(props);
+    //       this.state = { liked: false };
+    //     }
+    //     render() {
+    //       return (
+    //         <div>hello!!</div>
+    //       );
+    //     }
+    //   }
+
+    //   ReactDOM.render(App, document.querySelector('#root'));
+    // });
+
+  </script>
+
+
+<!-- 
+  <div id="app"></div>
+  <script type="text/babel">
+
+    class App extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { liked: false };
+      }
+      render() {
+        return (
+          <Tabs>
+            <TabList>
+              <Tab>Title 1</Tab>
+              <Tab>Title 2</Tab>
+            </TabList>
+
+            <TabPanel>
+              <h2>Any content 1</h2>
+            </TabPanel>
+            <TabPanel>
+              <h2>Any content 2</h2>
+            </TabPanel>
+          </Tabs>
+        );
+      }
+    }
+    
+    ReactDOM.render(<App />, document.getElementById('app'));
+  </script> -->
+
+
+
+</body>
+</html>

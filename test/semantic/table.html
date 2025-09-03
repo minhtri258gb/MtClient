@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Semantic - Table</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/nanogallery2/css/nanogallery2.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/test/style.css"> -->
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
+	<!-- <script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/lib/nanogallery2/jquery.nanogallery2.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
+	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
+</head>
+<body>
+
+	<table id="table" class="ui celled table"></table>
+	
+	<script>
+
+		function uiTable(idElement, options) {
+			
+			// Tùy chọn mặc định
+			if (options.columns == null)
+				options.columns = [];
+			if (options.data == null)
+				options.data = [];
+
+			// Build HTML Header
+			let html = `<thead><tr>`;
+			for (let i in options.columns) {
+				let column = options.columns[i];
+				html += `<th>${column.name}</th>`;
+			}
+			html += `</tr></thead>`;
+
+			// Build HTML Body
+			html += `<tbody>`;
+			for (let i in options.data) {
+				let data = options.data[i];
+				html += `<tr>`;
+				for (let i in options.columns) {
+					let column = options.columns[i];
+					html += `<td data-label="${column.name}">${data[column.prop]}</td>`;
+				}
+				html += `</tr>`;
+			}
+			html += `</tbody>`;
+
+			// Build HTML Fotter
+			html += `
+				<tfoot>
+					<tr><th colspan="5">
+						<div class="ui right floated pagination menu">
+							<a class="icon item">
+								<i class="left chevron icon"></i>
+							</a>
+							<a class="item">1</a>
+							<a class="item">2</a>
+							<a class="item">3</a>
+							<a class="item">4</a>
+							<a class="icon item">
+								<i class="right chevron icon"></i>
+							</a>
+						</div>
+					</th>
+				</tr></tfoot>
+			`;
+
+			// Place HTML
+			$('#'+idElement).html(html);
+		}
+		
+		// ====== TEST ======
+		let data = [
+			{
+				name: "James",
+				age: 24,
+				job: "Engineer",
+			},
+			{
+				name: "Jill	",
+				age: 26,
+				job: "Engineer",
+			},
+			{
+				name: "Elyse",
+				age: 24,
+				job: "Designer",
+			},
+		];
+		uiTable('table', {
+			columns: [
+				{ name: "Name", prop: "name", },
+				{ name: "Age", prop: "age", },
+				{ name: "Job", prop: "job", },
+			],
+			data: data,
+		});
+
+	</script>
+</body>
+</html>

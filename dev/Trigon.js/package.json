@@ -1,0 +1,23 @@
+{
+  "name": "Trigon.JS",
+  "version": "1.0.0",
+  "description": "",
+  "main": "song.js",
+  "dependencies": {
+    "html-webpack-plugin": "^4.5.1",
+    "web-audio-daw": "^4.9.1"
+  },
+  "devDependencies": {
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "webpack-dev-server --open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

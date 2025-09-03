@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Context Menu</title>
+
+	<meta charset="UTF-8">
+
+	<script src="/lib/context-menu/dist/context-menu.js"></script>
+
+	<style>
+
+	</style>
+</head>
+<body>
+
+	<!--
+		https://github.com/mturco/context-menu
+	-->
+
+	<div id="box">Right-click me</div>
+
+	<script>
+		const menu = new ContextMenu('#box', [
+			{ name: "Copy", fn: () => console.log("copy") },
+			{ type: "separator" },
+			{ name: "Delete", fn: () => console.log("delete") },
+		]);
+	</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8" />
+	<title>Text Editor</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			padding: 20px;
+		}
+
+		.container {
+			display: flex;
+			align-items: flex-start;
+		}
+
+		.line-numbers {
+			text-align: right;
+			padding: 8px 4px;
+			background: #f0f0f0;
+			user-select: none;
+			color: #666;
+			border: 1px solid #ccc;
+			border-right: none;
+			font-family: monospace;
+			line-height: 1.4;
+			overflow: hidden;
+			height: 300px;
+			white-space: pre;
+		}
+
+		textarea {
+			width: 600px;
+			height: 300px;
+			line-height: 1.4;
+			border: 1px solid #ccc;
+			font-family: monospace;
+			resize: none;
+			padding: 8px;
+			white-space: pre;
+			overflow-x: auto;
+		}
+
+		textarea:focus {
+			outline: none;
+		}
+		
+		.line-numbers,
+		textarea {
+			font-size: 14px;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="container">
+		<div class="line-numbers" id="lineNumbers">1</div>
+		<textarea id="codeArea" oninput="updateLineNumbers()" onscroll="syncScroll()" wrap="off"></textarea>
+	</div>
+
+	<script>
+		const textarea = document.getElementById("codeArea");
+		const lineNumbers = document.getElementById("lineNumbers");
+
+		function updateLineNumbers() {
+			const lines = textarea.value.split("\n").length;
+			let lineNums = "";
+			for (let i = 1; i <= lines; i++) {
+				lineNums += i + "\n";
+			}
+			lineNumbers.textContent = lineNums;
+			syncScroll();
+		}
+
+		function syncScroll() {
+			lineNumbers.scrollTop = textarea.scrollTop;
+		}
+
+		// Khởi tạo ban đầu
+		updateLineNumbers();
+	</script>
+</body>
+</html>

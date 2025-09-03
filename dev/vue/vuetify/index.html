@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vuetify</title>
+  <script src="/lib/vue/vue.global.prod.js"></script>
+  <script src="/lib/vuetify/vuetify.min.js"></script>
+  <link type="text/css" rel="stylesheet" href="/lib/vuetify/vuetify.min.css" />
+</head>
+<body>
+  <div id="app">
+    <div>
+      <my-component></my-component>
+    </div>
+    <v-card>
+      <v-toolbar color="primary">
+        <v-app-bar-nav-icon></v-app-bar-nav-icon>
+        <v-toolbar-title>Manager</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon>
+          <v-icon>mdi-magnify</v-icon>
+        </v-btn>
+        <v-btn icon>
+          <v-icon>mdi-dots-vertical</v-icon>
+        </v-btn>
+        <template v-slot:extension>
+          <v-tabs v-model="tab" align-tabs="title">
+            <v-tab key="manager" value="manager">
+              Manager
+            </v-tab>
+            <v-tab v-for="item in items" :key="item" :value="item">
+              {{ item }}
+            </v-tab>
+          </v-tabs>
+        </template>
+      </v-toolbar>
+      <v-window v-model="tab">
+        <v-window-item value="manager">
+          One Manager
+        </v-window-item>
+        <v-window-item v-for="item in items" :key="item" :value="item">
+          <v-card flat>
+            <v-card-text class="text-center">
+              sbcasdasd
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+      </v-window>
+    </v-card>
+  </div>
+  <script src="./script.js" type="module"></script>
+</body>
+</html>

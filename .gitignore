@@ -2,3 +2,4 @@ lib
 !lib/mt
 res/instruments
 node_modules
+/res/maps

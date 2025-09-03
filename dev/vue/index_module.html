@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Home</title>
+	<!-- <link href="/lib/react-custom/react-tabs/style/react-tabs.css" type="text/css" rel="stylesheet"> -->
+  <!-- <script src="/lib/vue/vue.global.js"></script> -->
+  <script type="importmap">
+    {"imports":{"vue":"/lib/vue/vue.esm-browser.js"}}
+  </script>
+</head>
+<body>
+  <div id="app">{{ message }}</div>
+  <script type="module">
+    import mt from "./script.js"
+    mt.init();
+  </script>
+</body>
+</html>

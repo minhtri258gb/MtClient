@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Semantic - Tree</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/lib/nanogallery2/css/nanogallery2.min.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="/test/style.css"> -->
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
+	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
+	<!-- <script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/lib/nanogallery2/jquery.nanogallery2.min.js"></script> -->
+	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
+	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
+</head>
+<body>
+	
+	<div id="content" class="ui list"></div>
+
+	<script>
+
+		function uiTree(tree, options) {
+			
+			// Hàm onClick collapse / expend
+			function toogleTree() {
+				let jElmIcon = $(this);
+				let lstContent = jElmIcon.next().children();
+				
+				// Return if no child
+				if (lstContent.length < 2)
+					return;
+				let jElmList = $(lstContent[2]);
+				
+				if (jElmList.is(":visible")) { // Hide
+					jElmList.hide();
+					jElmIcon.removeClass(jElmIcon.data('iconopen'));
+					jElmIcon.addClass(jElmIcon.data('iconclose'));
+				}
+				else { // Show
+					jElmList.show();
+					jElmIcon.removeClass(jElmIcon.data('iconclose'));
+					jElmIcon.addClass(jElmIcon.data('iconopen'));
+				}
+			}
+
+			// Hàm đệ quy build HTML
+			function buildHtml(tree, options) {
+				if (tree == null || tree.length == 0)
+					return "";
+				let htmlFull = "";
+				for (let i in tree) {
+					let item = tree[i];
+					
+					// Get HTML Child
+					let htmlChild = buildHtml(item[options.prop_list], options);
+					if (htmlChild.length > 0) {
+						htmlChild = `
+							<div class="list">
+								${htmlChild}
+							</div>
+						`;
+					}
+
+					// Get icon
+					let icon = item[options.prop_icon];
+					if (icon == null)
+						icon = options.icon_open;
+
+					// Build HTML
+					htmlFull += `
+						<div class="item">
+							<i class="${icon} icon" data-iconopen="${options.icon_open}" data-iconclose="${options.icon_close}"></i>
+							<div class="content">
+								<div class="header">${item[options.prop_header]}</div>
+								<div class="description">${item[options.prop_description]}</div>
+								${htmlChild}
+							</div>
+						</div>
+					`;
+				}
+				return htmlFull;
+			}
+			
+			// Tùy chọn mặc định
+			if (options.header == null)
+				options.header = 'header';
+			if (options.description == null)
+				options.description = 'description';
+			if (options.icon == null)
+				options.icon = 'icon';
+			if (options.list == null)
+				options.list = 'list';
+
+			// Place HTML
+			$('#content').html(buildHtml(tree, options));
+
+			// Set Event
+			$('#content .icon').off().on('click', toogleTree);
+		}
+		
+		// ====== TEST ======
+		let tree = [
+			{
+				name: "src",
+				detail: "Source files for project",
+				child: [
+					{
+						name: "site",
+						detail: "Your site's theme",
+					},
+					{
+						name: "themes",
+						detail: "Packaged theme files",
+						child: [
+							{
+								name: "default",
+								detail: "Default packaged theme",
+							},
+							{
+								name: "my_theme",
+								detail: "Packaged themes are also available in this folder",
+							},
+						],
+					},
+					{
+						icon: "file",
+						name: "theme.config",
+						detail: "Config file for setting packaged themes",
+					},
+				],
+			},
+			{
+				name: "dist",
+				detail: "Compiled CSS and JS files",
+				child: [
+					{
+						name: "components",
+						detail: "Individual component CSS and JS",
+					},
+				],
+			},
+			{
+				icon: "file",
+				name: "semantic.json",
+				detail: "Contains build settings for gulp",
+			},
+		];
+		uiTree(tree, {
+			prop_header: 'name',
+			prop_description: 'detail',
+			prop_icon: 'icon',
+			prop_list: 'child',
+			icon_open: 'folder open',
+			icon_close: 'folder',
+		});
+
+	</script>
+</body>
+</html>
