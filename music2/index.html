@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Music</title>
+
+	<meta charset='utf-8' />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/music/favicon.ico" rel="shortcut icon" type="image/png">
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/sweetalert2-11.22.4/sweetalert2.css" type="text/css" rel="stylesheet">
+	<script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js"></script>
+	<link href="/lib/tabulator-6.3/css/tabulator.min.css" type="text/css" rel="stylesheet">
+	<script src="/lib/tabulator-6.3/js/tabulator.min.js" type="text/javascript"></script>
+	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+		}
+		.layoutMain {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			flex-direction: row;
+
+			.layoutLeft {
+				width: 400px;
+				padding: 0 4px;
+				border-right: 1px solid #95B8E7;
+
+				.framebox {
+					border: 1px solid #95B8E7;
+					border-radius: 5px;
+				}
+			}
+			.layoutCenter {
+				flex: 1;
+			}
+		}
+
+		/* Custom Component */
+		button.iconButton {
+			width: 25px;
+			height: 25px;
+			color: #444;
+			border: 1px solid #bbb;
+			border-radius: 5px;
+			cursor: pointer;
+
+			&:hover {
+				background-color: #eaf2ff;
+				border: 1px solid #b7d2ff;
+			}
+		}
+		.range-vertical {
+			writing-mode: vertical-lr;
+			direction: rtl;
+			width: 22px;
+			height: 120px;
+			margin: 0;
+		}
+
+		/* === Tabulator === */
+		.tabulator {
+			background-color: white;
+			border: none;
+		}
+		.tabulator .tabulator-header .tabulator-col {
+			background: #f2faff;
+		}
+		.tabulator .tabulator-row:hover {
+			background-color: #e6f3ff;
+		}
+		.tabulator-row {
+			background-color: #fff;
+			border-bottom: 1px dotted #ccc;
+		}
+		.tabulator-row.tabulator-row-even {
+			background-color: #fff;
+		}
+		.tabulator-row.highlight-row {
+			background-color: #ffe48d;
+		}
+		.tabulator-row .tabulator-cell {
+			border-right: 1px dotted #ccc;
+		}
+
+		/* === Sweetalwer2 === */
+		.swal2-html-container {
+			text-align: left;
+		}
+	</style>
+</head>
+<body>
+
+	<!--
+		https://tabulator.info
+		https://fontawesome.com/v6/search?ic=free&o=r
+		https://github.com/json-editor/json-editor
+		https://sweetalert2.github.io
+	-->
+
+	<div class="layoutMain">
+		<div class="layoutLeft">
+
+			<!-- Tiêu đề -->
+			<h2 id="titleMusic" style="text-align:center">Music Player</h2>
+			<br>
+
+			<!-- Ảnh sóng âm -->
+			<canvas id="dynamicWave" class="framebox" style="width:100%;height:100px;"></canvas>
+			<br>
+
+			<!-- Thời lượng -->
+			<div class="framebox" style="width:100%;height:100px;position:relative;">
+				<canvas id="staticWave" style="width:100%;height:100%;z-index:1;"></canvas>
+				<span id="staticWaveCur" style="left:0px;width:1px;height:100%;position:absolute;z-index:2;background-color:#95B8E7;"></span>
+				<div style="height:15px;top:50%;left:50%;position:absolute;transform:translate(-50%,-50%);z-index:3;">
+					<span id="staticWaveTime">0:00</span> / <span id="staticWaveDuration">0:00</span>
+				</div>
+			</div>
+			<br>
+
+			<!-- Player -->
+			<div class="framebox" style="height:173px;">
+
+				<!-- Volume bên trái -->
+				<div style="width:40px;height:100%;float:left;position:relative;display:flex;flex-direction:column;border-right:ridge;border-width:thin;">
+
+					<!-- Volume Slider -->
+					<div style="margin:auto;margin-top:10px;width:fit-content;flex-grow:1;">
+						<input id="volumeBar" type="range" class="range-vertical" onchange="mt.event.volumeChange()" />
+					</div>
+
+					<!-- Volume Button -->
+					<div style="bottom:0;width:100%;height:40px;display:table;">
+						<div style="display:table-cell;vertical-align:middle;text-align:center;">
+							<button id="volumeBtn" class="iconButton" onclick="mt.event.volumeToggle()"><i class="fa-solid fa-volume-low"></i></button>
+						</div>
+					</div>
+
+				</div>
+
+				<!-- Controller bên phải -->
+				<div style="height:100%;margin-left:50px;padding:5px 5px 5px 5px;">
+
+					<!-- Button -->
+					<div style="text-align:center;margin-right:50px;">
+						<button class="iconButton" onclick="mt.event.btnBack()"><i class="fa-solid fa-backward"></i></button>
+						<button id="btnPause" class="iconButton" onclick="mt.event.btnPause()"><i class="fa-solid fa-play"></i></button>
+						<button class="iconButton" onclick="mt.event.btnNext()"><i class="fa-solid fa-forward"></i></button>
+					</div>
+
+					<div style="display:flex;justify-content:space-between;">
+
+						<!-- Visualizations -->
+						<div>
+							<input id="ckbWave" type="checkbox" onchange="mt.event.ckbWave()" checked>Wave</input>
+						</div>
+
+						<!-- Random -->
+						<div>
+							<input id="ckbNext" type="checkbox" onchange="mt.event.ckbNext()" checked>Auto next</input>
+						</div>
+					</div>
+
+					<!-- Loop -->
+					<div style="text-align:center;margin-top:12px;margin-right:88px;">
+						<label>Loop </label>
+						<input id="loop" type="number" min="0" max="99" value="0" style="width:32px;" />
+						<!-- <input id="loop" type="text" class="easyui-numberspinner" value="0" data-options="min:0,max:99,spinAlign:'horizontal'" style="width:83px;"> -->
+					</div>
+
+					<!-- Filter -->
+					<div style="margin-top:5px;">
+						<span style="display:inline-block;width:32px;">Inc </span><input id="tagInclude" type="text" style="width: calc(100% - 40px);" />
+						<br>
+						<span style="display:inline-block;width:32px;">Exc </span><input id="tagExclude" type="text" style="width: calc(100% - 40px);" />
+					</div>
+
+				</div>
+			</div>
+			<br>
+
+			<!-- Playlist -->
+			<ul id="playlist" class="framebox" style="min-height:18px;margin:0;">
+			</ul>
+			<br>
+
+			<!-- Toolbox -->
+			<div class="framebox" style="padding:8px;">
+				<div style="display:flex;gap:4px;">
+					<button class="iconButton" onclick="mt.event.btnCheckAdd()"><i class="fa-solid fa-circle-plus"></i></button>
+					<button class="iconButton" onclick="mt.event.btnCheckMiss()"><i class="fa-solid fa-shield-halved"></i></button>
+					<button class="iconButton" onclick="mt.event.btnTrack()"><i class="fa-solid fa-scissors"></i></button>
+					<button class="iconButton" onclick="mt.event.btnShare()"><i class="fa-solid fa-share-nodes"></i></button>
+				</div>
+				<div>
+
+				</div>
+			</div>
+			<br>
+
+		</div>
+		<div class="layoutCenter">
+
+			<!-- Tabulator -->
+			<div id="table"></div>
+
+		</div>
+	</div>
+
+	<script type="module">
+		import mtAuthen from '/common/authen.js';
+		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
+
+		var mt = {
+
+			// Module
+			mgr: {
+				h_pathMusic: '', // Link folder on Server
+				h_pathDB: 'music2/', // Link Data Client
+				// h_pathDB: 'res/DB/events/', // Link Data Client
+				p_authen: mtAuthen,
+				m_clientPath: '', // Đường dẫn client
+				d_musics: [], // Danh sách nhạc
+				d_arrayBufferFile: '', // arrayBuffer bài hiện tại để tạo sóng
+				d_blogUrl: '', // Blob URL bài hiện tại
+				d_randSeed: [], // Danh sách tỷ lệ ngẫu nhiên
+				d_history: [], // Danh sách lịch sử phát
+
+				async loadConfig() {
+
+					// Call API - read Enviroment
+					let response = await fetch('/common/getConfig?key=PATH_MUSIC', { method: 'GET' });
+					if (!response.ok)
+						throw { error: true, msg: await response.text() };
+
+					this.h_pathMusic = await response.text();
+				},
+				processParamURL() {
+					let urlParams = new URLSearchParams(window.location.search);
+					let idStr = urlParams.get('id');
+					let id = Number.parseInt(idStr);
+					if (isNaN(id) == false) {
+						if (id >= 0 && id < this.d_musics.length) {
+							let music = this.d_musics[id-1];
+							mt.player.addPlaylist(music);
+						}
+					}
+				},
+				async loadFromJson() {
+					try {
+
+						// DB Path
+						let listEvent = [];
+						let urlDB = '/' + this.h_pathDB + 'music.json';
+
+						// Call API
+						let response = await fetch(urlDB, { method: 'GET' });
+						if (!response.ok) {
+							if (response.status == 404) { } // skip
+							else
+								throw { error: true, message: await response.text() };
+						}
+						else
+							listEvent = await response.json();
+
+						// Process data và Build rate list
+						this.d_randSeed = [];
+						for (let i=0, sz=listEvent.length; i<sz; i++) {
+							let music = listEvent[i];
+
+							music.id = i+1;
+
+							// Compile lstRandSeed
+							if (music.miss == false) {
+								for (let j=0; j<music.rate; j++)
+									this.d_randSeed.push(i);
+							}
+						}
+						this.d_musics = listEvent;
+
+						// Set into calendar
+						mt.list.load(listEvent);
+					}
+					catch (ex) {
+						console.error('[mt.mgr.loadFromJson] Exception', ex);
+						throw ex;
+					}
+				},
+				async saveToJson() {
+					try {
+
+						// Authen
+						if (this.p_authen.checkAuthn() == false)
+							await this.p_authen.init();
+
+						if (year == null || year < 1000 || year > 3000)
+							throw { error: true, message: "Năm không hợp lệ" };
+
+						// Kiểm tra và lấy client path
+						if (this.m_clientPath.length == 0) {
+							let response = await fetch('/file/getClientPath', {
+								method: 'GET',
+								headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
+							});
+							if (!response.ok)
+								throw { error: true, message: await response.text() };
+
+							this.m_clientPath = await response.text();
+						}
+
+						// DB Path
+						let urlDB = mt.h_pathDB + year + '.json';
+
+						// Call API - Lưu dữ liệu
+						let paramURL = new URLSearchParams();
+						paramURL.set('file', this.m_clientPath + '/' + urlDB);
+						paramURL.set('force', true);
+						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'text/plain',
+								'Authorization': 'Bearer '+mt.p_authen.getToken(),
+							},
+							body: JSON.stringify(this.d_event[year]),
+						});
+						if (!responseSave.ok) {
+							let errorMessage = await responseSave.text();
+							this.toast('error', errorMessage);
+							console.error(errorMessage);
+							return;
+						}
+					}
+					catch (ex) {
+						console.error('[mt.mgr.saveToJson] Exception', ex);
+						throw ex;
+					}
+				},
+				async loadFile(filename) {
+					try {
+
+						// Call API - Load file
+						let response = await fetch(`/file/static?folder=${this.h_pathMusic}&file=${filename}.mp3`);
+						if (response.ok == false) {
+							if (response.status == 404)
+								throw { error: true, message: `Không tìm thấy file nhạc: "${filename}"` };
+							else
+								throw { error: true, message: await response.text() };
+						}
+
+						this.d_arrayBufferFile = await response.arrayBuffer();
+
+						// Giải phóng dữ liệu cũ và mã hóa dữ liệu mới
+						if (this.d_blogUrl.length > 0)
+							URL.revokeObjectURL(this.d_blogUrl);
+						this.d_blogUrl = URL.createObjectURL(new Blob([this.d_arrayBufferFile]));
+					}
+					catch (ex) {
+						throw { error: true, message: ex.message, detail: ex };
+					}
+				},
+			},
+			list: {
+				p_table: null, // Tabulator
+
+				init() {
+
+					this.p_table = new Tabulator('#table', {
+						layout: 'fitData',
+						height: '100%',
+						// autoRowHeight: true, // Từ động wraptext
+						// filterMode: 'remote', // Filter
+						// headerFilterLiveFilterDelay: 600,
+						// sortMode: 'remote', // Sort
+						// initialSort: [{column: 'time', dir: 'desc'}],
+						data: [],
+						initialSort: [{ column: 'name', dir: 'asc' }],
+						columns: [
+							{ title:"STT", formatter:'rownum', width:40, hozAlign:'center', vertAlign:'middle', headerSort:false },
+							{ title:"Name", field:'name', vertAlign:'middle', headerSort:false, editable:false, editable:false },
+							{ title:"Rate", field:'rate', width:62, hozAlign:'center', vertAlign:'middle', editable:false, formatter: (cell) => {
+								let value = cell.getValue(); // Lấy giá trị của ô (1-5)
+								return (value >= 1 && value <= 5) ? `<img src="/res/icons/rating${value}.png" />` : 'N/A';
+							}},
+							{ title:"Duration", field:'duration', width:64, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false,
+								formatter: (cell) => mt.utils.cv_formatTime(cell.getValue()),
+							},
+							{ title:"Tags", field:'tags', width:100, vertAlign:'middle', headerSort:false, editable:false},
+						],
+						// editorEmptyValue: null,
+						rowContextMenu: [
+							{ label: '<i class="fa-solid fa-square-plus"></i> Add Playlist', action: (event, row) => mt.event.menuAddPlaylist(row) },
+							{ label: '<i class="fa-solid fa-play"></i> Play', action: (event, row) => mt.event.menuPlay(row) },
+							{ label: '<i class="fa-solid fa-circle-play"></i> Play Track', action: (event, row) => mt.event.menuPlayTrack(row) },
+							{ separator: true, },
+							{ label: '<i class="fa-solid fa-pen-to-square"></i> Edit', action: (event, row) => mt.event.menuEdit(row) },
+							{ label: '<i class="fa-regular fa-trash-can"></i> Delete', action: (event, row) => mt.event.menuDelete(row) },
+						]
+						// headerSortElement: function(column, dir) {
+						// 	switch (dir) {
+						// 		case 'asc': return '<img src="/res/icons/sort_up_9x16.png" />';
+						// 		case 'desc': return '<img src="/res/icons/sort_down_9x16.png" />';
+						// 	}
+						// 	return '<img src="/res/icons/sort_9x16.png" />';
+						// },
+					});
+
+					// Register Event
+					this.p_table.on('cellDblClick', (event, cell) => mt.event.doubleClickList(cell));
+				},
+				load(lstRow) {
+					this.p_table.setData(lstRow);
+				},
+				highlightRow(id) {
+
+					// Xóa highlight cũ
+					document.querySelectorAll('.highlight-row').forEach(el => {
+						el.classList.remove('highlight-row');
+					});
+
+					// Highlight dòng hiện tại
+					let row = this.p_table.getRow(id);
+					row.getElement().classList.add('highlight-row');
+				},
+				scrollToCurrent(id) {
+					this.p_table.scrollToRow(id, 'center', true);
+				},
+			},
+			form: {
+				m_editor: null, // Json Editor
+
+				// Method
+				init() {
+
+					// Init Editor
+					JsonEditorEX.RateRegister();
+					JsonEditorEX.TagBoxRegister();
+				},
+				async open(music) {
+
+					// Open Modal
+					let result = await Swal.fire({
+						title: 'Sự kiện',
+						html: '<div id="json-editor" class="json-editor"></div>',
+						showCancelButton: true,
+						confirmButtonText: 'Lưu',
+						cancelButtonText: 'Đóng',
+						// showClass: {
+						// 	popup: '',
+						// },
+						// hideClass: {
+						// 	popup: '',
+						// },
+						didOpen: () => this.initForm(music),
+						didClose: () => this.m_editor.destroy(),
+						preConfirm: () => {
+							try {
+								return this.m_editor.getValue();
+							}
+							catch (ex) {
+								Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+								console.error('[mt.form.open.preConfirm] Exception:', ex);
+							}
+						},
+					});
+					if (result.isConfirmed)
+						this.onSave(result.value);
+				},
+				initForm(music) {
+
+					let objForm = {
+						id: 0,
+						name: '',
+						rate: 3,
+						duration: null,
+						tags: 'NEW',
+						decibel: 1.0,
+						trackbegin: null,
+						trackend: null,
+						miss: 0,
+					};
+					if (music != null)
+						objForm = Object.assign(objForm, music);
+
+					// Init Form
+					const element = document.getElementById('json-editor');
+					this.m_editor = new JSONEditor(element, {
+						use_name_attributes: false,
+						theme: 'barebones',
+						iconlib: 'fontawesome5',
+						disable_edit_json: true,
+						disable_properties: true,
+						disable_collapse: true,
+						startval: objForm,
+						schema: {
+							title: 'Event Calendar',
+							type: 'object',
+							required: [],
+							properties: {
+								'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
+								'name': { title: 'Name', type: 'string', format: 'text' },
+								'rate': { title: 'Rate', type: 'integer', format: 'rate', default: 3 },
+								'duration': { title: 'Duration', type: 'number', minimum: 0 },
+								'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
+								'decibel': { title: 'Decibel', type: 'number', minimum: 0, maximum: 500 },
+							},
+						},
+					});
+				},
+				async onSave(data) {
+					try {
+
+						let year = new Date(data.date).getFullYear();
+
+						if (data.id === '0') { // Add
+
+							if (mt.mgr.d_event[year] == null)
+								await mt.mgr.loadFromJson(year);
+							delete data.id;
+
+							// Save to RAM
+							mt.mgr.d_event[year].push(data);
+
+							// Change Calendar
+							let id = mt.mgr.d_event[year].length
+							mt.calendar.addEvent(id, data)
+						}
+						else { // Update
+
+							// Cập nhật data RAM
+							let arrIndex = +data.id - 1;
+							delete data.id;
+
+							// Save to RAM
+							mt.mgr.d_event[year][arrIndex] = data;
+
+							// Change Calendar
+							mt.calendar.editEvent(arrIndex+1, data);
+						}
+
+						// Save data
+						await mt.mgr.saveToJson(year);
+
+						// Notify
+						mt.utils.toast('success', "Lưu dữ liệu ảnh thành công.");
+					}
+					catch (ex) {
+						console.error('[mt.form.onSave] Exception', ex);
+						mt.utils.toast('error', ex.message);
+					}
+				},
+				async onDelete(data) {
+					try {
+
+						// Confirm Delete
+						let isConfirm = await mt.utils.confirmDanger('Xác nhận xóa sự kiện!', 'Xóa');
+						if (!isConfirm)
+							return;
+
+						let year = new Date(data.date).getFullYear();
+
+						// Cập nhật data RAM
+						let arrIndex = +data.id - 1;
+						delete data.id;
+
+						// Save to RAM
+						mt.mgr.d_event[year].splice(arrIndex, 1);
+
+						// Change Calendar
+						mt.calendar.removeEvent(arrIndex+1);
+
+						// Save data
+						await mt.mgr.saveToJson(year);
+
+						// Notify
+						mt.utils.toast('success', "Đã xóa sự kiện.");
+					}
+					catch (ex) {
+						console.error('[mt.form.onDelete] Exception', ex);
+						mt.utils.toast('error', ex.message);
+					}
+				},
+				async delete(music) {
+
+					// Confirm Popup
+					let isConfirm = await mt.utils.confirmDanger('Xác nhận xóa bài này?', 'Xóa');
+					if (isConfirm) {
+						// #TODO
+					}
+				},
+			},
+			player: {
+				h_defaultVolume: 0.3, // Âm lượng mặc định của loa
+				c_audio: null, // Element Audio
+				c_title: null, // Element Title music
+				c_volumeBar: null, // Volume Slide
+				c_volumeBtn: null, // Volume Button
+				c_pause: null, // Element Button Pause
+				c_ckbNext: null, // Checkbox auto next
+				c_loop: null, // Element Input Loop
+				c_playlist: null, // Element playlist
+				p_audioContext: null, // AudioContext
+				m_currentMusic: null, // Data bài phát hiện tại
+				m_track: 0, // Id bài track hiện tại
+				m_interact: false, // Cờ đặt lại trạng thái AudioContext sau tương tác
+				m_volumeBase: 1, // Volume chuẩn (chưa thay đổi theo từng bài)
+				m_volumeMute: false, // Cờ tắt âm thanh
+				m_autoNext: true, // Cờ tự random bài tiếp theo
+				d_playList: [], // Danh sách nhạc
+
+				init() {
+
+					// Variable
+					this.m_volumeBase = this.h_defaultVolume;
+
+					// Audio Context
+					window.AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
+					this.p_audioContext = new AudioContext();
+
+					// Audio Component
+					let audio = new Audio();
+					audio.volume = this.m_volumeBase;
+					audio.addEventListener('ended', (event) => this.onEnd(event));
+					// audio.addEventListener('loadeddata', () => this.onLoadedData());
+					// audio.addEventListener('canplaythrough', () => this.onReady()); // canplaythrough sự kiện này call khi seek, dễ lỗi
+					audio.addEventListener('timeupdate', () => this.onTimeUpdate());
+					this.c_audio = audio;
+
+					// Controller
+					this.c_title = document.getElementById('titleMusic');
+					this.c_volumeBar = document.getElementById('volumeBar');
+					this.c_volumeBtn = document.getElementById('volumeBtn');
+					this.c_pause = document.getElementById('btnPause');
+					this.c_ckbNext = document.getElementById('ckbNext');
+					this.c_loop = document.getElementById('loop');
+					this.c_playlist = document.getElementById('playlist');
+
+					// UI
+					this.c_volumeBar.value = this.m_volumeBase * 100;
+				},
+				async onTimeUpdate() { // Quá trình chạy nhạc
+
+					// Data
+					let currentTime = this.c_audio.currentTime;
+
+					// Cập nhật hiển thị wave static
+					mt.wave.staticUpdate(currentTime);
+
+					// CASE 1: Kiểm tra nếu như có track và đến thời điểm thì pause lại
+					if (this.m_track == this.m_currentMusic.id && currentTime > this.m_currentMusic.trackend) {
+
+						// Ngừng phát
+						this.c_audio.pause();
+
+						// Đổi icon
+						this.setIconPause(false);
+
+						// Kết thúc track
+						this.m_track = null;
+						return;
+					}
+				},
+				onEnd(event) { // Kết thúc chạy nhạc
+
+					// Cập nhật Icon khi kết thúc
+					this.setIconPause(false);
+
+					// CASE 1: Nếu có loop thì chạy lại
+					let loop = this.c_loop.value;
+					if (loop > 0) {
+						this.c_loop.value--;
+						this.c_audio.currentTime = 0;
+						this.c_audio.play();
+						return
+					}
+
+					// CASE 2: Lấy từ danh sách chờ nếu có
+					// CASE 3: Lấy ngẫu nhiên từ danh sách nhạc
+					// 2 case này có trong playNext
+					this.playNext();
+				},
+				async addPlaylist(music) {
+
+					// CASE 1: Nếu bài đang chạy thì chỉ tăng loop
+					if (this.m_currentMusic != null && music.id == this.m_currentMusic.id) {
+						mt.player.c_loop.value++;
+						return;
+					}
+
+					// CASE 2: Nếu bài có sẵn thì tăng loop trong playlist
+					let item = this.d_playList.find(o => o.id == music.id);
+					if (item != null) {
+
+						// Cập nhật loop
+						item.loop++;
+
+						// Tìm Element danh sách chờ có sẵn nhạc chưa
+						let elementItem = document.getElementById('playlist-item-'+music.id);
+						elementItem.textContent = music.name + ` (${item.loop})`;
+					}
+					// CASE 3: Thêm bài vào playlist
+					else {
+
+						// Change data
+						this.d_playList.push({
+							id: music.id,
+							name: music.name,
+							loop: 1,
+						});
+
+						// Render list
+						const li = document.createElement('li');
+						li.id = 'playlist-item-' + music.id;
+						li.textContent = music.name;
+						this.c_playlist.appendChild(li);
+					}
+				},
+				async pause(flag) {
+
+					// Nếu ko có sẵn nhạc thì cho qua
+					if (this.m_currentMusic == null) {
+						this.playNext();
+						return;
+					}
+
+					// Nếu ko có toggle thì chuyển trạng thái hiện tại
+					if (flag == null)
+						flag = (this.c_audio.paused == false);
+
+					if (flag) {
+
+						// Đổi trạng thái
+						this.c_audio.pause();
+
+						// Đổi icon button pause
+						this.setIconPause(false);
+					}
+					else {
+
+						// Đổi trạng thái
+						await this.c_audio.play();
+
+						// Đổi icon button pause
+						this.setIconPause(true);
+					}
+				},
+				seek(time) {
+
+					// nếu có track thì hủy track
+					if (this.m_track != null)
+						this.m_track = null;
+
+					// Seek
+					this.c_audio.currentTime = time;
+				},
+				async playNext() {
+
+					// Dừng nhạc hiện tại
+					this.c_audio.pause();
+
+					// Lưu lại lịch sử
+					if (this.m_currentMusic != null)
+						mt.mgr.d_history.push(this.m_currentMusic.id);
+
+					// CASE 1: Lấy bài từ playlist nếu có
+					// Tìm danh sách playlist có bài không?
+					if (this.d_playList.length > 0) {
+
+						// Lấy nhạc đầu danh sách
+						let musicNext = this.d_playList[0];
+						let id = musicNext.id;
+
+						// Xóa bản đó khỏi data và giao diện
+						this.d_playList.splice(0, 1);
+						let elMusicList = document.getElementById('playlist-item-' + id);
+						elMusicList.remove();
+
+						// Phát nhạc
+						let music = mt.mgr.d_musics[id-1];
+						this.playMusic(music);
+					}
+					// CASE 2: Lấy bài ngẫu nhiên trong danh sách nhạc nếu AutoNext được bật
+					else if (this.m_autoNext) {
+						let len = mt.mgr.d_randSeed.length;
+						let seed = Math.floor(Math.random() * len);
+						let arrIndex = mt.mgr.d_randSeed[seed];
+						let music = mt.mgr.d_musics[arrIndex];
+						this.playMusic(music);
+					}
+				},
+				playBack() {
+
+					// nếu có lịch sử thì back về
+					if ( mt.mgr.d_history.length == 0) {
+						mt.utils.toast('warning', 'Chưa có lịch sử chơi nhạc!');
+						return;
+					}
+
+					// Dừng nhạc hiện tại
+					this.c_audio.pause();
+
+					// Lấy bài gần nhất
+					let id =  mt.mgr.d_history.pop();
+					let music = mt.mgr.d_musics[id - 1];
+
+					// Chạy nhạc
+					this.playMusic(music);
+				},
+				async playForce(music) {
+
+					// CASE 1: Nếu bài đang chạy thì chỉ tăng loop
+					if (this.m_currentMusic != null && this.m_currentMusic.id == music.id) {
+						mt.player.c_loop.value++;
+						return;
+					}
+
+					// CASE 2: Chạy trực tiếp bài này
+
+					// Dừng nhạc hiện tại
+					this.c_audio.pause();
+
+					// Set loop value
+					this.c_loop.value = 0;
+
+					// Play music
+					this.playMusic(music);
+				},
+				async playTrack(music) {
+
+					// Kiểm tra data có track ko
+					if (music.trackbegin == null || music.trackend == null) {
+						mt.utils.toast('warning', 'Chưa có track!'); // Thông báo
+						return;
+					}
+
+					// Đặt track
+					this.m_track = music.id;
+
+					// CASE 1: Bài hiện tại là bài này
+					if (this.m_currentMusic != null && this.m_currentMusic.id == music.id) {
+						this.c_audio.pause();
+						this.c_audio.currentTime = this.m_currentMusic.trackbegin;
+						this.c_audio.play();
+
+						// Đổi icon button pause
+						this.setIconPause(true);
+						return;
+					}
+
+					// CASE 2: Chạy track trực tiếp bài này
+					this.playMusic(music);
+				},
+				volumeChange() {
+
+					// Điều chỉnh âm lượng
+					let volume = this.c_volumeBar.value;
+					if (this.m_currentMusic != null && this.m_currentMusic.decibel) // Điều chỉnh theo nhạc
+						volume *= (this.m_currentMusic.decibel / 100);
+					this.c_audio.volume = volume / 100;
+
+					// Cập nhật icon button
+					let icon = 'off';
+					if (volume > 60)
+						icon = 'high';
+					else if (volume > 20)
+						icon = 'low';
+					this.c_volumeBtn.innerHTML = `<i class="fa-solid fa-volume-${icon}"></i>`;
+				},
+				volumeToggle() {
+					let isMute = this.m_volumeMute;
+					if (this.m_volumeMute) {
+
+						// Điều chỉnh âm lượng
+						this.volumeChange();
+					}
+					else {
+
+						// Điều chỉnh âm lượng
+						this.c_audio.volume = 0;
+
+						// Cập nhật icon
+						this.c_volumeBtn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i>`;
+					}
+					this.m_volumeMute = !isMute;
+				},
+				async playMusic(music) {
+					try {
+
+						// Chỉnh lại audioContext sau tương tác
+						if (!this.m_interact && this.p_audioContext.state === 'suspended')
+							this.p_audioContext.resume();
+
+						// Load blob music
+						await mt.mgr.loadFile(music.name);
+
+						// Bind blob to Audio
+						this.c_audio.pause();
+						this.c_audio.src = mt.mgr.d_blogUrl;
+						this.c_audio.load();
+
+						// Change state
+						this.m_currentMusic = music;
+
+						// Generate Wave
+						mt.wave.staticGenerate(mt.mgr.d_arrayBufferFile); // Dùng arrayBuffer sau khi load file
+
+						// Change title
+						this.c_title.innerHTML = music.name;
+						document.title = music.name;
+
+						// Highlight color row
+						mt.list.highlightRow(music.id);
+
+						// Nếu ko phải doubleClickList và menuPlay thì focus row bài hát
+						if (['doubleClickList','menuPlay'].includes(mt.event.m_action) == false)
+							mt.list.scrollToCurrent(music.id);
+
+						// Đợi cho đến khi load xong
+						await new Promise((resolve, reject) => {
+							let wait = setInterval(() => {
+								if (this.c_audio.readyState >= 3) {
+									clearInterval(wait);
+									resolve();
+								}
+							}, 50);
+						});
+
+						// Nếu đang có track thì đặt điểm khởi đầu
+						if (this.m_track == music.id)
+							this.c_audio.currentTime = music.trackbegin;
+						else // Đã đổi bài, xóa track
+							this.m_track = null;
+
+						// Change icon button Pause
+						this.setIconPause(true)
+
+						// Hiển thị duration
+						mt.wave.c_staticWaveDuration.innerHTML = mt.utils.cv_formatTime(this.c_audio.duration);
+
+						// Bắt đầu phát
+						this.c_audio.play();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.error('[mt.player.playMusic] Exception:', ex);
+					}
+				},
+				setIconPause(toggle) {
+					this.c_pause.innerHTML = `<i class="fa-solid fa-${toggle ? 'pause' : 'play'}"></i>`;
+				},
+				changeAutoNext() {
+
+					// Nghịch đảo lại
+					this.m_autoNext = this.c_ckbNext.checked;
+				},
+			},
+			wave: {
+				c_staticWave: null, // SoundWave tĩnh
+				c_staticWaveCur: null, // Thanh thời điểm phát
+				c_staticWaveTime: null, // Thời điểm hiện tại
+				c_staticWaveDuration: null, // Thời lượng phát
+				c_dynamicWave: null, // SoundWave động
+				c_ckbWave: null, // Checkbox Wave
+				p_canvasContext: null, // CanvasContext
+				m_currentTime: 0, // Thời gian hiện tại
+				m_waveType: true, // true: wave, false: shake
+
+				init() {
+
+					// Bind Component
+					this.c_staticWave = document.getElementById('staticWave');
+					this.c_staticWaveCur = document.getElementById('staticWaveCur');
+					this.c_staticWaveTime = document.getElementById('staticWaveTime');
+					this.c_staticWaveDuration = document.getElementById('staticWaveDuration');
+					this.c_dynamicWave = document.getElementById('dynamicWave');
+					this.c_ckbWave = document.getElementById('ckbWave');
+
+					// Register Event
+					this.c_staticWave.addEventListener('click', (event) => mt.event.clickStaticWave(event), false);
+					this.c_dynamicWave.addEventListener('click', () => mt.event.clickDynamicWave(), false);
+
+					// Context
+					this.p_canvasContext = this.c_staticWave.getContext('2d');
+
+					this.dynamicInit();
+				},
+				onClickDynamic() {
+				},
+				staticClear() {
+					this.p_canvasContext.fillStyle = 'rgba(0,0,0,1)';
+					this.p_canvasContext.globalCompositeOperation = 'destination-out';
+					this.p_canvasContext.clearRect(0, 0, this.c_staticWave.width, this.c_staticWave.height);
+				},
+				staticGenerate(res) {
+					mt.player.p_audioContext.decodeAudioData(res, (buffer) => {
+
+						// buffer: AudioBuffer
+
+						let w = this.c_staticWave.clientWidth;
+						let h = this.c_staticWave.clientHeight;
+						this.staticGenSizeW = w;
+
+						this.c_staticWave.width = w;
+						this.c_staticWave.height = h;
+
+						this.p_canvasContext.fillStyle = '#f0f0f0'; // Màu xám nhạt
+						this.p_canvasContext.globalCompositeOperation = 'source-over';
+
+						let data = buffer.getChannelData(0);
+						let step = Math.ceil(data.length / w);
+						let amp = h / 2;
+						for (let i=0; i < w; i++) {
+							let min = 1.0;
+							let max = -1.0;
+							for (let j=0; j<step; j++) {
+								let datum = data[(i*step)+j];
+								if (datum < min) min = datum;
+								if (datum > max) max = datum;
+							}
+							this.p_canvasContext.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
+						}
+
+						this.p_canvasContext.globalCompositeOperation = 'source-atop';
+						this.m_currentTime = 0;
+					});
+				},
+				staticUpdate(currentTime) {
+					let w = this.c_staticWave.clientWidth;
+					let h = this.c_staticWave.clientHeight;
+					let pos = currentTime / mt.player.m_currentMusic.duration * w;
+
+					// Hiển thị thời gian
+					this.c_staticWaveTime.innerHTML = mt.utils.cv_formatTime(currentTime);
+
+					// Cập nhật vị trí thanh current
+					this.c_staticWaveCur.style.left = pos+'px';
+
+					// Vẽ current cho static
+					pos = pos * this.staticGenSizeW / w; // Fix lỗi scale khi resize window
+					if (currentTime > this.m_currentTime) {
+						this.p_canvasContext.fillStyle = '#ffe48d'; // màu cam
+						this.p_canvasContext.fillRect(0, 0, pos, h);
+					}
+					else {
+						this.p_canvasContext.fillStyle = '#f0f0f0'; // Màu xám nhạt
+						this.p_canvasContext.fillRect(pos, 0, w, h);
+					}
+
+					this.m_currentTime = currentTime;
+				},
+				dynamicInit() {
+
+					// Global
+					let elAudio = mt.player.c_audio;
+					let audioContext = mt.player.p_audioContext;
+
+					let analyser = audioContext.createAnalyser();
+					analyser.fftSize = 128;
+
+					let source = audioContext.createMediaElementSource(elAudio); // Gây lỗi ko phát nhạc được
+
+					source.connect(audioContext.destination);
+					source.connect(analyser);
+					
+					// source.connect(analyser);
+					// analyser.connect(audioContext.destination);
+
+					let bufferLength = analyser.frequencyBinCount;
+					let dataArray = new Uint8Array(bufferLength);
+
+					let canvas = this.c_dynamicWave;
+					canvas.width = canvas.clientWidth;
+					canvas.height = canvas.clientHeight;
+
+					let ctx = canvas.getContext('2d');
+					let WIDTH = canvas.width;
+					let HEIGHT = canvas.height;
+
+					let heightWave;
+
+					// For type 1
+					let sizeloop = Math.ceil(bufferLength * 2 / 3);
+					let barWidth = WIDTH / bufferLength * 1.5 - 2;
+					let gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+					gradient.addColorStop(1.0, '#fff8af');
+					gradient.addColorStop(0.5, '#ffe48d');
+					gradient.addColorStop(0.0, '#bba040');
+					// gradient.addColorStop(1.0, '#fff7bf');
+					// gradient.addColorStop(0.5, '#ffe48d');
+					// gradient.addColorStop(0.0, '#ccb15a');
+					let capYPositionArray = new Array(sizeloop); // Lưu lịch sử vị trí Cap
+
+					// For type 2
+					let HEIGHTHALF = HEIGHT / 2;
+					ctx.lineWidth = 2; // line width
+					ctx.strokeStyle = '#000'; // line color
+					const sliceWidth = WIDTH / bufferLength;
+					const scaleFactor = 5 / 2;
+
+					function renderFrame() {
+						requestAnimationFrame(renderFrame);
+						ctx.clearRect(0, 0, WIDTH, HEIGHT); // reset canvas
+
+						if (mt.wave.m_waveType) {
+							analyser.getByteFrequencyData(dataArray); // 0 - 255
+							for (let i = 0, x = 0; i < sizeloop; i++) {
+								heightWave = dataArray[i] / 256 * HEIGHT;
+								
+								// Render Bar
+								ctx.fillStyle = gradient;
+								ctx.fillRect(x, HEIGHT - heightWave, barWidth, heightWave);
+
+								// Render Cap
+								if (heightWave < capYPositionArray[i])
+									heightWave = --capYPositionArray[i];
+								else
+									capYPositionArray[i] = heightWave;
+								ctx.fillStyle = '#000';
+								ctx.fillRect(x, HEIGHT - heightWave - 2, barWidth, 2);
+
+								x += barWidth + 2;
+							}
+						}
+						else {
+							analyser.getByteTimeDomainData(dataArray);
+							ctx.beginPath();
+							ctx.moveTo(0, HEIGHTHALF);
+							for (var i=0, x = sliceWidth/2; i < bufferLength; i++) {
+								// 0 > 255 | 0 > 2 | -1 > 1 | scale 5/2 | to height
+								heightWave = (dataArray[i] / 128.0 - 1) * scaleFactor * HEIGHTHALF + HEIGHTHALF;
+								ctx.lineTo(x, heightWave);
+								x += sliceWidth;
+							}
+							ctx.lineTo(WIDTH, HEIGHTHALF);
+							ctx.stroke();
+						}
+					}
+					renderFrame();
+				},
+				changeWaveType() {
+
+					// Nghịch đảo lại
+					this.m_waveType = this.c_ckbWave.checked;
+				},
+			},
+			tools: {
+				add: {
+					open() {},
+				},
+				miss: {
+					open() {},
+				},
+				track: {
+					open() {},
+				},
+				share: {
+					async run() {
+
+						// Lấy Port hiện tại
+						let URL = location.origin + location.pathname;
+						if (URL.indexOf('localhost') > -1) {
+
+							// Call API - Get IP
+							let response = await fetch('/common/getIPLocal', { method: 'GET' });
+							if (!response.ok)
+								throw { error: true, message: await response.text() };
+
+							let IP = await response.text();
+
+							URL = URL.replace('localhost', IP);
+						}
+
+						// Thêm params query
+						let paramURL = new URLSearchParams();
+						paramURL.append('id', mt.player.m_currentMusic.id);
+						URL += '?' + paramURL.toString();
+
+						// Tự động copy
+						if (window.isSecureContext) {
+							await navigator.clipboard.writeText(URL);
+							mt.utils.toast('success', 'Đã copy link nhạc.');
+						}
+						else {
+							console.log(URL);
+							mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+						}
+					},
+				},
+			},
+			event: {
+				m_action: '',
+
+				clickDynamicWave() { // Click vào sóng âm động
+					try {
+						this.m_action = 'clickDynamicWave';
+
+						// Nếu chưa chọn bài thì bỏ qua
+						if (mt.player.m_currentMusic == null)
+							return;
+
+						// Move to row
+						mt.list.scrollToCurrent(mt.player.m_currentMusic.id);
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.clickDynamicWave]', ex);
+					}
+				},
+				clickStaticWave() { // Click vào sóng âm tĩnh
+					try {
+						this.m_action = 'clickStaticWave';
+
+						// Nếu chưa chọn bài thì bỏ qua
+						if (mt.player.m_currentMusic == null)
+							return;
+
+						// Seek
+						let duration = mt.player.m_currentMusic.duration;
+						let curTime = event.offsetX / event.target.offsetWidth * duration;
+						mt.player.seek(curTime);
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.clickStaticWave]', ex);
+					}
+				},
+				volumeChange() { // Chỉnh âm lượng
+					try {
+						this.m_action = 'volumeChange';
+						mt.player.volumeChange();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.volumeChange]', ex);
+					}
+				},
+				volumeToggle() { // Bật / tắt âm thanh
+					try {
+						this.m_action = 'volumeToggle';
+						mt.player.volumeToggle();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.volumeToggle]', ex);
+					}
+				},
+				btnBack() { // Lùi về bài trước
+					try {
+						this.m_action = 'btnBack';
+						mt.player.playBack();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnBack]', ex);
+					}
+				},
+				btnPause() { // Tạm dừng / phát tiếp
+					try {
+						this.m_action = 'btnPause';
+						mt.player.pause();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnPause]', ex);
+					}
+				},
+				btnNext() { // Bài tiếp theo
+					try {
+						this.m_action = 'btnNext';
+						mt.player.playNext();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnNext]', ex);
+					}
+				},
+				ckbWave() { // Đổi loại sóng âm nhạc
+					try {
+						this.m_action = 'ckbWave';
+						mt.wave.changeWaveType();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.ckbWave]', ex);
+					}
+				},
+				ckbNext() { // Tự động random bài tiếp
+					try {
+						this.m_action = 'ckbNext';
+						mt.player.changeAutoNext();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.ckbNext]', ex);
+					}
+				},
+				btnCheckAdd() { // Kiểm tra những bài mới
+					try {
+						this.m_action = 'btnCheckAdd';
+						// #TODO
+						mt.utils.toast('warning', 'Chưa có chức năng!');
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnCheckAdd]', ex);
+					}
+				},
+				btnCheckMiss() { // Kiểm tra file với data có khớp nhau ko
+					try {
+						this.m_action = 'btnCheckMiss';
+						// #TODO
+						mt.utils.toast('warning', 'Chưa có chức năng!');
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnCheckMiss]', ex);
+					}
+				},
+				btnTrack() { // Tạo soundtrack
+					try {
+						this.m_action = 'btnTrack';
+						// #TODO
+						mt.utils.toast('warning', 'Chưa có chức năng!');
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnTrack]', ex);
+					}
+				},
+				async btnShare() { // Copy link nhạc để chia sẻ
+					try {
+						this.m_action = 'btnShare';
+
+						// Nếu chưa chọn bài thì bỏ qua
+						if (mt.player.m_currentMusic == null) {
+							mt.utils.toast('warning', 'Chưa chọn nhạc!');
+							return;
+						}
+
+						await mt.tools.share.run();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnShare]', ex);
+					}
+				},
+				doubleClickList(cell) { // Nhấn đúp chọn bài trên danh sách
+					try {
+						this.m_action = 'doubleClickList';
+						mt.player.playForce(cell.getRow().getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.doubleClickList]', ex);
+					}
+				},
+				menuAddPlaylist(row) { // Thêm vào hàng chờ
+					try {
+						this.m_action = 'menuAddPlaylist';
+						mt.player.addPlaylist(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuAddPlaylist]', ex);
+					}
+				},
+				menuPlay(row) { // Phát bài đang chọn
+					try {
+						this.m_action = 'menuPlay';
+						mt.player.playForce(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuPlay]', ex);
+					}
+				},
+				menuPlayTrack(row) { // Phát soundtrack bài đang chọn
+					try {
+						this.m_action = 'menuPlayTrack';
+						mt.player.playTrack(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuPlayTrack]', ex);
+					}
+				},
+				menuEdit(row) { // Mở form chỉnh sửa
+					try {
+						this.m_action = 'menuEdit';
+						mt.form.open(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuEdit]', ex);
+					}
+				},
+				menuDelete(row) { // Xóa bài này
+					try {
+						this.m_action = 'menuDelete';
+						mt.form.delete(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuDelete]', ex);
+					}
+				},
+				pressSpace() { // Nhấn cách
+					try {
+						this.m_action = 'pressSpace';
+						mt.player.pause();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.pressSpace]', ex);
+					}
+				},
+				pressEnter() { // Nhấn enter
+					try {
+						this.m_action = 'pressEnter';
+						mt.player.playNext();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.pressEnter]', ex);
+					}
+				},
+				pressMediaPlayPause() { // Nhấn phím media dừng / phát
+					try {
+						this.m_action = 'pressMediaPlayPause';
+						mt.player.pause();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.pressMediaPlayPause]', ex);
+					}
+				},
+				mediaPlay() { // Controller Browser
+					try {
+						this.m_action = 'mediaPlay';
+						mt.player.pause(false);
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.mediaPlay]', ex);
+					}
+				},
+				mediaPause() { // Controller Browser
+					try {
+						this.m_action = 'mediaPause';
+						mt.player.pause(true);
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.mediaPause]', ex);
+					}
+				},
+				mediaBack() { // Controller Browser
+					try {
+						this.m_action = 'mediaBack';
+						mt.player.playBack();
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.mediaBack]', ex);
+					}
+				},
+				mediaNext() { // Controller Browser
+					try {
+						this.m_action = 'mediaNext';
+						mt.player.playNext()
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.mediaNext]', ex);
+					}
+				},
+			},
+			utils: {
+				p_toast: null, // Sweetalert2 - Toast
+
+				init() {
+
+					// Bind window event
+					window.addEventListener('keydown', (event) => this.onKeyPress(event));
+
+					// Register browser Media
+					this.registerMedia();
+
+					// Init Sweetlert2
+					this.p_toast = Swal.mixin({
+						toast: true,
+						position: 'bottom-end',
+						showConfirmButton: false,
+						timer: 3000,
+						timerProgressBar: true,
+						didOpen: (toast) => {
+							toast.onmouseenter = Swal.stopTimer;
+							toast.onmouseleave = Swal.resumeTimer;
+						},
+					});
+				},
+				registerMedia() {
+					navigator.mediaSession.setActionHandler('play', () => mt.event.mediaPlay());
+					navigator.mediaSession.setActionHandler('pause', () => mt.event.mediaPause());
+					navigator.mediaSession.setActionHandler('previoustrack', () => mt.event.mediaBack());
+					navigator.mediaSession.setActionHandler('nexttrack', () => mt.event.mediaNext());
+				},
+				toast(type, message) {
+
+					// Show Toast
+					this.p_toast.fire({ icon: type, title: message });
+				},
+				async confirmDanger(message, action) {
+					let result = await Swal.fire({
+						title: message,
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonColor: '#d33',
+						confirmButtonText: action,
+						cancelButtonText: 'Hủy'
+					});
+					return result.isConfirmed;
+				},
+				onKeyPress(event) {
+
+					let isAction = true;
+					switch (event.code) {
+						case 'Space': mt.event.pressSpace(); break;
+						case 'Enter': mt.event.pressEnter(); break;
+						default: isAction = false;
+					}
+
+					if (!isAction) {
+						isAction = true;
+						switch (event.key) {
+							case 'MediaPlayPause': mt.event.pressMediaPlayPause(); break;
+							default: isAction = false;
+						}
+					}
+
+					if (isAction)
+						event.preventDefault();
+					return !isAction;
+				},
+				cv_formatTime(value) {
+					let valueR = Math.floor(value);
+					let minute = Math.floor(valueR / 60);
+					let second = valueR % 60;
+					if (second < 10) second = '0' + second;
+					return minute + ':' + second;
+				},
+			},
+
+			// Method
+			async init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Read Config
+				await this.mgr.loadConfig();
+
+				// Init
+				this.list.init();
+
+				this.form.init();
+
+				this.player.init();
+
+				// Wave khởi tạo sau player để có Element Audio
+				this.wave.init();
+
+				this.utils.init();
+
+				// First Load
+				await this.mgr.loadFromJson();
+
+				// Process URL Params
+				this.mgr.processParamURL()
+			},
+		};
+		mt.init();
+	</script>
+</body>
+</html>

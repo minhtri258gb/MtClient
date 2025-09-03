@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 	<title>Music</title>
+
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+
 	<link id="logo" rel="shortcut icon" type="image/png" href="/music/favicon.ico">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
@@ -18,14 +21,14 @@
 	<script type="text/javascript" src="/music/script.js"></script>
 	<script type="text/javascript" src="/common/config.js"></script>
 	<script type="text/javascript" src="/common/auth.js"></script>
-</head>
 
+</head>
 <body>
 
 	<div id="layout" class="easyui-layout" style="caret-color:transparent;">
 
 		<div id="left_content" data-options="region:'west',split:false,collapsible:false" style="width:25%;">
-		
+
 			<div style="width:98%;margin-left:1%;margin-right:1%;">
 
 				<h2 id="music_title" style="text-align:center">Music Player</h2>
@@ -46,7 +49,7 @@
 				<div style="height:173px;border:solid;border-radius:5px;border-width:1px;border-color:#95B8E7;">
 
 					<div style="width:40px;height:100%;float:left;position:relative;display:flex;flex-direction:column;border-right:ridge;border-width:thin;">
-						
+
 						<!-- Volume Slider -->
 						<div style="margin:auto;margin-top:10px;width:fit-content;flex-grow:1;">
 							<div id="volumeBar"></div>
@@ -75,7 +78,7 @@
 							<div style="float:left;">
 								<input id="visual" class="easyui-switchbutton" data-options="checked:true,onText:'Wave',offText:'Shake',onChange:mt.visual.onChangeType" style="width:70px;margin-left:5px;float:left;">
 							</div>
-							
+
 							<!-- Random -->
 							<div style="float:right;">
 								<input id="autoNext" class="easyui-switchbutton" data-options="checked:true,onText:'Next',offText:'Stop'" style="width:62px;margin-left:5px;float:right;">
@@ -87,7 +90,7 @@
 							<span>Loop: </span>
 							<input id="loop" type="text" class="easyui-numberspinner" value="0" data-options="min:0,max:99,spinAlign:'horizontal'" style="width:83px;">
 						</div>
-						
+
 						<!-- Tags -->
 						<!-- <input id="tags" class='tagify--outside' readOnly style="width:100%;margin-top:5px;"> -->
 
@@ -97,7 +100,7 @@
 							<input id="tagExclude" type="text" style="width:100%;">
 							<!-- <input id="txtSearch" type="text" style="width:100%;"> -->
 						</div>
-						
+
 					</div>
 				</div>
 				<br>
@@ -105,13 +108,13 @@
 				<!-- Next Playlist -->
 				<div id="listNext"></div>
 				<br>
-			
+
 			</div>
-		
+
 		</div>
 
 		<div data-options="region:'center'" style="padding:5px;background:#eee;">
-			
+
 			<!-- Toolbar -->
 			<div id="toolbar">
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-queue',plain:true" onclick="mt.next.add()">Play next</a>
@@ -122,10 +125,10 @@
 				<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-reload',plain:true" onclick="mt.handler.listSync()">List sync</a>
 				<a href="#" id="btnAccess" class="easyui-linkbutton" data-options="iconCls:'icon-key',plain:true" onclick="mt.core.access()">Access</a>
 			</div>
-			
+
 			<!-- Datagrid -->
 			<table id="list"></table>
-			
+
 			<!-- Drawer -->
 			<div id="drawer" class="easyui-drawer">
 				<div id="toolbar_new" style="text-align:center;">
@@ -205,7 +208,7 @@
 			<!-- Cut content -->
 			<div id="right_cut" hidden style="height:150px;margin-top:10px;display:none;">
 				<p style="text-align:center;">Cut Option</p>
-				
+
 				<div style="width:100%;padding-left:13px;padding-right:13px;">
 					<input id="cutSlider" style="width:100%;">
 				</div>
@@ -231,7 +234,7 @@
 		// 	// console.log("add: ", n);
 		// 	return n
 		// };
-		
+
 		// var oldSetInterVal = window.setTimeout
 		// window.setTimeout = function(func, delay) {
 		// 	// console.trace()
@@ -247,6 +250,6 @@
 			for(let i=0; i<100; i++)  window.clearInterval(i);
 		}, 5000);
 	</script>
-	
+
 </body>
 </html>

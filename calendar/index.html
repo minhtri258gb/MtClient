@@ -8,6 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<!-- <link href='/lib/bootstrap-5.3.3/bootstrap.min.css' rel='stylesheet'> -->
 	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
 	<link href="/lib/sweetalert2-11.22.4/sweetalert2.css" type="text/css" rel="stylesheet">
 	<script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js"></script>
@@ -40,9 +41,11 @@
 <body>
 
 	<!--
+		https://fullcalendar.io/docs
 		https://fontawesome.com/v6/search?o=r
 		https://github.com/json-editor/json-editor
-	 -->
+		https://sweetalert2.github.io
+	-->
 
 	<div id='calendar'></div>
 
@@ -52,7 +55,8 @@
 
 		var mt = {
 			h_debug: true,
-			h_pathDB: 'res/DB/events/', // Link Data Client
+			h_pathDB: 'calendar/', // Link Data Client
+			// h_pathDB: 'res/DB/events/', // Link Data Client
 			p_authen: mtAuthen,
 			d_event: {},
 
@@ -64,8 +68,9 @@
 				async loadFromJson(year) {
 					try {
 
-						if (year == null || year < 1000 || year > 3000)
-							year = new Date().getFullYear();
+						// Validate
+						if (year == null || typeof year != 'number')
+							throw { error: true, message: "Số năm không hợp lệ" };
 
 						// Authen
 						if (mt.p_authen.checkAuthn() == false)
@@ -80,47 +85,57 @@
 						if (!response.ok) {
 							if (response.status == 404) { } // skip
 							else
-								throw { error: true, msg: await response.text() };
+								throw { error: true, message: await response.text() };
 						}
 						else
 							listEvent = await response.json();
+
+						// Save in RAM
+						this.d_event[year] = listEvent;
+
+						// Set into calendar
+						mt.calendar.setEvents(listEvent);
 
 						// Log
 						mt.h_debug && console.log('[mt.mgr.loadFromJson]', { listEvent });
 					}
 					catch (ex) {
 						console.error('[mt.mgr.loadFromJson] Exception', ex);
+						throw ex;
 					}
 				},
 				async saveToJson(year) {
 					try {
 
 						if (year == null || year < 1000 || year > 3000)
-							throw { error: true, msg: "Năm không hợp lệ" };
+							throw { error: true, message: "Năm không hợp lệ" };
 
 						// Kiểm tra và lấy client path
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer '+this.p_authen.getToken() },
+								headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
 							});
 							if (!response.ok)
-								throw { error: true, msg: await response.text() };
+								throw { error: true, message: await response.text() };
 
 							this.m_clientPath = await response.text();
 						}
 
+						// DB Path
+						let urlDB = mt.h_pathDB + year + '.json';
+
 						// Call API - Lưu dữ liệu
 						let paramURL = new URLSearchParams();
-						paramURL.set('file', this.m_clientPath + '/' + this.h_pathDB);
+						paramURL.set('file', this.m_clientPath + '/' + urlDB);
 						paramURL.set('force', true);
 						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer '+this.p_authen.getToken(),
+								'Authorization': 'Bearer '+mt.p_authen.getToken(),
 							},
-							body: JSON.stringify(this.d_wallpaper),
+							body: JSON.stringify(this.d_event[year]),
 						});
 						if (!responseSave.ok) {
 							let errorMessage = await responseSave.text();
@@ -128,11 +143,10 @@
 							console.error(errorMessage);
 							return;
 						}
-
-						this.toast('success', "Lưu dữ liệu ảnh thành công.");
 					}
 					catch (ex) {
 						console.error('[mt.mgr.saveToJson] Exception', ex);
+						throw ex;
 					}
 				},
 			},
@@ -145,14 +159,14 @@
 					let calendarEl = document.getElementById('calendar');
 					this.m_calendar = new FullCalendar.Calendar(calendarEl, {
 						initialView: 'dayGridMonth',
-						initialDate: '2024-12-08', // #DEBUG
+						// initialDate: '2024-12-08', // #DEBUG
 						locale: 'vi',
 						timeZone: 'Asia/Ho_Chi_Minh',
 						// Toolbar
 						headerToolbar: {
 							left: 'prev,next today',
 							center: 'title',
-							right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+							right: 'addEvent dayGridMonth,timeGridWeek,timeGridDay,listWeek'
 						},
 						// UI Setting
 						firstDay: 1,
@@ -172,28 +186,59 @@
 						dayMaxEvents: true, // allow "more" link when too many events
 						// Data
 						events: [],
+						// Custom Button
+						customButtons: {
+							addEvent: { text: 'Thêm', click: () => mt.form.open(null) },
+						},
 						// Register Event
 						datesSet: (info) => this.changeDate(info),
-						eventClick: (info) => this.eventClick(info),
+						eventClick: (item) => mt.form.open(item),
 						dateClick: () => this.dateClick(),
 					});
 					this.m_calendar.render();
 				},
-				changeDate(info) { // khi đổi tháng, kiểu view, ngày, ...
-
-					// Lấy thông tin tháng hiện tại
-					var currentMonth = info.view.currentStart.getMonth() + 1;
-					var currentYear = info.view.currentStart.getFullYear();
-					mt.loadData(currentMonth, currentYear); // No Await
+				setEvents(listEvent) {
+					let lstData = [];
+					for (let i=0, sz=listEvent.length; i<sz; i++) {
+						let event = listEvent[i];
+						lstData.push({
+							id: i+1,
+							title: event.name,
+							start: event.date,
+							extendedProps: event,
+						});
+					}
+					this.m_calendar.addEventSource(lstData);
 				},
-				eventClick(info) { // khi Click vào sự kiện
-					mt.h_debug && console.log('eventClick:', info.event);
-
-					let eventData = info.event.extendedProps;
-					mt.form.open(eventData);
+				async changeDate(info) { // khi đổi tháng, kiểu view, ngày, ...
+					let year = info.view.currentStart.getFullYear();
+					if (mt.mgr.d_event[year] == null)
+						await mt.mgr.loadFromJson(year);
 				},
 				dateClick() { // khi Click vào ngày
 					// alert('a day has been clicked!');
+				},
+				getViewDate() { // Lấy thời gian đang xem của lịch (class Date)
+					return this.m_calendar.getDate();
+				},
+				addEvent(id, data) {
+					this.m_calendar.addEvent({
+						id: id,
+						title: data.name,
+						start: data.date,
+						extendedProps: data,
+					});
+				},
+				editEvent(id, data) {
+					let event = this.m_calendar.getEventById(id);
+					event.setProp('title', data.name);
+					event.setDates(data.date, null, { allDay: true });
+					event.setExtendedProp('name', data.name);
+					event.setExtendedProp('date', data.date);
+				},
+				removeEvent(id) {
+					let event = this.m_calendar.getEventById(id);
+					event.remove();
 				},
 			},
 			form: {
@@ -205,14 +250,16 @@
 					// Init Editor
 					// JsonEditorEX.RateRegister();
 				},
-				async open(eventData) {
+				async open(item) {
 
 					// Open Modal
 					let result = await Swal.fire({
 						title: 'Sự kiện',
 						html: '<div id="json-editor" class="json-editor"></div>',
+						showDenyButton: true,
 						showCancelButton: true,
 						confirmButtonText: 'Lưu',
+						denyButtonText: 'Xóa',
 						cancelButtonText: 'Đóng',
 						// showClass: {
 						// 	popup: '',
@@ -220,23 +267,45 @@
 						// hideClass: {
 						// 	popup: '',
 						// },
-						didOpen: () => this.initForm(eventData),
+						didOpen: () => this.initForm(item),
 						didClose: () => this.m_editor.destroy(),
 						preConfirm: () => {
 							try {
-								let data = this.m_editor.getValue();
-								return this.cv_form2obj(data);
+								return this.m_editor.getValue();
 							}
 							catch (ex) {
 								Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
 								console.error('[mt.form.open.preConfirm] Exception:', ex);
 							}
-						}
+						},
 					});
 					if (result.isConfirmed)
 						this.onSave(result.value);
+					else if (result.isDenied)
+						this.onDelete({
+							id: item.event.id,
+							...item.event.extendedProps
+						});
 				},
-				initForm(eventData) {
+				initForm(item) {
+
+					let objForm = null;
+					if (item != null) {
+						objForm = {
+							id: item.event.id,
+							...item.event.extendedProps
+						};
+					}
+					else {
+						objForm = {
+							id: 0,
+							name: '',
+							date: new Date().toISOString().substring(0, 10),
+						};
+					}
+
+					// Default value
+					let sysdate = new Date().toISOString().substring(0, 10);
 
 					// Init Form
 					const element = document.getElementById('json-editor');
@@ -247,6 +316,7 @@
 						disable_edit_json: true,
 						disable_properties: true,
 						disable_collapse: true,
+						startval: objForm,
 						schema: {
 							title: 'Event Calendar',
 							type: 'object',
@@ -262,28 +332,80 @@
 								}}},
 							},
 						},
-						startval: this.cv_obj2form(eventData),
 					});
 				},
-				onSave(data) {
+				async onSave(data) {
+					try {
 
-					console.log("Dữ liệu đã nhập:", data);
-					Swal.fire("Đã lưu!", JSON.stringify(data), "success");
+						let year = new Date(data.date).getFullYear();
+
+						if (data.id === '0') { // Add
+
+							if (mt.mgr.d_event[year] == null)
+								await mt.mgr.loadFromJson(year);
+							delete data.id;
+
+							// Save to RAM
+							mt.mgr.d_event[year].push(data);
+
+							// Change Calendar
+							let id = mt.mgr.d_event[year].length
+							mt.calendar.addEvent(id, data)
+						}
+						else { // Update
+
+							// Cập nhật data RAM
+							let arrIndex = +data.id - 1;
+							delete data.id;
+
+							// Save to RAM
+							mt.mgr.d_event[year][arrIndex] = data;
+
+							// Change Calendar
+							mt.calendar.editEvent(arrIndex+1, data);
+						}
+
+						// Save data
+						await mt.mgr.saveToJson(year);
+
+						// Notify
+						mt.utils.toast('success', "Lưu dữ liệu ảnh thành công.");
+					}
+					catch (ex) {
+						console.error('[mt.form.onSave] Exception', ex);
+						mt.utils.toast('error', ex.message);
+					}
 				},
-				cv_obj2form(raw) {
-					return {
-						id: raw.id,
-						name: raw.name,
-						date: mt.cv_event2calendar(raw),
-					};
-				},
-				cv_form2obj(raw) {
-					let dateEvent = mt.cv_calendar2event(raw.date);
-					return {
-						id: Number.parseInt(raw.id),
-						name: raw.name,
-						...dateEvent,
-					};
+				async onDelete(data) {
+					try {
+
+						// Confirm Delete
+						let isConfirm = await mt.utils.confirmDanger('Xác nhận xóa sự kiện!', 'Xóa');
+						if (!isConfirm)
+							return;
+
+						let year = new Date(data.date).getFullYear();
+
+						// Cập nhật data RAM
+						let arrIndex = +data.id - 1;
+						delete data.id;
+
+						// Save to RAM
+						mt.mgr.d_event[year].splice(arrIndex, 1);
+
+						// Change Calendar
+						mt.calendar.removeEvent(arrIndex+1);
+
+						// Save data
+						await mt.mgr.saveToJson(year);
+
+						// Notify
+						mt.utils.toast('success', "Đã xóa sự kiện.");
+					}
+					catch (ex) {
+						console.error('[mt.form.onDelete] Exception', ex);
+						mt.utils.toast('error', ex.message);
+					}
 				},
 			},
 			utils: {
@@ -304,7 +426,7 @@
 						},
 					});
 				},
-				toast(type, msg) {
+				toast(type, message) {
 
 					let title = '';
 					switch (type) {
@@ -321,17 +443,28 @@
 							title = "Lỗi";
 							break;
 						default:
-							throw { error: true, msg: "Type không hợp lệ!" };
+							throw { error: true, message: "Type không hợp lệ!" };
 					}
 
 					// Prepare
 					let opts = {
 						icon: type,
-						title: msg,
+						title: message,
 					};
 
 					// Show Toast
 					this.p_toast.fire(opts);
+				},
+				async confirmDanger(message, action) {
+					let result = await Swal.fire({
+						title: message,
+						icon: 'warning',
+						showCancelButton: true,
+						confirmButtonColor: '#d33',
+						confirmButtonText: action,
+						cancelButtonText: 'Hủy'
+					});
+					return result.isConfirmed;
 				},
 			},
 
@@ -346,134 +479,35 @@
 				this.form.init();
 				this.calendar.init();
 				this.utils.init();
-
-				// First load
-				this.mgr.loadFromJson();
 			},
-			async loadData(month, year) { // Tải dữ liệu sự kiện
+			async test() {
 
-				if (month == null || year == null) {
-					let viewDate = this.getViewDate();
-					month = viewDate.getMonth()+1;
-					year = viewDate.getFullYear();
+				// Call API - Load Data
+				let response = await fetch('/calendar/2024.json', { method: 'GET' });
+				if (!response.ok)
+					throw { error: true, message: await response.text() };
+				let lstEvent = await response.json();
+
+				let lstProcess = [];
+				for (let event of lstEvent) {
+
+					let dayMonth = new Date(event.date);
+					dayMonth.setFullYear(2000);
+
+					lstProcess.push({
+						name: event.name,
+						date: dayMonth.toISOString().substring(0, 10),
+						type: 'yearly',
+					});
 				}
 
-				// Kiểm tra có data chưa
-				let keyData = `${year}_${month}`;
-				let listEventAvailable = this.d_event[keyData];
-				if (listEventAvailable != null)
-					return; // Đã có data
-
-				// Check Authn
-				if (!this.p_authen.checkAuthn())
-					return;
-
-				// Call API
-				const response = await fetch('/database/query', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + this.p_authen.getToken(),
-					},
-					body: JSON.stringify({
-						"database": "calendar",
-						"sql": `
-							SELECT id, name, day, month, year
-							FROM calendar
-							WHERE month = ${month} AND year = ${year}
-						`
-					}),
+				console.log({
+					lstEvent,
+					lstProcess,
 				});
-				const listCalendar = await response.json();
-				this.h_debug && console.log('listCalendar', listCalendar);
-
-				// Lưu lại
-				this.d_event[keyData] = listCalendar;
-
-				// Load to calendar
-				let listEvent = listCalendar.map(e => {
-					return {
-						id: e.id,
-						title: e.name,
-						start: this.cv_event2calendar(e),
-						extendedProps: e,
-					};
-				});
-				this.h_debug && console.log('listEvent', listEvent);
-
-				// Thêm vào lịch để hiển thị
-				this.calendar.m_calendar.addEventSource(listEvent);
-			},
-			saveForm(event) {
-				event.preventDefault(); // Ngăn form reload trang
-
-				const dataObject = this.form.get();
-				console.log("Dữ liệu từ form (FormData):", dataObject);
-
-				// // Lấy giá trị từ form
-				// var title = document.getElementById('title').value;
-				// var startDate = document.getElementById('startDate').value;
-				// var startTime = document.getElementById('startTime').value;
-				// var endDate = document.getElementById('endDate').value;
-				// var endTime = document.getElementById('endTime').value;
-				// var allDay = document.getElementById('allDay').checked;
-
-				// // Tạo đối tượng sự kiện
-				// var event = {
-				// 	title: title,
-				// 	allDay: allDay
-				// };
-
-				// // Xử lý ngày giờ bắt đầu
-				// if (allDay) {
-				// 	event.start = startDate;
-				// 	if (endDate) {
-				// 		// Thêm 1 ngày cho endDate nếu là sự kiện cả ngày
-				// 		var endDateObj = new Date(endDate);
-				// 		endDateObj.setDate(endDateObj.getDate() + 1);
-				// 		event.end = endDateObj.toISOString().split('T')[0];
-				// 	}
-				// }
-				// else {
-				// 	event.start = startDate + (startTime ? 'T' + startTime + ':00' : 'T00:00:00');
-				// 	if (endDate && endTime) {
-				// 		event.end = endDate + 'T' + endTime + ':00';
-				// 	} else if (endDate) {
-				// 		event.end = endDate + 'T00:00:00';
-				// 	}
-				// }
-
-				// // Thêm sự kiện vào FullCalendar
-				// calendar.addEvent(event);
-
-				// // Reset form
-				// document.getElementById('eventForm').reset();
-			},
-
-			// Get / Set
-			getViewDate() { // Lấy thời gian đang xem của lịch (class Date)
-				return this.m_calendar.getDate();
-			},
-
-			// Utils
-			cv_event2calendar(data) { // Chuyển date event thành date calendar
-				if (data == null)
-					return '';
-				return `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`;
-			},
-			cv_calendar2event(date) { // Chuyển date calendar thành date event
-				if (date == null || date.length == 0)
-					return null;
-
-				return {
-					day: Number.parseInt(date.substr(8, 2)),
-					month: Number.parseInt(date.substr(5, 2)),
-					year: Number.parseInt(date.substr(0, 4)),
-				};
 			},
 		};
 		document.addEventListener('DOMContentLoaded', () => mt.init());
 	</script>
-
 </body>
 </html>
