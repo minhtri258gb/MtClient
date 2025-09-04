@@ -82,14 +82,13 @@ div.layoutCenter {
 
 
 /* Toolbar GridStack */
-.toolbar-dashboard {
+.toolbar-grid {
 	display: flex;
 	flex-direction: row-reverse;
 	gap: 4px;
 
-	#btnAddWidget {
-		display: none;
-	}
+	#btnAdd { display: none; }
+	#btnSave { display: none; }
 }
 
 
@@ -103,6 +102,12 @@ div#jstree {
 	height: 16px !important;
 }
 /* END JsTree */
+
+
+/* Modal */
+.swal2-html-container {
+	text-align: left;
+}
 
 
 /* BEGIN Other */

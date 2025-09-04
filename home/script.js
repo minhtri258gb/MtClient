@@ -1,4 +1,11 @@
+import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 import mtAuthen from '/common/authen.js';
+
+/**
+ * https://fontawesome.com/v6/search?ic=free&o=r
+ * https://github.com/gridstack/gridstack.js
+ * https://gridstackjs.com/doc/html/index.html
+ */
 
 var mt = {
 	p_authen: mtAuthen,
@@ -35,14 +42,89 @@ var mt = {
 			'html': { icon: '/res/icons/web16.png' },
 		},
 	},
-	m_clientPath: '',
 
 	// Module
-	dashboard: {
+	mgr: {
+		h_pathDB: '/res/DB/home.json',
+		m_clientPath: '',
+
+		async loadConfig() {
+
+			// Call API
+			let resClientPath = await fetch('/file/getClientPath', {
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+				},
+			});
+			this.m_clientPath = await resClientPath.text();
+		},
+		async loadFromJson() {
+
+			// Call API
+			let response = await fetch(this.h_pathDB, {
+				method: 'GET',
+			});
+			if (!response.ok)
+				throw { error: true, message: 'Lỗi tải dữ liệu home!', detail: ex };
+
+			let data = await response.json();
+			mt.grid.load(data);
+
+			// Log
+			// console.log('[mt.mgr.loadFromJson]', { data });
+		},
+		async saveToJson(data) {
+			try {
+
+				// Kiểm tra và lấy client path
+				if (this.m_clientPath.length == 0) {
+					let response = await fetch('/file/getClientPath', {
+						method: 'GET',
+						headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
+					});
+					if (!response.ok)
+						throw { error: true, message: await response.text() };
+
+					this.m_clientPath = await response.text();
+				}
+
+				// Call API - Lưu dữ liệu
+				let paramURL = new URLSearchParams();
+				paramURL.set('file', this.m_clientPath + this.h_pathDB);
+				paramURL.set('force', true);
+				let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'text/plain',
+						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+					},
+					body: JSON.stringify(data),
+				});
+				if (!responseSave.ok)
+					throw { error: true, message: await responseSave.text() };
+			}
+			catch (ex) {
+				console.error('[mt.mgr.saveToJson] Exception', ex);
+				throw ex;
+			}
+		},
+	},
+	grid: {
+		c_btnEdit: null,
+		c_btnEditIcon: null,
+		c_btnAdd: null,
+		c_btnSave: null,
 		p_grid: null,
 		m_isEdit: false,
 
 		init() {
+
+			// Bind Component
+			this.c_btnEdit = document.getElementById('btnEdit');
+			this.c_btnEditIcon = document.getElementById('btnEditIcon');
+			this.c_btnAdd = document.getElementById('btnAdd');
+			this.c_btnSave = document.getElementById('btnSave');
 
 			// Init GridStack
 			this.p_grid = GridStack.init({
@@ -54,33 +136,48 @@ var mt = {
 				lazyLoad: true,
 				margin: 5,
 			});
-
-			// this.p_grid.addWidget({w: 2, content: 'item 1'});
-
-			const serializedData = [
-				{x: 0, y: 0, w: 2, h: 2},
-				{x: 2, y: 3, w: 3, content: 'item 2'},
-				{x: 1, y: 3},
-
-				{x: 0, y: 0, w: 2, h: 2, id: '0'},
-				{x: 3, y: 1, h: 2, id: 'no_move', noMove: true, content: 'no move'},
-				{x: 4, y: 1, id: '2'},
-				{x: 2, y: 3, w: 3, id: 'no_resize', noResize: true, content: 'no resize'},
-				{x: 1, y: 3, id: 'locked', locked: true, content: 'locked'}
-			];
-
-			this.p_grid.load(serializedData);
 		},
-		editDashboard() {
+		load(serializedData) {
+
+			// Bổ sung id cho từng widget
+			for (let i=0, sz=serializedData.length; i<sz; i++) {
+				let widget = serializedData[i];
+				widget.id = i+1;
+				if (widget.customData == null)
+					widget.customData = {};
+				widget.customData.id = i+1;
+				widget.content = widget.customData.name || '';
+			}
+
+			// Render
+			this.p_grid.load(serializedData);
+
+			// Register Event
+			const elWidgets = this.p_grid.getGridItems();
+			for (let elWidget of elWidgets)
+				elWidget.addEventListener('click', () => this.onWidgetClick(elWidget));
+
+			// Log
+			// console.log('[mt.grid.load]', { serializedData });
+		},
+		edit(toggle) {
 
 			// Đổi cờ
-			this.m_isEdit = !this.m_isEdit;
+			if (toggle == null)
+				this.m_isEdit = !this.m_isEdit;
+			else
+				this.m_isEdit = toggle;
 
 			// Set GridStack
 			this.p_grid.setStatic(!this.m_isEdit);
 
+			// Hiện nút khi edit
+			let displayStyle = this.m_isEdit ? 'initial' : 'none';
+			this.c_btnAdd.style.display = displayStyle;
+			this.c_btnSave.style.display = displayStyle;
+
 			// Đổi icon trên button
-			let iconElm = document.getElementById('btnEditDashboardIcon');
+			let iconElm = document.getElementById('btnEditIcon');
 			let classListElm = iconElm.classList;
 			if (this.m_isEdit) {
 				classListElm.remove('fa-regular');
@@ -91,8 +188,241 @@ var mt = {
 				classListElm.add('fa-regular');
 			}
 		},
-		addWidget() {
-			this.p_grid.addWidget({x: 0, y: 0, content: "new item"});
+		add() {
+			let elWidget = this.p_grid.addWidget({
+				id: 0,
+				x: 0,
+				y: 0,
+				content: 'New',
+				customData: { ...mt.form.h_defaultData },
+			});
+			elWidget.addEventListener('click', () => this.onWidgetClick(elWidget));
+			// console.log('[mt.grid.add]', { elWidget });
+		},
+		async save() {
+			try {
+
+				// Get Data
+				let layout = this.p_grid.save();
+				// console.log('[mt.grid.save]', { layout });
+
+				// Xóa id
+				for (let widget of layout) {
+					if (widget.id != null) {
+						delete widget.id;
+						delete widget.customData.id;
+						widget.content = '';
+					}
+				}
+
+				// Call API- Save data
+				await mt.mgr.saveToJson(layout);
+
+				// Change state
+				this.edit(false);
+
+				// Notify
+				mt.utils.toast('success', 'Đã lưu grid.');
+			}
+			catch (ex) {
+				mt.utils.toast('error', ex.message);
+				console.error('[mt.grid.save]', ex);
+			}
+		},
+		async onWidgetClick(elWidget) {
+
+			// Lấy Id widget
+			let id = +elWidget.getAttribute('gs-id');
+
+			if (isNaN(id) || id == 0) {
+				console.warn('[mt.grid.add] widget không có id', { id, elWidget });
+				return; // Bỏ qua các widget ko có id
+			}
+
+			// Widget
+			let lstWidget = this.p_grid.getGridItems();
+			let widget = lstWidget.find(item => item.gridstackNode.id === id);
+
+			// Nếu là chỉnh sửa thì mở form
+			if (this.m_isEdit) {
+				mt.form.open(widget);
+			}
+			// Di chuyển đến màn ứng dụng
+			else {
+				let data = widget.gridstackNode.customData;
+				if (data.link != null && data.link.length > 0) {
+					let isConfirm = await mt.utils.confirmPrimary(`Xác nhận mở app ${data.name}?`, 'Đến');
+					if (isConfirm)
+						window.open(data.link);
+				}
+				else
+					mt.utils.toast('warning', 'Chưa có link ứng dụng!');
+			}
+
+			// Log
+			// console.log('[mt.grid.add]', { id, elWidget });
+		},
+	},
+	form: {
+		h_defaultData: { id: 0, name: '', icon: '', link: '' },
+		m_editor: null, // Json Editor
+
+		init() {
+
+			// Init Editor
+			JsonEditorEX.RateRegister();
+		},
+		async open(widget) {
+
+			// Open Modal
+			let result = await Swal.fire({
+				title: 'Sự kiện',
+				html: '<div id="json-editor" class="json-editor"></div>',
+				showDenyButton: true,
+				showCancelButton: true,
+				confirmButtonText: 'Lưu',
+				denyButtonText: 'Xóa',
+				cancelButtonText: 'Đóng',
+				// showClass: {
+				// 	popup: '',
+				// },
+				// hideClass: {
+				// 	popup: '',
+				// },
+				didOpen: () => this.initForm(widget),
+				didClose: () => this.m_editor.destroy(),
+				preConfirm: () => {
+					try {
+						return this.m_editor.getValue();
+					}
+					catch (ex) {
+						Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+						console.error('[mt.form.open.preConfirm] Exception:', ex);
+					}
+				},
+			});
+			if (result.isConfirmed)
+				this.onSave(widget, result.value);
+			else if (result.isDenied)
+				this.onDelete(widget, {
+					id: widget.id,
+					...widget.customData
+				});
+		},
+		initForm(widget) {
+
+			let objForm = Object.assign({ ...this.h_defaultData }, widget.gridstackNode.customData);
+
+			// Init Form
+			const element = document.getElementById('json-editor');
+			this.m_editor = new JSONEditor(element, {
+				use_name_attributes: false,
+				theme: 'barebones',
+				iconlib: 'fontawesome5',
+				disable_edit_json: true,
+				disable_properties: true,
+				disable_collapse: true,
+				startval: objForm,
+				schema: {
+					title: 'Event Calendar',
+					type: 'object',
+					required: [],
+					properties: {
+						'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
+						'name': { title: 'Name', type: 'string', format: 'text' },
+						'icon': { title: 'Icon', type: 'string', format: 'text' },
+						'link': { title: 'Link', type: 'string', format: 'url' },
+					},
+				},
+			});
+		},
+		onSave(widget, data) {
+
+			// Cập nhật id
+			data.id = Number.parseInt(data.id);
+
+			let widgetOtps = widget.gridstackNode;
+			widgetOtps.content = data.name;
+			widgetOtps.customData = data;
+
+			// Update grid
+			mt.grid.p_grid.update(widget, widgetOtps);
+
+			// Log
+			console.log('[mt.form.onSave]', { widget, data });
+		},
+		onDelete(widget, data) {
+
+		},
+	},
+	utils: {
+		p_toast: null, // Sweetalert2 - Toast
+
+		init() {
+
+			// Init Sweetlert2
+			this.p_toast = Swal.mixin({
+				toast: true,
+				position: 'bottom-end',
+				showConfirmButton: false,
+				timer: 3000,
+				timerProgressBar: true,
+				didOpen: (toast) => {
+					toast.onmouseenter = Swal.stopTimer;
+					toast.onmouseleave = Swal.resumeTimer;
+				},
+			});
+		},
+		toast(type, message) {
+
+			let title = '';
+			switch (type) {
+				case 'info':
+					title = 'Thông báo';
+					break;
+				case 'success':
+					title = 'Thành công';
+					break;
+				case 'warning':
+					title = 'Cảnh báo';
+					break;
+				case 'error':
+					title = 'Lỗi';
+					break;
+				default:
+					throw { error: true, message: 'Type không hợp lệ!' };
+			}
+
+			// Prepare
+			let opts = {
+				icon: type,
+				title: message,
+			};
+
+			// Show Toast
+			this.p_toast.fire(opts);
+		},
+		async confirmPrimary(message, action) {
+			let result = await Swal.fire({
+				title: message,
+				icon: 'info',
+				showCancelButton: true,
+				confirmButtonColor: '#0054e9',
+				confirmButtonText: action,
+				cancelButtonText: 'Đóng'
+			});
+			return result.isConfirmed;
+		},
+		async confirmDanger(message, action) {
+			let result = await Swal.fire({
+				title: message,
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#c5000f',
+				confirmButtonText: action,
+				cancelButtonText: 'Đóng'
+			});
+			return result.isConfirmed;
 		},
 	},
 
@@ -106,18 +436,15 @@ var mt = {
 		await this.p_authen.init();
 
 		// Read config
-		let resClientPath = await fetch('/file/getClientPath', {
-			method: 'GET',
-			headers: {
-				'Authorization': 'Bearer '+this.p_authen.getToken(),
-			},
-		});
-		this.m_clientPath = await resClientPath.text();
+		await this.mgr.loadConfig();
 
 		// Init
-		this.dashboard.init();
+		this.grid.init();
 		this.initUI();
+		this.utils.init();
 
+		// First load
+		await this.mgr.loadFromJson();
 	},
 	initUI() {
 
@@ -162,7 +489,7 @@ var mt = {
 					},
 					dataType: 'json',
 					data: (node) => {
-						let folder = node.original?.path || this.m_clientPath; // Lấy path
+						let folder = node.original?.path || mt.mgr.m_clientPath; // Lấy path
 						return { folder };
 					},
 					success: (data) => this.processNode(data),
@@ -226,7 +553,7 @@ var mt = {
 				icon: '/res/icons/play.png',
 				action: (obj) => {
 					let path = node.original.path;
-					path = path.replaceAll(this.m_clientPath, '');
+					path = path.replaceAll(mt.mgr.m_clientPath, '');
 					window.open(path, '_blank');
 				}
 			};
@@ -260,7 +587,7 @@ var mt = {
 	doubleClick(node) { // Nhấn đúp
 		if (node.type == 'html') {
 			let path = node.original.path;
-			path = path.replaceAll(this.m_clientPath, '');
+			path = path.replaceAll(mt.mgr.m_clientPath, '');
 			window.open(path, '_blank');
 		}
 	},
@@ -276,4 +603,4 @@ var mt = {
 		return 'file';
 	},
 };
-$(document).ready(() => mt.init());
+document.addEventListener('DOMContentLoaded', () => mt.init());
