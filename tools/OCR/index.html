@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
+
 	<title>OCR</title>
+
+	<meta charset="utf-8">
+
+	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
 
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
-	
-	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
 
-	<script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
-	
+	<!-- <script src="/lib/tesseract.js-6.0.1/tesseract.min.js"></script> -->
+
 </head>
 <body>
 
@@ -19,49 +21,68 @@
 
 	<div id="result" style="border:solid;border-width:1px;"></div>
 
-	<script>
+	<script type="module">
+		import Tesseract from '/lib/tesseract.js-6.0.1/tesseract.esm.min.js';
+		var mt = {
+			p_worker: null, // Tesseract
 
-		function scan(file) {
+			async init() {
 
-			// Draw Image
-			$('#image')[0].src = URL.createObjectURL(file);
+				// Bind Global
+				window.mt = this;
 
-			let worker = Tesseract.createWorker();
-			worker.load().then(() => {
-				worker.loadLanguage('eng').then(() => {
-					worker.initialize('eng').then(() => {
-						worker.recognize(file).then(res => {
-							$('#result').html(res.data.text);
-							worker.terminate();
-						});
-					});
+				// Init 
+				let worker = await Tesseract.createWorker('vie', 1, {
+					workerPath: '/lib/tesseract.js-6.0.1/worker.min.js',
+					langPath: '/lib/tesseract.js-6.0.1/res/',
+					// corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
+					logger: (m) => console.log(m),
 				});
-			});
+				// await worker.load();
+				// await worker.loadLanguage('vie');
+				// await worker.initialize('vie');
+				// await worker.setParameters({
+				// 	tessedit_pageseg_mode: '6',
+				// });
+				this.p_worker = worker;
 
-		}
+				// Register Event
+				document.onpaste = (event) => this.onParseClipboard(event);
+				window.addEventListener('beforeunload', async () => await this.p_worker.terminate());
+			},
+			async onParseClipboard(event) {
 
-		document.onpaste = (event) => {
-			const auth = navigator.permissions.query({ name: "clipboard-read" });
-			if (auth.state !== 'denied') {
-				navigator.clipboard.read().then(item_list => {
-					let image_type;
-					const item = item_list.find(item =>
-						item.types.some( type => {
-							if (type.startsWith('image/')) {
-								image_type = type;
-								return true;
-							}
-						})
-					);
-					if (item) {
-						item.getType(image_type).then(file => {
-							scan(file);
-						});
-					}
-				});
-			}
-		}
+				const auth = navigator.permissions.query({ name: 'clipboard-read' });
+				if (auth.state === 'denied') {
+					console.warn('[mt.onParseClipboard] Chưa cấp quyền đọc bộ nhớ đệm!');
+					return;
+				}
 
+				let item_list = await navigator.clipboard.read();
+				let image_type;
+				const item = item_list.find(item =>
+					item.types.some( type => {
+						if (type.startsWith('image/')) {
+							image_type = type;
+							return true;
+						}
+					})
+				);
+				if (item == null) {
+					console.warn('[mt.onParseClipboard] Không tìm thấy ảnh!');
+					return;
+				}
+
+				let file = await item.getType(image_type);
+
+				// Draw Image
+				$('#image')[0].src = URL.createObjectURL(file);
+
+				const res = await this.p_worker.recognize(file);
+				$('#result').html(res.data.text);
+			},
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
 	</script>
 </body>
 </html>
