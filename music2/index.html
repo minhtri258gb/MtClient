@@ -29,12 +29,21 @@
 
 			.layoutLeft {
 				width: 400px;
+				height: 100%;
 				padding: 0 4px;
 				border-right: 1px solid #95B8E7;
+				overflow-y: auto;
+				overflow-x: hidden;
 
 				.framebox {
 					border: 1px solid #95B8E7;
 					border-radius: 5px;
+
+					.toolbox-content {
+						display: none;
+						margin-top: 6px;
+						border-top: 1px solid #95B8E7;
+					}
 				}
 			}
 			.layoutCenter {
@@ -54,6 +63,13 @@
 			&:hover {
 				background-color: #eaf2ff;
 				border: 1px solid #b7d2ff;
+			}
+
+			&.confirmButton {
+				color: #0054e9;
+			}
+			&.dangerButton {
+				color: #c5000f;
 			}
 		}
 		.range-vertical {
@@ -139,7 +155,7 @@
 					<!-- Volume Button -->
 					<div style="bottom:0;width:100%;height:40px;display:table;">
 						<div style="display:table-cell;vertical-align:middle;text-align:center;">
-							<button id="volumeBtn" class="iconButton" onclick="mt.event.volumeToggle()"><i class="fa-solid fa-volume-low"></i></button>
+							<button id="volumeBtn" class="iconButton" onclick="mt.event.volumeToggle()" title="Âm lượng"><i class="fa-solid fa-volume-low"></i></button>
 						</div>
 					</div>
 
@@ -150,9 +166,9 @@
 
 					<!-- Button -->
 					<div style="text-align:center;margin-right:50px;">
-						<button class="iconButton" onclick="mt.event.btnBack()"><i class="fa-solid fa-backward"></i></button>
-						<button id="btnPause" class="iconButton" onclick="mt.event.btnPause()"><i class="fa-solid fa-play"></i></button>
-						<button class="iconButton" onclick="mt.event.btnNext()"><i class="fa-solid fa-forward"></i></button>
+						<button class="iconButton" onclick="mt.event.btnBack()" title="Bài trước"><i class="fa-solid fa-backward"></i></button>
+						<button id="btnPause" class="iconButton" onclick="mt.event.btnPause()" title="Tạm dừng / phát tiếp"><i class="fa-solid fa-play"></i></button>
+						<button class="iconButton" onclick="mt.event.btnNext()" title="Bài tiếp theo"><i class="fa-solid fa-forward"></i></button>
 					</div>
 
 					<div style="display:flex;justify-content:space-between;">
@@ -194,13 +210,30 @@
 			<!-- Toolbox -->
 			<div class="framebox" style="padding:8px;">
 				<div style="display:flex;gap:4px;">
-					<button class="iconButton" onclick="mt.event.btnCheckAdd()"><i class="fa-solid fa-circle-plus"></i></button>
-					<button class="iconButton" onclick="mt.event.btnCheckMiss()"><i class="fa-solid fa-shield-halved"></i></button>
-					<button class="iconButton" onclick="mt.event.btnTrack()"><i class="fa-solid fa-scissors"></i></button>
-					<button class="iconButton" onclick="mt.event.btnShare()"><i class="fa-solid fa-share-nodes"></i></button>
+					<button class="iconButton" onclick="mt.tools.run('check')" title="Kiểm tra file nhạc"><i class="fa-solid fa-list-check"></i></button>
+					<button class="iconButton" onclick="mt.tools.run('merge')" title="Gom dữ liệu"><i class="fa-solid fa-object-group"></i></button>
+					<button class="iconButton" onclick="mt.tools.run('track')" title="Soundtrack"><i class="fa-solid fa-scissors"></i></button>
+					<button class="iconButton" onclick="mt.tools.run('share')" title="Chia sẻ"><i class="fa-solid fa-share-nodes"></i></button>
 				</div>
-				<div>
-
+				<div id="toolbox-check" class="toolbox-content">
+					<div style="margin:4px 4px 0 0; display:flex;justify-content:center;gap:4px">
+						<button onclick="mt.tools.check.addAll()" title="Thêm toàn bộ" class="iconButton"><i class="fa-solid fa-square-plus"></i></button>
+					</div>
+					<ol id="toolbox-check-list"></ol>
+				</div>
+				<div id="toolbox-merge" class="toolbox-content">
+					TODO
+				</div>
+				<div id="toolbox-track" class="toolbox-content">
+					<div style="margin:4px 4px 0 0; display:flex;justify-content:center;gap:4px">
+						<button onclick="mt.tools.track.play()" title="Chạy thử bản track" class="iconButton"><i class="fa-solid fa-play"></i></button>
+						<button onclick="mt.tools.track.save()" title="Lưu track" class="iconButton"><i class="fa-solid fa-floppy-disk"></i></button>
+					</div>
+					<div style="margin-top:8px;display:flex;justify-content:space-around">
+						<input id="toolbox-track-begin" type="text">
+						<span >-</span>
+						<input id="toolbox-track-end" type="text">
+					</div>
 				</div>
 			</div>
 			<br>
@@ -219,13 +252,12 @@
 		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 
 		var mt = {
+			p_authen: mtAuthen,
 
 			// Module
 			mgr: {
 				h_pathMusic: '', // Link folder on Server
-				h_pathDB: 'music2/', // Link Data Client
-				// h_pathDB: 'res/DB/events/', // Link Data Client
-				p_authen: mtAuthen,
+				h_pathDB: '/res/DB/music.json', // Link Data Client
 				m_clientPath: '', // Đường dẫn client
 				d_musics: [], // Danh sách nhạc
 				d_arrayBufferFile: '', // arrayBuffer bài hiện tại để tạo sóng
@@ -258,7 +290,7 @@
 
 						// DB Path
 						let listEvent = [];
-						let urlDB = '/' + this.h_pathDB + 'music.json';
+						let urlDB = this.h_pathDB;
 
 						// Call API
 						let response = await fetch(urlDB, { method: 'GET' });
@@ -297,17 +329,14 @@
 					try {
 
 						// Authen
-						if (this.p_authen.checkAuthn() == false)
-							await this.p_authen.init();
-
-						if (year == null || year < 1000 || year > 3000)
-							throw { error: true, message: "Năm không hợp lệ" };
+						if (mt.p_authen.checkAuthn() == false)
+							await mt.p_authen.init();
 
 						// Kiểm tra và lấy client path
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
+								headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
 							});
 							if (!response.ok)
 								throw { error: true, message: await response.text() };
@@ -315,20 +344,25 @@
 							this.m_clientPath = await response.text();
 						}
 
-						// DB Path
-						let urlDB = mt.h_pathDB + year + '.json';
+						// Bỏ id
+						let listData = [];
+						for (let music of this.d_musics) {
+							let clone = Object.assign({}, music);
+							delete clone.id;
+							listData.push(clone);
+						}
 
 						// Call API - Lưu dữ liệu
 						let paramURL = new URLSearchParams();
-						paramURL.set('file', this.m_clientPath + '/' + urlDB);
+						paramURL.set('file', this.m_clientPath + this.h_pathDB);
 						paramURL.set('force', true);
 						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer '+mt.p_authen.getToken(),
+								'Authorization': 'Bearer ' + mt.p_authen.getToken(),
 							},
-							body: JSON.stringify(this.d_event[year]),
+							body: JSON.stringify(listData),
 						});
 						if (!responseSave.ok) {
 							let errorMessage = await responseSave.text();
@@ -386,16 +420,20 @@
 						data: [],
 						initialSort: [{ column: 'name', dir: 'asc' }],
 						columns: [
-							{ title:"STT", formatter:'rownum', width:40, hozAlign:'center', vertAlign:'middle', headerSort:false },
-							{ title:"Name", field:'name', vertAlign:'middle', headerSort:false, editable:false, editable:false },
-							{ title:"Rate", field:'rate', width:62, hozAlign:'center', vertAlign:'middle', editable:false, formatter: (cell) => {
+							{ title:'STT', formatter:'rownum', width:40, hozAlign:'center', vertAlign:'middle', headerSort:false },
+							{ title:'Name', field:'name', vertAlign:'middle', headerSort:false, editable:false, editable:false },
+							{ title:'Rate', field:'rate', width:62, hozAlign:'center', vertAlign:'middle', editable:false, formatter: (cell) => {
 								let value = cell.getValue(); // Lấy giá trị của ô (1-5)
 								return (value >= 1 && value <= 5) ? `<img src="/res/icons/rating${value}.png" />` : 'N/A';
 							}},
-							{ title:"Duration", field:'duration', width:64, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false,
+							{ title:'Duration', field:'duration', width:64, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false,
 								formatter: (cell) => mt.utils.cv_formatTime(cell.getValue()),
 							},
-							{ title:"Tags", field:'tags', width:100, vertAlign:'middle', headerSort:false, editable:false},
+							{ title:'Tags', field:'tags', width:100, vertAlign:'middle', headerSort:false, editable:false },
+							{ title:'Track', field:'trackbegin', width:45, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false, formatter: (cell) => {
+								let value = cell.getValue(); // Lấy giá trị trackbegin
+								return (value == null || value == '') ? '': '<i class="fa-regular fa-circle-check" style="color:#2dd55b"></i>';
+							}},
 						],
 						// editorEmptyValue: null,
 						rowContextMenu: [
@@ -405,6 +443,8 @@
 							{ separator: true, },
 							{ label: '<i class="fa-solid fa-pen-to-square"></i> Edit', action: (event, row) => mt.event.menuEdit(row) },
 							{ label: '<i class="fa-regular fa-trash-can"></i> Delete', action: (event, row) => mt.event.menuDelete(row) },
+							{ separator: true, },
+							{ label: '<i class="fa-solid fa-print"></i> Print', action: (event, row) => mt.event.menuPrint(row) },
 						]
 						// headerSortElement: function(column, dir) {
 						// 	switch (dir) {
@@ -484,10 +524,10 @@
 						rate: 3,
 						duration: null,
 						tags: 'NEW',
-						decibel: 1.0,
+						decibel: 100,
 						trackbegin: null,
 						trackend: null,
-						miss: 0,
+						miss: false,
 					};
 					if (music != null)
 						objForm = Object.assign(objForm, music);
@@ -611,7 +651,7 @@
 				c_playlist: null, // Element playlist
 				p_audioContext: null, // AudioContext
 				m_currentMusic: null, // Data bài phát hiện tại
-				m_track: 0, // Id bài track hiện tại
+				m_track: { id:null, begin:0, end:0 }, // Bài track hiện tại
 				m_interact: false, // Cờ đặt lại trạng thái AudioContext sau tương tác
 				m_volumeBase: 1, // Volume chuẩn (chưa thay đổi theo từng bài)
 				m_volumeMute: false, // Cờ tắt âm thanh
@@ -657,7 +697,7 @@
 					mt.wave.staticUpdate(currentTime);
 
 					// CASE 1: Kiểm tra nếu như có track và đến thời điểm thì pause lại
-					if (this.m_track == this.m_currentMusic.id && currentTime > this.m_currentMusic.trackend) {
+					if (this.m_track.id == this.m_currentMusic.id && currentTime > this.m_currentMusic.trackend) {
 
 						// Ngừng phát
 						this.c_audio.pause();
@@ -666,7 +706,7 @@
 						this.setIconPause(false);
 
 						// Kết thúc track
-						this.m_track = null;
+						this.m_track.id = null;
 						return;
 					}
 				},
@@ -922,7 +962,7 @@
 						mt.list.highlightRow(music.id);
 
 						// Nếu ko phải doubleClickList và menuPlay thì focus row bài hát
-						if (['doubleClickList','menuPlay'].includes(mt.event.m_action) == false)
+						if (['doubleClickList','menuPlay','menuPlayTrack'].includes(mt.event.m_action) == false)
 							mt.list.scrollToCurrent(music.id);
 
 						// Đợi cho đến khi load xong
@@ -953,6 +993,10 @@
 
 						// Bắt đầu phát
 						this.c_audio.play();
+
+						// Extra - Tool Track - Nếu đang mở tool track thì điền begin và end vào input
+						if (mt.tools.m_open = 'track')
+							mt.tools.track.setTime(music);
 					}
 					catch (ex) {
 						mt.utils.toast('error', ex.message);
@@ -1158,14 +1202,193 @@
 				},
 			},
 			tools: {
-				add: {
-					open() {},
+				m_open: '',
+
+				check: {
+					c_content: null,
+					c_list: null,
+					d_listNew: [],
+					d_listMiss: [],
+
+					async open() {
+
+						// Authen
+						if (mt.p_authen.checkAuthn() == false)
+							await mt.p_authen.init();
+
+						// Call API - Lấy danh sách file trong thư mục nhạc
+						let paramsURL = new URLSearchParams();
+						paramsURL.append('folder', mt.mgr.h_pathMusic);
+						let response = await fetch('/file/list?' + paramsURL.toString(), {
+							method: 'GET',
+							headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
+						});
+						if (!response.ok)
+							throw { error: true, message: await response.text(), detail: response };
+
+						let listFile = await response.json();
+
+						// Tạo mapping
+						let mapFile = {};
+						for (let file of listFile) {
+							if (file.isFolder)
+								continue;
+							let name = file.name.substring(0, file.name.length-4); // Bỏ .mp3
+							mapFile[name] = true; //file;
+						}
+
+						// Tìm bài bị miss, bài đã có thì xóa khỏi map, còn lại sẽ là bài mới
+						this.d_listMiss = [];
+						for (let music of mt.mgr.d_musics) {
+							let name = music.name;
+							if (mapFile[name] != null) { // Nếu có
+								music.miss = false;
+								delete mapFile[name];
+							}
+							else { // Nếu ko
+								music.miss = true;
+								this.d_listMiss.push(name);
+							}
+						}
+						this.d_listNew = [];
+						for (let name in mapFile) {
+							// let file = mapFile[name];
+							this.d_listNew.push(name);
+						}
+
+						// Clean list
+						this.c_list.innerHTML = '';
+
+						// Show New
+						for (let name of this.d_listNew) {
+							const li = document.createElement('li');
+							// const button = document.createElement('button');
+							// button.title = 'Thêm bài này';
+							// button.classList.add('iconButton');
+							// button.classList.add('confirmButton');
+							// button.innerHTML = '<i class="fa-solid fa-plus"></i>';
+							// button.addEventListener('click', () => this.add(name, li));
+							// li.appendChild(button);
+							// li.append(' ' + name);
+							li.append(name);
+							this.c_list.appendChild(li);
+						}
+
+						// Show miss
+						// for (let name of this.d_listMiss) {
+						// 	const button = document.createElement('button');
+						// 	button.title = 'Xóa bài này';
+						// 	button.classList.add('iconButton');
+						// 	button.classList.add('dangerButton');
+						// 	button.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+						// 	button.addEventListener('click', () => this.remove(name));
+
+						// 	const li = document.createElement('li');
+						// 	li.appendChild(button);
+						// 	li.append(' ' + name);
+
+						// 	this.c_list.appendChild(li);
+						// }
+
+						// Log
+						// console.log('[mt.tools.check.open]', { listFile });
+					},
+					async addAll() {
+
+						for (let name of this.d_listNew) {
+
+							let musicNew = {
+								name: name,
+								duration: null,
+								decibel: 100,
+								rate: 3,
+								tags: ['NEW'],
+								trackbegin: null,
+								trackend: null,
+								miss: false,
+							};
+
+							// Thêm vào list
+							mt.mgr.d_musics.push(musicNew);
+
+							// Thêm vào tabulator
+							await mt.list.p_table.addRow(musicNew);
+						}
+
+						// Sắp xếp lại tabulator
+						mt.list.p_table.setSort('name', 'asc');
+
+						// Clean list check
+						this.c_list.innerHTML = '';
+						this.d_listNew = [];
+
+						// Lưu lại file music.json
+						mt.mgr.saveToJson();
+
+						// Close tool check
+						this.c_content.style.display = 'none';
+
+						// Notify
+						mt.utils.toast('success', `Đã thêm toàn bộ bài mới`);
+
+						// Log
+						console.log('[mt.tools.check.addAll]', {  });
+					},
 				},
-				miss: {
-					open() {},
+				merge: {
+					c_content: null,
+
+					open() {
+
+					},
 				},
 				track: {
-					open() {},
+					c_content: null,
+					c_begin: null,
+					c_end: null,
+
+					init() {
+						this.c_content = document.getElementById('toolbox-track');
+						this.c_begin = document.getElementById('toolbox-track-begin');
+						this.c_end = document.getElementById('toolbox-track-end');
+					},
+					open() {
+						if (mt.player.m_currentMusic == null)
+							return;
+
+					},
+					play() {
+						try {
+							if (mt.player.m_currentMusic == null)
+								return;
+
+							// Kiểm tra
+							let timeBeginStr = this.c_begin.value;
+							let timeEndStr = this.c_end.value;
+							if (timeBeginStr.length == 0 || timeEndStr.length == 0)
+								throw { error: true, msg: 'Chưa nhập timeBegin, timeEnd' };
+
+							let timeBegin = Number.parseFloat(timeBeginStr);
+							let timeEnd = Number.parseFloat(timeEndStr);
+							if (isNaN(timeBegin) || isNaN(timeEnd))
+								throw { error: true, msg: 'timeBegin, timeEnd không hợp lệ' };
+
+							// Log
+							console.log('[mt.tools.track.play]', { timeBegin, timeEnd });
+						}
+						catch (ex) {
+							mt.utils.toast('error', ex.message);
+						}
+					},
+					save() {
+						if (mt.player.m_currentMusic == null)
+							return;
+
+					},
+					setTime(music) {
+						this.c_begin.value = music.trackbegin;
+						this.c_end.value = music.trackend;
+					},
 				},
 				share: {
 					async run() {
@@ -1199,6 +1422,53 @@
 							mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
 						}
 					},
+				},
+
+				init() {
+
+					// Bind Component
+					this.check.c_content = document.getElementById('toolbox-check');
+					this.check.c_list = document.getElementById('toolbox-check-list');
+					this.merge.c_content = document.getElementById('toolbox-merge');
+					this.track.init();
+				},
+				async run(tool) {
+					try {
+
+						// Hide all
+						this.check.c_content.style.display = 'none';
+						this.merge.c_content.style.display = 'none';
+						this.track.c_content.style.display = 'none';
+
+						// Run tool
+						switch (tool) {
+							case 'check':
+								this.check.c_content.style.display = 'block';
+								await this.check.open();
+								break;
+							case 'merge':
+								this.merge.c_content.style.display = 'block';
+								this.merge.open();
+								break;
+							case 'track':
+								this.track.c_content.style.display = 'block';
+								this.track.open();
+								break;
+							case 'share':
+								// Nếu chưa chọn bài thì bỏ qua
+								if (mt.player.m_currentMusic == null) {
+									mt.utils.toast('warning', 'Chưa chọn nhạc!');
+									return;
+								}
+								await this.share.run();
+								break;
+						}
+						this.m_open = tool;
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.tools.run]', ex);
+					}
 				},
 			},
 			event: {
@@ -1308,56 +1578,6 @@
 						console.log('[mt.event.ckbNext]', ex);
 					}
 				},
-				btnCheckAdd() { // Kiểm tra những bài mới
-					try {
-						this.m_action = 'btnCheckAdd';
-						// #TODO
-						mt.utils.toast('warning', 'Chưa có chức năng!');
-					}
-					catch (ex) {
-						mt.utils.toast('error', ex.message);
-						console.log('[mt.event.btnCheckAdd]', ex);
-					}
-				},
-				btnCheckMiss() { // Kiểm tra file với data có khớp nhau ko
-					try {
-						this.m_action = 'btnCheckMiss';
-						// #TODO
-						mt.utils.toast('warning', 'Chưa có chức năng!');
-					}
-					catch (ex) {
-						mt.utils.toast('error', ex.message);
-						console.log('[mt.event.btnCheckMiss]', ex);
-					}
-				},
-				btnTrack() { // Tạo soundtrack
-					try {
-						this.m_action = 'btnTrack';
-						// #TODO
-						mt.utils.toast('warning', 'Chưa có chức năng!');
-					}
-					catch (ex) {
-						mt.utils.toast('error', ex.message);
-						console.log('[mt.event.btnTrack]', ex);
-					}
-				},
-				async btnShare() { // Copy link nhạc để chia sẻ
-					try {
-						this.m_action = 'btnShare';
-
-						// Nếu chưa chọn bài thì bỏ qua
-						if (mt.player.m_currentMusic == null) {
-							mt.utils.toast('warning', 'Chưa chọn nhạc!');
-							return;
-						}
-
-						await mt.tools.share.run();
-					}
-					catch (ex) {
-						mt.utils.toast('error', ex.message);
-						console.log('[mt.event.btnShare]', ex);
-					}
-				},
 				doubleClickList(cell) { // Nhấn đúp chọn bài trên danh sách
 					try {
 						this.m_action = 'doubleClickList';
@@ -1416,6 +1636,16 @@
 					catch (ex) {
 						mt.utils.toast('error', ex.message);
 						console.log('[mt.event.menuDelete]', ex);
+					}
+				},
+				menuPrint(row) { // Console log bài này
+					try {
+						this.m_action = 'menuPrint';
+						console.log(row.getData());
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.menuPrint]', ex);
 					}
 				},
 				pressSpace() { // Nhấn cách
@@ -1557,10 +1787,13 @@
 					return !isAction;
 				},
 				cv_formatTime(value) {
+					if (value == null || value.length == 0)
+						return '';
 					let valueR = Math.floor(value);
 					let minute = Math.floor(valueR / 60);
 					let second = valueR % 60;
-					if (second < 10) second = '0' + second;
+					if (second < 10)
+						second = '0' + second;
 					return minute + ':' + second;
 				},
 			},
@@ -1584,6 +1817,7 @@
 				// Wave khởi tạo sau player để có Element Audio
 				this.wave.init();
 
+				this.tools.init();
 				this.utils.init();
 
 				// First Load
