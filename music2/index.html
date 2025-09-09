@@ -211,7 +211,6 @@
 			<div class="framebox" style="padding:8px;">
 				<div style="display:flex;gap:4px;">
 					<button class="iconButton" onclick="mt.tools.run('check')" title="Kiểm tra file nhạc"><i class="fa-solid fa-list-check"></i></button>
-					<button class="iconButton" onclick="mt.tools.run('merge')" title="Gom dữ liệu"><i class="fa-solid fa-object-group"></i></button>
 					<button class="iconButton" onclick="mt.tools.run('track')" title="Soundtrack"><i class="fa-solid fa-scissors"></i></button>
 					<button class="iconButton" onclick="mt.tools.run('share')" title="Chia sẻ"><i class="fa-solid fa-share-nodes"></i></button>
 				</div>
@@ -220,9 +219,6 @@
 						<button onclick="mt.tools.check.addAll()" title="Thêm toàn bộ" class="iconButton"><i class="fa-solid fa-square-plus"></i></button>
 					</div>
 					<ol id="toolbox-check-list"></ol>
-				</div>
-				<div id="toolbox-merge" class="toolbox-content">
-					TODO
 				</div>
 				<div id="toolbox-track" class="toolbox-content">
 					<div style="margin:4px 4px 0 0; display:flex;justify-content:center;gap:4px">
@@ -289,7 +285,7 @@
 					try {
 
 						// DB Path
-						let listEvent = [];
+						let listMusic = [];
 						let urlDB = this.h_pathDB;
 
 						// Call API
@@ -300,25 +296,20 @@
 								throw { error: true, message: await response.text() };
 						}
 						else
-							listEvent = await response.json();
+							listMusic = await response.json();
 
-						// Process data và Build rate list
-						this.d_randSeed = [];
-						for (let i=0, sz=listEvent.length; i<sz; i++) {
-							let music = listEvent[i];
-
-							music.id = i+1;
-
-							// Compile lstRandSeed
-							if (music.miss == false) {
-								for (let j=0; j<music.rate; j++)
-									this.d_randSeed.push(i);
-							}
+						// Process data
+						for (let i=0, sz=listMusic.length; i<sz; i++) {
+							let music = listMusic[i];
+							music.id = i+1; // Thêm ID
 						}
-						this.d_musics = listEvent;
+						this.d_musics = listMusic;
+
+						// Build RandSeed
+						this.buildRandomSeed();
 
 						// Set into calendar
-						mt.list.load(listEvent);
+						mt.list.load(listMusic);
 					}
 					catch (ex) {
 						console.error('[mt.mgr.loadFromJson] Exception', ex);
@@ -402,6 +393,17 @@
 						throw { error: true, message: ex.message, detail: ex };
 					}
 				},
+				buildRandomSeed() {
+					this.d_randSeed = [];
+					for (let i=0, sz=this.d_musics.length; i<sz; i++) {
+						// Bỏ bài miss
+						if (this.d_musics[i].miss)
+							continue;
+						// Thêm seed bằng rate tương ứng
+						for (let j=0; j<music.rate; j++)
+							this.d_randSeed.push(i);
+					}
+				},
 			},
 			list: {
 				p_table: null, // Tabulator
@@ -432,7 +434,7 @@
 							{ title:'Tags', field:'tags', width:100, vertAlign:'middle', headerSort:false, editable:false },
 							{ title:'Track', field:'trackbegin', width:45, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false, formatter: (cell) => {
 								let value = cell.getValue(); // Lấy giá trị trackbegin
-								return (value == null || value == '') ? '': '<i class="fa-regular fa-circle-check" style="color:#2dd55b"></i>';
+								return value == null ? '': '<i class="fa-regular fa-circle-check" style="color:#2dd55b"></i>';
 							}},
 						],
 						// editorEmptyValue: null,
@@ -445,7 +447,7 @@
 							{ label: '<i class="fa-regular fa-trash-can"></i> Delete', action: (event, row) => mt.event.menuDelete(row) },
 							{ separator: true, },
 							{ label: '<i class="fa-solid fa-print"></i> Print', action: (event, row) => mt.event.menuPrint(row) },
-						]
+						],
 						// headerSortElement: function(column, dir) {
 						// 	switch (dir) {
 						// 		case 'asc': return '<img src="/res/icons/sort_up_9x16.png" />';
@@ -453,6 +455,11 @@
 						// 	}
 						// 	return '<img src="/res/icons/sort_9x16.png" />';
 						// },
+						rowFormatter: (row) => {
+							let data = row.getData();
+							if (data.miss)
+								row.getElement().style.backgroundColor = '#ffebee';
+						}
 					});
 
 					// Register Event
@@ -495,20 +502,22 @@
 						showCancelButton: true,
 						confirmButtonText: 'Lưu',
 						cancelButtonText: 'Đóng',
-						// showClass: {
-						// 	popup: '',
-						// },
-						// hideClass: {
-						// 	popup: '',
-						// },
-						didOpen: () => this.initForm(music),
-						didClose: () => this.m_editor.destroy(),
+						didOpen: () => {
+							this.initForm(music);
+						},
+						didClose: () => {
+							this.m_editor.destroy();
+
+							// Scroll lại cột edit (lỗi do modal của Sweetalert2 Modal ẩn scroll để ko lỗi hiển thị làm mất vị trí scroll tabulator)
+							mt.list.p_table.scrollToRow(music.id, 'center', true);
+						},
 						preConfirm: () => {
 							try {
-								return this.m_editor.getValue();
+								let value = this.m_editor.getValue();
+								return this.cv_outForm(value);
 							}
 							catch (ex) {
-								Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+								Swal.showValidationMessage('Dữ liệu nhập chưa hợp lệ!');
 								console.error('[mt.form.open.preConfirm] Exception:', ex);
 							}
 						},
@@ -517,20 +526,6 @@
 						this.onSave(result.value);
 				},
 				initForm(music) {
-
-					let objForm = {
-						id: 0,
-						name: '',
-						rate: 3,
-						duration: null,
-						tags: 'NEW',
-						decibel: 100,
-						trackbegin: null,
-						trackend: null,
-						miss: false,
-					};
-					if (music != null)
-						objForm = Object.assign(objForm, music);
 
 					// Init Form
 					const element = document.getElementById('json-editor');
@@ -541,7 +536,7 @@
 						disable_edit_json: true,
 						disable_properties: true,
 						disable_collapse: true,
-						startval: objForm,
+						startval: this.cv_inForm(music),
 						schema: {
 							title: 'Event Calendar',
 							type: 'object',
@@ -553,6 +548,9 @@
 								'duration': { title: 'Duration', type: 'number', minimum: 0 },
 								'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
 								'decibel': { title: 'Decibel', type: 'number', minimum: 0, maximum: 500 },
+								'trackbegin': { title: 'Track begin', type: 'number', minimum: 0 },
+								'trackend': { title: 'Track end', type: 'number', minimum: 0 },
+								'miss': { title: 'Miss', type: 'string', format: 'checkbox' },
 							},
 						},
 					});
@@ -560,36 +558,43 @@
 				async onSave(data) {
 					try {
 
-						let year = new Date(data.date).getFullYear();
+						if (data.id === 0) { // Add
 
-						if (data.id === '0') { // Add
-
-							if (mt.mgr.d_event[year] == null)
-								await mt.mgr.loadFromJson(year);
-							delete data.id;
+							// Add Index
+							data.id = mt.mgr.d_musics.length + 2; // Chưa push + lệch 1, bắt đầu từ 1 => +2
 
 							// Save to RAM
-							mt.mgr.d_event[year].push(data);
+							mt.mgr.d_musics.push(data);
 
-							// Change Calendar
-							let id = mt.mgr.d_event[year].length
-							mt.calendar.addEvent(id, data)
+							// Build lại seed để auto play random ko lệch
+							mt.mgr.buildRandomSeed();
+
+							// Thêm vào tabulator
+							await mt.list.p_table.addRow(data);
+
+							// Sắp xếp lại tabulator
+							mt.list.p_table.setSort('name', 'asc');
+
+							// Log
+							// console.log('[mt.form.onSave]', { data });
 						}
 						else { // Update
 
-							// Cập nhật data RAM
-							let arrIndex = +data.id - 1;
-							delete data.id;
+							// Log
+							// console.log('[mt.form.onSave]', {
+							// 	old: Object.assign({}, mt.mgr.d_musics[arrIndex]),
+							// 	new: Object.assign({}, data),
+							// });
 
 							// Save to RAM
-							mt.mgr.d_event[year][arrIndex] = data;
+							mt.mgr.d_musics[data.id - 1] = data;
 
-							// Change Calendar
-							mt.calendar.editEvent(arrIndex+1, data);
+							// Change Tabulator
+							mt.list.p_table.updateRow(data.id, data);
 						}
 
 						// Save data
-						await mt.mgr.saveToJson(year);
+						await mt.mgr.saveToJson();
 
 						// Notify
 						mt.utils.toast('success', "Lưu dữ liệu ảnh thành công.");
@@ -599,44 +604,56 @@
 						mt.utils.toast('error', ex.message);
 					}
 				},
-				async onDelete(data) {
-					try {
-
-						// Confirm Delete
-						let isConfirm = await mt.utils.confirmDanger('Xác nhận xóa sự kiện!', 'Xóa');
-						if (!isConfirm)
-							return;
-
-						let year = new Date(data.date).getFullYear();
-
-						// Cập nhật data RAM
-						let arrIndex = +data.id - 1;
-						delete data.id;
-
-						// Save to RAM
-						mt.mgr.d_event[year].splice(arrIndex, 1);
-
-						// Change Calendar
-						mt.calendar.removeEvent(arrIndex+1);
-
-						// Save data
-						await mt.mgr.saveToJson(year);
-
-						// Notify
-						mt.utils.toast('success', "Đã xóa sự kiện.");
-					}
-					catch (ex) {
-						console.error('[mt.form.onDelete] Exception', ex);
-						mt.utils.toast('error', ex.message);
-					}
-				},
 				async delete(music) {
 
 					// Confirm Popup
-					let isConfirm = await mt.utils.confirmDanger('Xác nhận xóa bài này?', 'Xóa');
-					if (isConfirm) {
-						// #TODO
-					}
+					let isConfirm = await mt.utils.confirmDanger(`Xác nhận xóa bài ${music.name}?`, 'Xóa');
+					if (!isConfirm)
+						return;
+
+					// Save to RAM
+					mt.mgr.d_musics.splice(music.id-1, 1);
+
+					// Build lại seed để auto play random ko lệch
+					mt.mgr.buildRandomSeed();
+
+					// Xóa khỏi tabulator
+					mt.list.p_table.deleteRow(music.id);
+
+					// Save data
+					await mt.mgr.saveToJson();
+
+					// Notify
+					mt.utils.toast('success', `Đã xóa dữ liệu bài ${music.name}`);
+
+					// Log
+					console.log('[mt.form.delete]', { music });
+				},
+				cv_inForm(data) {
+					return {
+						id: data?.id || 0,
+						name: data?.name || '',
+						rate: data?.rate || 3,
+						duration: data?.duration || 0,
+						tags: data?.tags || ['NEW'],
+						decibel: data?.decibel || 100,
+						trackbegin: data?.trackbegin || 0,
+						trackend: data?.trackend || 0,
+						miss: data?.miss || false,
+					};
+				},
+				cv_outForm(data) {
+					return {
+						id: Number.parseInt(data.id), // Convert Int
+						name: data.name,
+						rate: data.rate,
+						duration: data.duration == 0 ? null : data.duration, // Bằng 0 thì null
+						tags: data.tags,
+						decibel: data.decibel,
+						trackbegin: data.trackbegin == 0 ? null : data.trackbegin, // Bằng 0 thì null
+						trackend: data.trackend == 0 ? null : data.trackend, // Bằng 0 thì null
+						miss: data.miss == 'true', // Convert Boolean
+					};
 				},
 			},
 			player: {
@@ -697,7 +714,7 @@
 					mt.wave.staticUpdate(currentTime);
 
 					// CASE 1: Kiểm tra nếu như có track và đến thời điểm thì pause lại
-					if (this.m_track.id == this.m_currentMusic.id && currentTime > this.m_currentMusic.trackend) {
+					if (this.m_track.id == this.m_currentMusic.id && currentTime > this.m_track.end) {
 
 						// Ngừng phát
 						this.c_audio.pause();
@@ -795,12 +812,6 @@
 					}
 				},
 				seek(time) {
-
-					// nếu có track thì hủy track
-					if (this.m_track != null)
-						this.m_track = null;
-
-					// Seek
 					this.c_audio.currentTime = time;
 				},
 				async playNext() {
@@ -884,7 +895,11 @@
 					}
 
 					// Đặt track
-					this.m_track = music.id;
+					this.m_track = {
+						id: music.id,
+						begin: music.trackbegin,
+						end: music.trackend,
+					};
 
 					// CASE 1: Bài hiện tại là bài này
 					if (this.m_currentMusic != null && this.m_currentMusic.id == music.id) {
@@ -980,10 +995,10 @@
 							music.duration = this.c_audio.duration;
 
 						// Nếu đang có track thì đặt điểm khởi đầu
-						if (this.m_track == music.id)
-							this.c_audio.currentTime = music.trackbegin;
+						if (this.m_track.id == music.id)
+							this.c_audio.currentTime = this.m_track.begin;
 						else // Đã đổi bài, xóa track
-							this.m_track = null;
+							this.m_track.id = null;
 
 						// Change icon button Pause
 						this.setIconPause(true)
@@ -995,7 +1010,7 @@
 						this.c_audio.play();
 
 						// Extra - Tool Track - Nếu đang mở tool track thì điền begin và end vào input
-						if (mt.tools.m_open = 'track')
+						if (mt.tools.m_open == 'track')
 							mt.tools.track.setTime(music);
 					}
 					catch (ex) {
@@ -1318,6 +1333,9 @@
 						// Sắp xếp lại tabulator
 						mt.list.p_table.setSort('name', 'asc');
 
+						// Build lại seed để auto play random ko lệch
+						mt.mgr.buildRandomSeed();
+
 						// Clean list check
 						this.c_list.innerHTML = '';
 						this.d_listNew = [];
@@ -1335,13 +1353,6 @@
 						console.log('[mt.tools.check.addAll]', {  });
 					},
 				},
-				merge: {
-					c_content: null,
-
-					open() {
-
-					},
-				},
 				track: {
 					c_content: null,
 					c_begin: null,
@@ -1356,11 +1367,18 @@
 						if (mt.player.m_currentMusic == null)
 							return;
 
+						let music = mt.player.m_currentMusic;
+						if (music.trackbegin != null && music.trackbegin > 0)
+							this.c_begin.value = music.trackbegin;
+						if (music.trackend != null && music.trackend > 0)
+							this.c_end.value = music.trackend;
 					},
 					play() {
 						try {
 							if (mt.player.m_currentMusic == null)
 								return;
+
+							let music = mt.player.m_currentMusic;
 
 							// Kiểm tra
 							let timeBeginStr = this.c_begin.value;
@@ -1368,13 +1386,35 @@
 							if (timeBeginStr.length == 0 || timeEndStr.length == 0)
 								throw { error: true, msg: 'Chưa nhập timeBegin, timeEnd' };
 
+							// Chuyển format MM:ss thành second
+							if (timeBeginStr.indexOf(':') > -1) {
+								timeBeginStr = mt.utils.cv_reFormatTime(timeBeginStr);
+								this.c_begin.value = timeBeginStr;
+							}
+							if (timeEndStr.indexOf(':') > -1) {
+								timeEndStr = mt.utils.cv_reFormatTime(timeEndStr);
+								this.c_end.value = timeEndStr;
+							}
+
+							// Kiểm tra
 							let timeBegin = Number.parseFloat(timeBeginStr);
 							let timeEnd = Number.parseFloat(timeEndStr);
 							if (isNaN(timeBegin) || isNaN(timeEnd))
 								throw { error: true, msg: 'timeBegin, timeEnd không hợp lệ' };
 
+							// Set state
+							mt.player.m_track = {
+								id: music.id,
+								begin: timeBegin,
+								end: timeEnd,
+							};
+
+							// Seek
+							mt.player.seek(timeBegin);
+							mt.player.pause(false);
+
 							// Log
-							console.log('[mt.tools.track.play]', { timeBegin, timeEnd });
+							// console.log('[mt.tools.track.play]', { timeBegin, timeEnd });
 						}
 						catch (ex) {
 							mt.utils.toast('error', ex.message);
@@ -1429,7 +1469,6 @@
 					// Bind Component
 					this.check.c_content = document.getElementById('toolbox-check');
 					this.check.c_list = document.getElementById('toolbox-check-list');
-					this.merge.c_content = document.getElementById('toolbox-merge');
 					this.track.init();
 				},
 				async run(tool) {
@@ -1437,7 +1476,6 @@
 
 						// Hide all
 						this.check.c_content.style.display = 'none';
-						this.merge.c_content.style.display = 'none';
 						this.track.c_content.style.display = 'none';
 
 						// Run tool
@@ -1445,10 +1483,6 @@
 							case 'check':
 								this.check.c_content.style.display = 'block';
 								await this.check.open();
-								break;
-							case 'merge':
-								this.merge.c_content.style.display = 'block';
-								this.merge.open();
 								break;
 							case 'track':
 								this.track.c_content.style.display = 'block';
@@ -1497,6 +1531,10 @@
 						// Nếu chưa chọn bài thì bỏ qua
 						if (mt.player.m_currentMusic == null)
 							return;
+
+						// Hủy track nếu có
+						if (mt.player.m_track.id != null)
+							mt.player.m_track.id = null;
 
 						// Seek
 						let duration = mt.player.m_currentMusic.duration;
@@ -1795,6 +1833,12 @@
 					if (second < 10)
 						second = '0' + second;
 					return minute + ':' + second;
+				},
+				cv_reFormatTime(value) {
+					let pos = value.indexOf(':');
+					let minute = +value.substring(0, pos);
+					let second = +value.substring(pos+1);
+					return minute * 60  + second;
 				},
 			},
 
