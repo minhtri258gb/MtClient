@@ -396,8 +396,9 @@
 				buildRandomSeed() {
 					this.d_randSeed = [];
 					for (let i=0, sz=this.d_musics.length; i<sz; i++) {
+						let music = this.d_musics[i];
 						// Bỏ bài miss
-						if (this.d_musics[i].miss)
+						if (music.miss)
 							continue;
 						// Thêm seed bằng rate tương ứng
 						for (let j=0; j<music.rate; j++)
