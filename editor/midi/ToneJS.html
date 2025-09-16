@@ -31,8 +31,8 @@
 <body>
 
 	<!--
-		https://github.com/jagenjo/litegraph.js
-		https://tamats.com/projects/litegraph/editor/
+		https://tonejs.github.io
+		https://tonejs.github.io/docs/15.1.22
 	-->
 
 	<h1>Music Composer</h1>
@@ -48,6 +48,7 @@
 		var mt = {
 
 			tone: { // ToneJS
+				h_velocityFactor: 0.02,
 				m_synth: null,
 				p_BPM: 120,
 				p_volumn: -10,
@@ -101,7 +102,8 @@
 					// Tính thời gian và đặt các note vào lịch trình
 					Tone.Transport.cancel(0); // Reset lịch trình
 					const part = new Tone.Part((time, value) => {
-						this.m_synth.triggerAttackRelease(value.note, value.duration, time);
+						let velocity = this.calculateVelocity(value.note); // Chuẩn hóa âm lượng theo tần số
+						this.m_synth.triggerAttackRelease(value.note, value.duration, time, velocity);
 					}, noteEvents);
 					part.start(0);
 
@@ -112,6 +114,14 @@
 					await Tone.start();
 					Tone.Transport.stop();
 					Tone.Transport.start();
+				},
+				calculateVelocity(note, baseVelocity = 0.8) {
+					const noteNumber = Tone.Frequency(note).toMidi();
+					const middleC = 60; // C4 làm note chuẩn
+
+					// Công thức: note thấp → tăng velocity, note cao → giảm velocity
+					const adjustment = (middleC - noteNumber) * this.h_velocityFactor;
+					return Math.max(0.1, Math.min(1, baseVelocity + adjustment));
 				},
 			},
 			editor: { // CodeMirror

@@ -796,8 +796,8 @@ var mt = {
 			JZZ.synth.Tiny.register();
 
 			this.out = JZZ().openMidiOut().or(()=>{ alert('Cannot open MIDI port!'); });
-			
-			this.setVolume(0.4);
+
+			this.setVolume(0.6);
 		},
 		send: function(note, toggle) {
 			let offsetNote = mt.tool.offsetNote.get();
@@ -806,7 +806,9 @@ var mt = {
 			finalNote = Math.min(finalNote, 127);
 
 			if (toggle) {
-				this.out.send([0x90, finalNote, 0x7f]);
+				const velocity = this.calculateVelocity(finalNote); // Chuẩn hóa velocity
+				this.out.send([0x90, finalNote, velocity]);
+				// this.out.send([0x90, finalNote, 0x7f]); // Max velocity
 				mt.key._keyname.text("Key: " + finalNote + " - " + mt.jzz.num2name(finalNote)); // Show keyname
 			}
 			else
@@ -840,6 +842,11 @@ var mt = {
 			if (typeof num != 'number' || num < 21 || num > 108)
 				throw('[mt.jzz.num2name] input not number');
 			return this.h_cov[num % 12] + (Math.floor(num / 12) - 1);
+		},
+		calculateVelocity(note, baseVelocity = 80) {
+			const middleC = 60; // C4
+			const adjustment = (middleC - note);// * 1.5; // Factor 1.5
+			return Math.max(20, Math.min(127, baseVelocity + adjustment));
 		},
 	},
 	tone: {

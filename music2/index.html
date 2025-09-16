@@ -185,10 +185,10 @@
 					</div>
 
 					<!-- Loop -->
-					<div style="text-align:center;margin-top:12px;margin-right:88px;">
+					<div style="text-align:center;margin-top:12px;margin-right:60px;">
 						<label>Loop </label>
 						<input id="loop" type="number" min="0" max="99" value="0" style="width:32px;" />
-						<!-- <input id="loop" type="text" class="easyui-numberspinner" value="0" data-options="min:0,max:99,spinAlign:'horizontal'" style="width:83px;"> -->
+						<button class="iconButton" onclick="mt.event.btnLoopIncrease()" title="Tăng lặp lại"><i class="fa-solid fa-arrow-up"></i></button>
 					</div>
 
 					<!-- Filter -->
@@ -1331,7 +1331,8 @@
 							await mt.list.p_table.addRow(musicNew);
 						}
 
-						// Sắp xếp lại tabulator
+						// Sắp xếp lại danh sách và tabulator
+						mt.mgr.d_musics.sort((a, b) => a.name.localeCompare(b.name)); // .toLowerCase()
 						mt.list.p_table.setSort('name', 'asc');
 
 						// Build lại seed để auto play random ko lệch
@@ -1595,6 +1596,16 @@
 					catch (ex) {
 						mt.utils.toast('error', ex.message);
 						console.log('[mt.event.btnNext]', ex);
+					}
+				},
+				btnLoopIncrease() { // Tăng loop
+					try {
+						this.m_action = 'btnNext';
+						mt.player.c_loop.stepUp(1);
+					}
+					catch (ex) {
+						mt.utils.toast('error', ex.message);
+						console.log('[mt.event.btnLoopIncrease]', ex);
 					}
 				},
 				ckbWave() { // Đổi loại sóng âm nhạc
