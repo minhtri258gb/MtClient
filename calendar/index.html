@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-	<title>Full Calendar</title>
-
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Calendar</title>
 
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
 	<!-- <link href='/lib/bootstrap-5.3.3/bootstrap.min.css' rel='stylesheet'> -->
@@ -23,13 +21,14 @@
 	<style>
 		body {
 			margin: 0;
-			padding: 0;
+			padding: 16px;
 			height: 100vh;
+			box-sizing: border-box;
 		}
 
 		/* Calendar */
 		#calendar {
-			margin: 16px;
+			height: 100%;
 		}
 
 		/* Modal */
@@ -47,7 +46,7 @@
 		https://sweetalert2.github.io
 	-->
 
-	<div id='calendar'></div>
+	<div id="calendar"></div>
 
 	<script type="module">
 		import mtAuthen from '/common/authen.js';

@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-	<title>Convert</title>
-
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Convert</title>
 
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
 
@@ -20,7 +18,6 @@
 			font-family: MONOSPACE;
 		}
 	</style>
-
 </head>
 <body>
 
@@ -49,14 +46,25 @@
 		<span id="outputURL"></span>
 	</div>
 
+	<div id="hashString">
+		<h2 id="labelHashString">String -> MD5</h2>
+		<select id="typeHashString">
+			<option value="MD5">MD5</option>
+			<option value="SHA1">SHA1</option>
+		</select>
+		<input id="inputHashString" type="text" />
+		<button onclick="mt.convert('HashString')">Convert</button>
+		<span id="outputHashString"></span>
+	</div>
+
 	<script type="module">
+		import mtImport from '/common/import.js';
 		var mt = {
 
-			init() {
+			async init() {
 				window.mt = this; // Bind Global
-
 			},
-			convert(type) {
+			async convert(type) {
 				switch (type) {
 					case 'URL':
 						let directURL = $('#directURL').val() == '1';
@@ -87,6 +95,18 @@
 							resBase64 = atob(valueBase64);
 						$('#outputBase64').html(resBase64);
 						break;
+					case 'HashString':
+						let valueHashString = $('#inputHashString').val();
+						let typeHashString = $('#typeHashString').val();
+						if (typeHashString == 'MD5') {
+							let md5 = await mtImport.script('/lib/blueimp-md5/js/md5.min.js', 'md5');
+							let resHashString = md5(valueHashString);
+							$('#outputHashString').html(resHashString);
+						}
+						else if (typeHashString == 'SHA-1') {
+							// #TODO
+						}
+						break;
 					default:
 						console.error('type:', type);
 						alert('Lỗi convert! Ko có type tương ứng!');
@@ -115,7 +135,7 @@
 				// #TODO
 			},
 		};
-		mt.init();
+		document.addEventListener('DOMContentLoaded', () => mt.init());
 	</script>
 
 </body>
