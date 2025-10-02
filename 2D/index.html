@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>2D</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 20px;
+			font-family: Arial, sans-serif;
+			background-color: #f0f0f0;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			background: white;
+			border-radius: 10px;
+			box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+			overflow: hidden;
+		}
+
+		.header {
+			padding: 20px;
+			text-align: center;
+		}
+
+		.controls {
+			padding: 20px;
+			border-bottom: 1px solid #eee;
+		}
+
+		.control-group {
+			margin-bottom: 15px;
+		}
+
+		.control-group label {
+			display: block;
+			margin-bottom: 5px;
+			font-weight: bold;
+			color: #333;
+		}
+
+		.control-group input, .control-group select {
+			width: 100%;
+			padding: 8px;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			font-size: 14px;
+		}
+
+		.control-row {
+			display: flex;
+			gap: 15px;
+		}
+
+		.control-row .control-group {
+			flex: 1;
+		}
+
+		.btn {
+			background: #667eea;
+			color: white;
+			border: none;
+			padding: 10px 20px;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 14px;
+			transition: background 0.3s;
+		}
+
+		.btn:hover {
+			background: #5a6fd8;
+		}
+
+		.btn:disabled {
+			background: #ccc;
+			cursor: not-allowed;
+		}
+
+		.canvas-container {
+			padding: 20px;
+			text-align: center;
+			background: #f8f9fa;
+		}
+
+		#canvas {
+			border: 2px solid #ddd;
+			border-radius: 8px;
+			background: white;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+
+		.info {
+			margin-top: 15px;
+			padding: 10px;
+			background: #e3f2fd;
+			border-radius: 4px;
+			font-size: 14px;
+			color: #1976d2;
+		}
+
+		.error {
+			margin-top: 15px;
+			padding: 10px;
+			background: #ffebee;
+			border-radius: 4px;
+			font-size: 14px;
+			color: #d32f2f;
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="header">
+			<h1>🎬 Spritesheet Animation với Three.js</h1>
+			<p>Tải lên spritesheet và tạo animation 2D</p>
+		</div>
+
+		<div class="controls">
+			<div class="control-group">
+				<label for="imageInput">Chọn file spritesheet:</label>
+				<input type="file" id="imageInput" accept="image/*">
+			</div>
+
+			<div class="control-row">
+				<div class="control-group">
+					<label for="columns">Số cột:</label>
+					<input type="number" id="columns" value="4" min="1" max="20">
+				</div>
+				<div class="control-group">
+					<label for="rows">Số hàng:</label>
+					<input type="number" id="rows" value="4" min="1" max="20">
+				</div>
+				<div class="control-group">
+					<label for="frameRate">Tốc độ frame (fps):</label>
+					<input type="number" id="frameRate" value="10" min="1" max="60">
+				</div>
+			</div>
+
+			<div class="control-group">
+				<button id="loadBtn" class="btn" disabled>Tải Animation</button>
+				<button id="playBtn" class="btn" disabled>Phát</button>
+				<button id="pauseBtn" class="btn" disabled>Tạm dừng</button>
+				<button id="resetBtn" class="btn" disabled>Reset</button>
+			</div>
+
+			<div class="error" id="errorMsg"></div>
+		</div>
+
+		<div class="canvas-container">
+			<canvas id="canvas" width="400" height="300"></canvas>
+			<div class="info" id="info">
+				Vui lòng chọn file spritesheet để bắt đầu
+			</div>
+		</div>
+	</div>
+
+	<script type="module">
+		import mtImport from '/common/import.js';
+		class SpritesheetAnimation {
+			constructor() {
+				this.scene = null;
+				this.camera = null;
+				this.renderer = null;
+				this.sprite = null;
+				this.texture = null;
+				this.frameWidth = 0;
+				this.frameHeight = 0;
+				this.totalFrames = 0;
+				this.currentFrame = 0;
+				this.frameRate = 10;
+				this.lastTime = 0;
+				this.isPlaying = false;
+				this.animationId = null;
+
+				this.initThreeJS();
+				this.setupEventListeners();
+			}
+			initThreeJS() {
+				const canvas = document.getElementById('canvas');
+
+				// Tạo scene
+				this.scene = new THREE.Scene();
+				this.scene.background = new THREE.Color(0xf0f0f0);
+
+				// Tạo camera orthographic cho 2D
+				const aspect = canvas.width / canvas.height;
+				this.camera = new THREE.OrthographicCamera(
+					-aspect, aspect, 1, -1, 0.1, 1000
+				);
+				this.camera.position.z = 1;
+
+				// Tạo renderer
+				this.renderer = new THREE.WebGLRenderer({
+					canvas: canvas,
+					antialias: true
+				});
+				this.renderer.setSize(canvas.width, canvas.height);
+				this.renderer.setPixelRatio(window.devicePixelRatio);
+			}
+			setupEventListeners() {
+				const imageInput = document.getElementById('imageInput');
+				const loadBtn = document.getElementById('loadBtn');
+				const playBtn = document.getElementById('playBtn');
+				const pauseBtn = document.getElementById('pauseBtn');
+				const resetBtn = document.getElementById('resetBtn');
+
+				imageInput.addEventListener('change', (e) => {
+					if (e.target.files.length > 0) {
+						loadBtn.disabled = false;
+					}
+				});
+
+				loadBtn.addEventListener('click', () => this.loadSpritesheet());
+				playBtn.addEventListener('click', () => this.play());
+				pauseBtn.addEventListener('click', () => this.pause());
+				resetBtn.addEventListener('click', () => this.reset());
+			}
+			loadSpritesheet() {
+				const fileInput = document.getElementById('imageInput');
+				const columns = parseInt(document.getElementById('columns').value);
+				const rows = parseInt(document.getElementById('rows').value);
+				const frameRate = parseInt(document.getElementById('frameRate').value);
+
+				if (!fileInput.files[0]) {
+					this.showError('Vui lòng chọn file ảnh');
+					return;
+				}
+
+				const file = fileInput.files[0];
+				const reader = new FileReader();
+
+				reader.onload = (e) => {
+					const img = new Image();
+					img.onload = () => {
+						this.setupSpritesheet(img, columns, rows, frameRate);
+					};
+					img.src = e.target.result;
+				};
+
+				reader.readAsDataURL(file);
+			}
+			setupSpritesheet(img, columns, rows, frameRate) {
+				try {
+
+					// Xóa sprite cũ nếu có
+					if (this.sprite) {
+						this.scene.remove(this.sprite);
+						this.sprite.material.dispose();
+						this.texture.dispose();
+					}
+
+					// Tạo texture từ ảnh
+					this.texture = new THREE.Texture(img);
+					this.texture.needsUpdate = true;
+
+					// Tính toán kích thước frame
+					this.frameWidth = 1 / columns;
+					this.frameHeight = 1 / rows;
+					this.totalFrames = columns * rows;
+					this.frameRate = frameRate;
+					this.currentFrame = 0;
+
+					// Tạo material với texture
+					const material = new THREE.MeshBasicMaterial({
+						map: this.texture,
+						transparent: true,
+						alphaTest: 0.1
+					});
+
+					// Tạo geometry cho sprite
+					const geometry = new THREE.PlaneGeometry(1, 1);
+
+					// Tạo mesh
+					this.sprite = new THREE.Mesh(geometry, material);
+					this.scene.add(this.sprite);
+
+					// Tạo mesh 2
+					// const geometry1 = new THREE.PlaneGeometry(0.5, 0.5);
+					// const material1 = new THREE.MeshBasicMaterial({
+					// 	color: 0xff0000,
+					// 	side: THREE.DoubleSide
+					// });
+					// this.sprite2 = new THREE.Mesh(geometry1, material1);
+					// this.sprite2.position.set(0, 1, 0); // Vị trí bên trái
+					// this.scene.add(this.sprite2);
+
+					// Thiết lập UV mapping cho frame đầu tiên
+					this.updateFrame();
+
+					// Cập nhật UI
+					this.updateUI();
+					this.hideError();
+
+					// Render frame đầu tiên
+					this.render();
+				}
+				catch (error) {
+					this.showError('Lỗi khi tải spritesheet: ' + error.message);
+				}
+			}
+			updateFrame() {
+
+				if (!this.sprite)
+					return;
+
+				const columns = parseInt(document.getElementById('columns').value);
+				const frameX = this.currentFrame % columns;
+				const frameY = Math.floor(this.currentFrame / columns);
+
+				// Cập nhật UV coordinates
+				const geometry = this.sprite.geometry;
+				const uvAttribute = geometry.attributes.uv;
+
+				const u = frameX * this.frameWidth;
+				const v = 1 - (frameY + 1) * this.frameHeight;
+				// const v = frameY * this.frameHeight;
+
+				uvAttribute.array[0] = u; // left
+				uvAttribute.array[1] = v + this.frameHeight; // top
+				uvAttribute.array[2] = u + this.frameWidth; // right
+				uvAttribute.array[3] = v + this.frameHeight; // top
+				uvAttribute.array[4] = u; // left
+				uvAttribute.array[5] = v; // bottom
+				uvAttribute.array[6] = u + this.frameWidth; // right
+				uvAttribute.array[7] = v; // bottom
+
+				uvAttribute.needsUpdate = true;
+			}
+			animate(currentTime) {
+
+				if (!this.isPlaying || !this.sprite)
+					return;
+
+				const deltaTime = currentTime - this.lastTime;
+				const frameInterval = 1000 / this.frameRate;
+
+				if (deltaTime >= frameInterval) {
+					this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+					this.updateFrame();
+					this.render();
+					this.lastTime = currentTime;
+				}
+
+				this.animationId = requestAnimationFrame((time) => this.animate(time));
+			}
+			play() {
+
+				if (!this.sprite)
+					return;
+
+				this.isPlaying = true;
+				this.lastTime = performance.now();
+				this.animate(this.lastTime);
+
+				document.getElementById('playBtn').disabled = true;
+				document.getElementById('pauseBtn').disabled = false;
+			}
+			pause() {
+				this.isPlaying = false;
+				if (this.animationId) {
+					cancelAnimationFrame(this.animationId);
+					this.animationId = null;
+				}
+
+				document.getElementById('playBtn').disabled = false;
+				document.getElementById('pauseBtn').disabled = true;
+			}
+			reset() {
+				this.pause();
+				this.currentFrame = 0;
+				this.updateFrame();
+				this.render();
+
+				document.getElementById('playBtn').disabled = false;
+				document.getElementById('pauseBtn').disabled = true;
+			}
+			render() {
+				if (this.renderer && this.scene && this.camera) {
+					this.renderer.render(this.scene, this.camera);
+				}
+			}
+			updateUI() {
+				const info = document.getElementById('info');
+				const columns = parseInt(document.getElementById('columns').value);
+				const rows = parseInt(document.getElementById('rows').value);
+				const totalFrames = columns * rows;
+
+				info.innerHTML = `
+					<strong>Thông tin Animation:</strong><br>
+					Tổng số frame: ${totalFrames}<br>
+					Kích thước frame: ${Math.round(this.frameWidth * 100)}% x ${Math.round(this.frameHeight * 100)}%<br>
+					Tốc độ: ${this.frameRate} fps<br>
+					Frame hiện tại: ${this.currentFrame + 1}/${totalFrames}
+				`;
+
+				// Kích hoạt các nút điều khiển
+				document.getElementById('playBtn').disabled = false;
+				document.getElementById('pauseBtn').disabled = true;
+				document.getElementById('resetBtn').disabled = false;
+			}
+			showError(message) {
+				const errorDiv = document.getElementById('errorMsg');
+				errorDiv.textContent = message;
+				errorDiv.style.display = 'block';
+			}
+			hideError() {
+				const errorDiv = document.getElementById('errorMsg');
+				errorDiv.style.display = 'none';
+			}
+		}
+		var mt = {
+			mgr: {
+				load() {
+
+					// Load file
+				},
+			},
+			async init() {
+
+				// Load library
+				await mtImport.script('../lib/threejs/three.min.js', 'THREE');
+
+				// Bind Global
+				window.mt = mt;
+
+				// First Load
+				this.mgr.load();
+
+				// Init example
+				new SpritesheetAnimation();
+			},
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
+	</script>
+</body>
+</html>

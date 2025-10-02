@@ -5,3 +5,4 @@ node_modules
 /res/maps
 /res/assets
 /res/midi
+/.vscode/chrome-debug

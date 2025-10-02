@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WFC Ecosystem Transition</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 20px;
+			background: #1a1a2e;
+			color: white;
+		}
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+		.controls {
+			margin-bottom: 20px;
+			display: flex;
+			gap: 15px;
+			flex-wrap: wrap;
+			align-items: center;
+		}
+		button {
+			padding: 10px 20px;
+			background: #16213e;
+			color: white;
+			border: 1px solid #0f3460;
+			cursor: pointer;
+			border-radius: 5px;
+			transition: background 0.3s;
+		}
+		button:hover {
+			background: #0f3460;
+		}
+		.grid-container {
+			display: flex;
+			gap: 20px;
+			flex-wrap: wrap;
+		}
+		.grid {
+			border: 2px solid #333;
+			background: #0f0f23;
+			padding: 10px;
+			border-radius: 8px;
+		}
+		.cell {
+			width: 12px;
+			height: 12px;
+			display: inline-block;
+			margin: 1px;
+		}
+		.legend {
+			display: flex;
+			gap: 15px;
+			flex-wrap: wrap;
+			margin-top: 15px;
+		}
+		.legend-item {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+		.legend-color {
+			width: 20px;
+			height: 20px;
+			border: 1px solid #666;
+		}
+		.info {
+			margin-top: 20px;
+			padding: 15px;
+			background: #16213e;
+			border-radius: 8px;
+			line-height: 1.6;
+		}
+		h1 {
+			color: #4fc3f7;
+			text-align: center;
+			margin-bottom: 30px;
+		}
+		h3 {
+			color: #81c784;
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>🌊 Wave Function Collapse - Chuyển giao Hệ sinh thái 🏔️</h1>
+		
+		<div class="controls">
+			<button onclick="generateMap()">Tạo Map Mới</button>
+			<button onclick="toggleBiomes()">Đổi Hướng Chuyển giao</button>
+			<label>Kích thước: <select id="sizeSelect" onchange="updateSize()">
+				<option value="40">40x30</option>
+				<option value="50" selected>50x35</option>
+				<option value="60">60x40</option>
+			</select></label>
+		</div>
+
+		<div class="grid-container">
+			<div>
+				<h3>🗺️ Bản đồ được tạo</h3>
+				<div id="grid" class="grid"></div>
+			</div>
+		</div>
+
+		<div class="legend">
+			<div class="legend-item">
+				<div class="legend-color" style="background: #1565c0;"></div>
+				<span>Nước sâu</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #42a5f5;"></div>
+				<span>Nước nông</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #ffcc02;"></div>
+				<span>Cát bãi biển</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #66bb6a;"></div>
+				<span>Cỏ đồng bằng</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #2e7d32;"></div>
+				<span>Rừng thấp</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #1b5e20;"></div>
+				<span>Rừng rậm</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #8d6e63;"></div>
+				<span>Đá núi</span>
+			</div>
+			<div class="legend-item">
+				<div class="legend-color" style="background: #ffffff;"></div>
+				<span>Tuyết</span>
+			</div>
+		</div>
+
+		<div class="info">
+			<h3>📋 Cách thức hoạt động:</h3>
+			<p><strong>1. Định nghĩa Hệ sinh thái:</strong></p>
+			<ul>
+				<li><strong>Hệ sinh thái Biển:</strong> Nước sâu → Nước nông → Cát bãi biển → Cỏ đồng bằng</li>
+				<li><strong>Hệ sinh thái Núi:</strong> Cỏ đồng bằng → Rừng thấp → Rừng rậm → Đá núi → Tuyết</li>
+			</ul>
+			
+			<p><strong>2. Tạo Vùng Chuyển giao:</strong></p>
+			<ul>
+				<li>Sử dụng <strong>gradient zones</strong> để xác định vị trí chuyển giao</li>
+				<li>Tiles gần biên được <strong>bias theo hệ sinh thái tương ứng</strong></li>
+				<li>Vùng giữa có <strong>trọng số kết hợp</strong> từ cả 2 hệ sinh thái</li>
+			</ul>
+
+			<p><strong>3. Wave Function Collapse:</strong></p>
+			<ul>
+				<li>Mỗi ô có <strong>xác suất</strong> chứa từng loại tile</li>
+				<li>Thuật toán <strong>collapse</strong> từng ô theo ràng buộc adjacency</li>
+				<li>Tạo ra chuyển giao <strong>tự nhiên và hợp lý</strong></li>
+			</ul>
+		</div>
+	</div>
+
+	<script>
+		// Định nghĩa các loại tile
+		const TILES = {
+			DEEP_WATER: { id: 0, color: '#1565c0', name: 'Nước sâu' },
+			SHALLOW_WATER: { id: 1, color: '#42a5f5', name: 'Nước nông' },
+			SAND: { id: 2, color: '#ffcc02', name: 'Cát bãi biển' },
+			GRASS: { id: 3, color: '#66bb6a', name: 'Cỏ đồng bằng' },
+			LIGHT_FOREST: { id: 4, color: '#2e7d32', name: 'Rừng thấp' },
+			DENSE_FOREST: { id: 5, color: '#1b5e20', name: 'Rừng rậm' },
+			ROCK: { id: 6, color: '#8d6e63', name: 'Đá núi' },
+			SNOW: { id: 7, color: '#ffffff', name: 'Tuyết' }
+		};
+
+		// Quy tắc adjacency - tile nào có thể nằm cạnh tile nào
+		const ADJACENCY_RULES = {
+			[TILES.DEEP_WATER.id]: [TILES.DEEP_WATER.id, TILES.SHALLOW_WATER.id],
+			[TILES.SHALLOW_WATER.id]: [TILES.DEEP_WATER.id, TILES.SHALLOW_WATER.id, TILES.SAND.id],
+			[TILES.SAND.id]: [TILES.SHALLOW_WATER.id, TILES.SAND.id, TILES.GRASS.id],
+			[TILES.GRASS.id]: [TILES.SAND.id, TILES.GRASS.id, TILES.LIGHT_FOREST.id],
+			[TILES.LIGHT_FOREST.id]: [TILES.GRASS.id, TILES.LIGHT_FOREST.id, TILES.DENSE_FOREST.id],
+			[TILES.DENSE_FOREST.id]: [TILES.LIGHT_FOREST.id, TILES.DENSE_FOREST.id, TILES.ROCK.id],
+			[TILES.ROCK.id]: [TILES.DENSE_FOREST.id, TILES.ROCK.id, TILES.SNOW.id],
+			[TILES.SNOW.id]: [TILES.ROCK.id, TILES.SNOW.id]
+		};
+
+		// Hệ sinh thái và trọng số
+		const ECOSYSTEMS = {
+			OCEAN: {
+				weights: {
+					[TILES.DEEP_WATER.id]: 0.4,
+					[TILES.SHALLOW_WATER.id]: 0.3,
+					[TILES.SAND.id]: 0.2,
+					[TILES.GRASS.id]: 0.1,
+					[TILES.LIGHT_FOREST.id]: 0.0,
+					[TILES.DENSE_FOREST.id]: 0.0,
+					[TILES.ROCK.id]: 0.0,
+					[TILES.SNOW.id]: 0.0
+				}
+			},
+			MOUNTAIN: {
+				weights: {
+					[TILES.DEEP_WATER.id]: 0.0,
+					[TILES.SHALLOW_WATER.id]: 0.0,
+					[TILES.SAND.id]: 0.0,
+					[TILES.GRASS.id]: 0.1,
+					[TILES.LIGHT_FOREST.id]: 0.2,
+					[TILES.DENSE_FOREST.id]: 0.3,
+					[TILES.ROCK.id]: 0.3,
+					[TILES.SNOW.id]: 0.1
+				}
+			}
+		};
+
+		let width = 50;
+		let height = 35;
+		let isVerticalTransition = true;
+
+		class WFCGenerator {
+			constructor(width, height) {
+				this.width = width;
+				this.height = height;
+				this.grid = [];
+				this.initializeGrid();
+			}
+
+			initializeGrid() {
+				this.grid = [];
+				for (let y = 0; y < this.height; y++) {
+					this.grid[y] = [];
+					for (let x = 0; x < this.width; x++) {
+						this.grid[y][x] = {
+							collapsed: false,
+							possibilities: Object.values(TILES).map(t => t.id),
+							weights: this.calculateBiasWeights(x, y)
+						};
+					}
+				}
+			}
+
+			calculateBiasWeights(x, y) {
+				let biasWeights = {};
+				
+				if (isVerticalTransition) {
+					// Chuyển giao từ trái (Ocean) sang phải (Mountain)
+					const oceanInfluence = 1 - (x / this.width);
+					const mountainInfluence = x / this.width;
+					
+					for (let tileId of Object.values(TILES).map(t => t.id)) {
+						const oceanWeight = ECOSYSTEMS.OCEAN.weights[tileId] || 0;
+						const mountainWeight = ECOSYSTEMS.MOUNTAIN.weights[tileId] || 0;
+						biasWeights[tileId] = (oceanWeight * oceanInfluence + mountainWeight * mountainInfluence);
+					}
+				} else {
+					// Chuyển giao từ trên (Ocean) xuống dưới (Mountain)
+					const oceanInfluence = 1 - (y / this.height);
+					const mountainInfluence = y / this.height;
+					
+					for (let tileId of Object.values(TILES).map(t => t.id)) {
+						const oceanWeight = ECOSYSTEMS.OCEAN.weights[tileId] || 0;
+						const mountainWeight = ECOSYSTEMS.MOUNTAIN.weights[tileId] || 0;
+						biasWeights[tileId] = (oceanWeight * oceanInfluence + mountainWeight * mountainInfluence);
+					}
+				}
+				
+				// Đảm bảo tổng trọng số = 1
+				const total = Object.values(biasWeights).reduce((sum, w) => sum + w, 0);
+				if (total > 0) {
+					for (let tileId in biasWeights) {
+						biasWeights[tileId] /= total;
+					}
+				}
+				
+				return biasWeights;
+			}
+
+			getLowestEntropyCell() {
+				let minEntropy = Infinity;
+				let candidates = [];
+				
+				for (let y = 0; y < this.height; y++) {
+					for (let x = 0; x < this.width; x++) {
+						const cell = this.grid[y][x];
+						if (!cell.collapsed && cell.possibilities.length > 0) {
+							if (cell.possibilities.length < minEntropy) {
+								minEntropy = cell.possibilities.length;
+								candidates = [{x, y}];
+							} else if (cell.possibilities.length === minEntropy) {
+								candidates.push({x, y});
+							}
+						}
+					}
+				}
+				
+				return candidates.length > 0 ? 
+					candidates[Math.floor(Math.random() * candidates.length)] : null;
+			}
+
+			collapseCell(x, y) {
+				const cell = this.grid[y][x];
+				if (cell.collapsed || cell.possibilities.length === 0) return false;
+
+				// Chọn tile dựa trên trọng số bias
+				const weightedPossibilities = [];
+				for (let tileId of cell.possibilities) {
+					const weight = cell.weights[tileId] || 0.001;
+					for (let i = 0; i < Math.max(1, Math.floor(weight * 1000)); i++) {
+						weightedPossibilities.push(tileId);
+					}
+				}
+				
+				const chosenTile = weightedPossibilities.length > 0 ?
+					weightedPossibilities[Math.floor(Math.random() * weightedPossibilities.length)] :
+					cell.possibilities[Math.floor(Math.random() * cell.possibilities.length)];
+				
+				cell.collapsed = true;
+				cell.tileId = chosenTile;
+				cell.possibilities = [chosenTile];
+				
+				return true;
+			}
+
+			propagateConstraints(startX, startY) {
+				const queue = [{x: startX, y: startY}];
+				const visited = new Set();
+				
+				while (queue.length > 0) {
+					const {x, y} = queue.shift();
+					const key = `${x},${y}`;
+					
+					if (visited.has(key)) continue;
+					visited.add(key);
+					
+					const neighbors = [
+						{x: x-1, y}, {x: x+1, y},
+						{x, y: y-1}, {x, y: y+1}
+					];
+					
+					for (let neighbor of neighbors) {
+						if (neighbor.x >= 0 && neighbor.x < this.width && 
+							neighbor.y >= 0 && neighbor.y < this.height) {
+							
+							if (this.updateNeighborPossibilities(neighbor.x, neighbor.y)) {
+								queue.push(neighbor);
+							}
+						}
+					}
+				}
+			}
+
+			updateNeighborPossibilities(x, y) {
+				const cell = this.grid[y][x];
+				if (cell.collapsed) return false;
+				
+				const neighbors = [
+					{x: x-1, y}, {x: x+1, y},
+					{x, y: y-1}, {x, y: y+1}
+				];
+				
+				const allowedTiles = new Set();
+				
+				for (let tileId of cell.possibilities) {
+					let isValid = true;
+					
+					for (let neighbor of neighbors) {
+						if (neighbor.x >= 0 && neighbor.x < this.width && 
+							neighbor.y >= 0 && neighbor.y < this.height) {
+							
+							const neighborCell = this.grid[neighbor.y][neighbor.x];
+							if (neighborCell.collapsed) {
+								if (!ADJACENCY_RULES[tileId].includes(neighborCell.tileId)) {
+									isValid = false;
+									break;
+								}
+							}
+						}
+					}
+					
+					if (isValid) {
+						allowedTiles.add(tileId);
+					}
+				}
+				
+				const newPossibilities = Array.from(allowedTiles);
+				const changed = newPossibilities.length !== cell.possibilities.length ||
+					!newPossibilities.every(t => cell.possibilities.includes(t));
+				
+				cell.possibilities = newPossibilities;
+				return changed;
+			}
+
+			generate() {
+				let iterations = 0;
+				const maxIterations = this.width * this.height * 2;
+				
+				while (iterations < maxIterations) {
+					const cell = this.getLowestEntropyCell();
+					if (!cell) break;
+					
+					if (this.collapseCell(cell.x, cell.y)) {
+						this.propagateConstraints(cell.x, cell.y);
+					}
+					
+					iterations++;
+				}
+				
+				// Fill any remaining uncollapsed cells
+				for (let y = 0; y < this.height; y++) {
+					for (let x = 0; x < this.width; x++) {
+						if (!this.grid[y][x].collapsed) {
+							this.grid[y][x].collapsed = true;
+							this.grid[y][x].tileId = TILES.GRASS.id;
+						}
+					}
+				}
+			}
+
+			renderToGrid(gridElement) {
+				gridElement.innerHTML = '';
+				
+				for (let y = 0; y < this.height; y++) {
+					for (let x = 0; x < this.width; x++) {
+						const cell = document.createElement('div');
+						cell.className = 'cell';
+						
+						const tileId = this.grid[y][x].tileId;
+						const tile = Object.values(TILES).find(t => t.id === tileId);
+						cell.style.backgroundColor = tile ? tile.color : '#333';
+						cell.title = `${x},${y}: ${tile ? tile.name : 'Unknown'}`;
+						
+						gridElement.appendChild(cell);
+					}
+					gridElement.appendChild(document.createElement('br'));
+				}
+			}
+		}
+
+		function generateMap() {
+			const gridElement = document.getElementById('grid');
+			const generator = new WFCGenerator(width, height);
+			generator.generate();
+			generator.renderToGrid(gridElement);
+		}
+
+		function toggleBiomes() {
+			isVerticalTransition = !isVerticalTransition;
+			generateMap();
+		}
+
+		function updateSize() {
+			const select = document.getElementById('sizeSelect');
+			const size = parseInt(select.value);
+			width = size;
+			height = Math.floor(size * 0.7);
+			generateMap();
+		}
+
+		// Tạo map ban đầu
+		generateMap();
+	</script>
+</body>
+</html>

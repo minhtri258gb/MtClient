@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-	<title>Sprite Editor</title>
-
 	<meta charset="UTF-8" />
+	<title>Sprite Editor</title>
 
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
 	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet" />
@@ -50,12 +48,22 @@
 		<!-- Main Content -->
 		<div style="flex:1;background-color:#ebfcf6;">
 
-			<canvas id="render" style="width:100px;height:100px"></canvas>
+			<div>
+				Assets
+			</div>
+
+			<div>
+				<canvas id="render" style="width:100px;height:100px"></canvas>
+			</div>
 
 		</div>
 
 		<!-- Assets Content -->
 		<div style="width:400px;background-color:azure;">
+			<div>
+				<span><h2>Assets</h2></span>
+				<button onclick="mt.assets.add()"><i class="fa-solid fa-plus"></i></button>
+			</div>
 			<div class="grid-stack"></div>
 		</div>
 	</div>
@@ -152,7 +160,30 @@
 					console.log('[mt.assets.load]', { listAsset });
 
 					this.p_grid.load(listAsset);
-				}
+				},
+				add() {
+
+					// Tạo input file ẩn
+					const input = document.createElement('input');
+					input.type = 'file';
+
+					// Lắng nghe sự kiện chọn file
+					input.onchange = e => {
+						const file = e.target.files[0];
+						console.log({ file });
+						// console.log('File đã chọn:', file.name);
+
+						// Đọc file nếu cần
+						// const reader = new FileReader();
+						// reader.onload = function(event) {
+						// 	// console.log('Nội dung file:', event.target.result);
+						// };
+						// reader.readAsText(file); // hoặc readAsDataURL, readAsArrayBuffer
+					};
+
+					// Mở hộp thoại chọn file
+					input.click();
+				},
 			},
 			render: {
 				c_render: null,

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>SpriteSheet → JSON Edge Mapper</title>
+
+	<style>
+		body { font-family: sans-serif; }
+		#tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+		.tile { border: 2px solid #ccc; position: relative; cursor: pointer; }
+		.tile.selected { border-color: #007bff; }
+		.edges { display:flex; justify-content:space-around; margin-top:4px; }
+		.edge-btn { padding:2px 6px; cursor:pointer; font-size:12px; }
+	</style>
+</head>
+<body>
+
+	<h2>Sprite Sheet Edge Mapper</h2>
+	<input type="file" id="imgInput" accept="image/*"><br>
+	<label>Cols: <input type="number" id="cols" value="4"></label>
+	<label>Rows: <input type="number" id="rows" value="4"></label>
+	<label>Gap: <input type="number" id="gap" value="0"></label>
+	<button id="sliceBtn">Slice</button>
+	<button id="exportBtn">Export JSON</button>
+
+	<div id="tiles"></div>
+
+	<script>
+		let tilesData = [];
+		let selectedTile = null;
+		let sheetImg = null;
+
+		document.getElementById('imgInput').onchange = e=>{
+			const file = e.target.files[0];
+			const img = new Image();
+			img.onload = ()=> sheetImg = img;
+			img.src = URL.createObjectURL(file);
+		};
+
+		document.getElementById('sliceBtn').onclick = () => {
+			if (!sheetImg)
+				return alert("Chưa chọn ảnh");
+
+			const cols = +document.getElementById('cols').value;
+			const rows = +document.getElementById('rows').value;
+			const gap  = +document.getElementById('gap').value;
+
+			const tileW = Math.floor((sheetImg.width - (cols-1)*gap)/cols);
+			const tileH = Math.floor((sheetImg.height - (rows-1)*gap)/rows);
+
+			tilesData = [];
+			const tilesDiv = document.getElementById('tiles');
+			tilesDiv.innerHTML = "";
+
+			for(let r=0;r<rows;r++){
+				for(let c=0;c<cols;c++){
+					const sx = c*(tileW+gap);
+					const sy = r*(tileH+gap);
+
+					const canvas = document.createElement('canvas');
+					canvas.width = tileW; canvas.height = tileH;
+					const ctx = canvas.getContext('2d');
+					ctx.drawImage(sheetImg, sx, sy, tileW, tileH, 0, 0, tileW, tileH);
+
+					const div = document.createElement('div');
+					div.className = "tile";
+					div.appendChild(canvas);
+
+					const edges = document.createElement('div');
+					edges.className="edges";
+					['N','E','S','W'].forEach(dir=>{
+						const btn = document.createElement('button');
+						btn.textContent = dir;
+						btn.className="edge-btn";
+						btn.onclick = ()=>{
+							const label = prompt(`Edge label for ${dir}:`, tilesData[idx].edges[dir] || "");
+							if(label!==null) {
+								tilesData[idx].edges[dir] = label;
+							}
+						};
+						edges.appendChild(btn);
+					});
+					div.appendChild(edges);
+
+					const idx = tilesData.length;
+					div.onclick = ()=> {
+						if(selectedTile) selectedTile.classList.remove("selected");
+						selectedTile = div;
+						div.classList.add("selected");
+					};
+
+					tilesDiv.appendChild(div);
+
+					tilesData.push({
+						id:`tile_${r}_${c}`,
+						sx, sy, sw:tileW, sh:tileH,
+						weight:1,
+						symmetry:"X",
+						edges:{N:"",E:"",S:"",W:""}
+					});
+				}
+			}
+		};
+
+		document.getElementById('exportBtn').onclick = ()=>{
+			const json = {
+				meta:{sheet:"your_spritesheet.png", tileSize: tilesData[0]?.sw || 0},
+				tiles: tilesData
+			};
+			const blob = new Blob([JSON.stringify(json,null,2)], {type:"application/json"});
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url; a.download="tiles.json"; a.click();
+		};
+	</script>
+</body>
+</html>

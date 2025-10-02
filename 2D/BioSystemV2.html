@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Ecosystem WFC with Sprite Sheets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            background: #16213e;
+            color: white;
+            border: 1px solid #0f3460;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0f3460;
+        }
+        .sprite-sheets {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .sprite-sheet {
+            border: 2px solid #333;
+            background: #0f0f23;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .sprite-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 32px);
+            grid-template-rows: repeat(3, 32px);
+            gap: 2px;
+            margin: 10px 0;
+        }
+        .sprite-tile {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .output-section {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .output-grid {
+            border: 2px solid #333;
+            background: #0f0f23;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .map-canvas {
+            border: 1px solid #666;
+            background: #000;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4fc3f7;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h3 {
+            color: #81c784;
+            margin-bottom: 10px;
+        }
+        .seed-display {
+            background: #16213e;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .loading {
+            color: #ffcc02;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Multi-Ecosystem WFC với Sprite Sheets</h1>
+        
+        <div class="controls">
+            <button onclick="generateMap()">🎲 Sinh Map</button>
+            <button onclick="regenerateSeeds()">🔄 Đổi Seeds</button>
+            <button onclick="showEcosystemZones()">🗺️ Xem Vùng Ảnh Hưởng</button>
+            <label>Kích thước: <select id="sizeSelect">
+                <option value="60">60x45</option>
+                <option value="80" selected>80x60</option>
+                <option value="100">100x75</option>
+            </select></label>
+        </div>
+
+        <div class="seed-display">
+            <strong>🌱 Ecosystem Seeds:</strong> <span id="seedInfo"></span>
+        </div>
+
+        <div class="sprite-sheets">
+            <div class="sprite-sheet">
+                <h3>🌊 Ocean Tileset</h3>
+                <div class="sprite-grid" id="ocean-tiles"></div>
+            </div>
+            <div class="sprite-sheet">
+                <h3>🏔️ Mountain Tileset</h3>
+                <div class="sprite-grid" id="mountain-tiles"></div>
+            </div>
+            <div class="sprite-sheet">
+                <h3>🏜️ Desert Tileset</h3>
+                <div class="sprite-grid" id="desert-tiles"></div>
+            </div>
+            <div class="sprite-sheet">
+                <h3>🧊 Arctic Tileset</h3>
+                <div class="sprite-grid" id="arctic-tiles"></div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-grid">
+                <h3 id="mapTitle">🗺️ Generated Map</h3>
+                <canvas id="mapCanvas" class="map-canvas" width="800" height="600"></canvas>
+                <div id="generationStatus"></div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>🔧 Cách thức hoạt động với kchapelier/wavefunctioncollapse:</h3>
+            
+            <p><strong>1. Multi-Tileset Management:</strong></p>
+            <ul>
+                <li>Mỗi hệ sinh thái có <strong>3x3 tileset riêng</strong> với adjacency rules</li>
+                <li>Tạo <strong>combined tileset</strong> từ tất cả ecosystems</li>
+                <li>Map tile IDs để tránh <strong>conflicts giữa tilesets</strong></li>
+            </ul>
+            
+            <p><strong>2. Ecosystem Influence System:</strong></p>
+            <ul>
+                <li>Sử dụng <strong>Voronoi seeds</strong> để định vùng ảnh hưởng</li>
+                <li>Tính <strong>distance-based weights</strong> cho mỗi vị trí</li>
+                <li>Tạo <strong>constraint masks</strong> để giới hạn tiles theo ecosystem</li>
+            </ul>
+            
+            <p><strong>3. WFC Integration:</strong></p>
+            <ul>
+                <li>Modify <strong>constraint propagation</strong> với ecosystem weights</li>
+                <li>Override <strong>tile selection</strong> dựa trên influence map</li>
+                <li>Implement <strong>transition rules</strong> giữa các ecosystems</li>
+            </ul>
+            
+            <p><strong>4. Transition Tiles:</strong></p>
+            <ul>
+                <li>Tạo <strong>bridge tiles</strong> kết nối các ecosystems</li>
+                <li>Define <strong>cross-ecosystem adjacency</strong> rules</li>
+                <li>Smooth blending với <strong>gradient zones</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+    <script>
+        // Simulated WFC library functionality (thay thế cho kchapelier/wavefunctioncollapse)
+        class SimplifiedWFC {
+            constructor(width, height, tileset, adjacencyRules) {
+                this.width = width;
+                this.height = height;
+                this.tileset = tileset;
+                this.adjacencyRules = adjacencyRules;
+                this.grid = [];
+                this.influenceMap = null;
+                this.initGrid();
+            }
+
+            setInfluenceMap(influenceMap) {
+                this.influenceMap = influenceMap;
+            }
+
+            initGrid() {
+                for (let y = 0; y < this.height; y++) {
+                    this.grid[y] = [];
+                    for (let x = 0; x < this.width; x++) {
+                        this.grid[y][x] = {
+                            collapsed: false,
+                            possibilities: [...this.tileset.map(t => t.id)],
+                            tileId: null
+                        };
+                    }
+                }
+            }
+
+            getValidTiles(x, y) {
+                if (!this.influenceMap) return this.tileset;
+                
+                const influence = this.influenceMap[y][x];
+                const validTiles = [];
+                
+                for (let tile of this.tileset) {
+                    const ecosystemWeight = influence[tile.ecosystem] || 0;
+                    if (ecosystemWeight > 0.1) { // threshold
+                        validTiles.push(tile);
+                    }
+                }
+                
+                return validTiles.length > 0 ? validTiles : this.tileset;
+            }
+
+            collapse(x, y) {
+                const cell = this.grid[y][x];
+                if (cell.collapsed) return false;
+
+                const validTiles = this.getValidTiles(x, y);
+                const validPossibilities = cell.possibilities.filter(id => 
+                    validTiles.some(t => t.id === id)
+                );
+
+                if (validPossibilities.length === 0) return false;
+
+                // Weight-based selection with ecosystem influence
+                let weights = [];
+                if (this.influenceMap) {
+                    const influence = this.influenceMap[y][x];
+                    weights = validPossibilities.map(id => {
+                        const tile = this.tileset.find(t => t.id === id);
+                        return influence[tile.ecosystem] || 0.01;
+                    });
+                } else {
+                    weights = validPossibilities.map(() => 1);
+                }
+
+                const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+                let random = Math.random() * totalWeight;
+                
+                let chosenTile = validPossibilities[0];
+                for (let i = 0; i < validPossibilities.length; i++) {
+                    random -= weights[i];
+                    if (random <= 0) {
+                        chosenTile = validPossibilities[i];
+                        break;
+                    }
+                }
+
+                cell.collapsed = true;
+                cell.tileId = chosenTile;
+                cell.possibilities = [chosenTile];
+                
+                return true;
+            }
+
+            propagate(startX, startY) {
+                const stack = [{x: startX, y: startY}];
+                const visited = new Set();
+
+                while (stack.length > 0) {
+                    const {x, y} = stack.pop();
+                    const key = `${x},${y}`;
+                    if (visited.has(key)) continue;
+                    visited.add(key);
+
+                    const neighbors = [
+                        {x: x-1, y, dir: 'left'},
+                        {x: x+1, y, dir: 'right'},
+                        {x, y: y-1, dir: 'top'},
+                        {x, y: y+1, dir: 'bottom'}
+                    ];
+
+                    for (let neighbor of neighbors) {
+                        if (neighbor.x >= 0 && neighbor.x < this.width && 
+                            neighbor.y >= 0 && neighbor.y < this.height) {
+                            
+                            if (this.updateConstraints(neighbor.x, neighbor.y)) {
+                                stack.push({x: neighbor.x, y: neighbor.y});
+                            }
+                        }
+                    }
+                }
+            }
+
+            updateConstraints(x, y) {
+                const cell = this.grid[y][x];
+                if (cell.collapsed) return false;
+
+                const neighbors = [
+                    {x: x-1, y, dir: 'left'},
+                    {x: x+1, y, dir: 'right'},
+                    {x, y: y-1, dir: 'top'},
+                    {x, y: y+1, dir: 'bottom'}
+                ];
+
+                const newPossibilities = [];
+                
+                for (let tileId of cell.possibilities) {
+                    let isValid = true;
+                    
+                    for (let neighbor of neighbors) {
+                        if (neighbor.x >= 0 && neighbor.x < this.width && 
+                            neighbor.y >= 0 && neighbor.y < this.height) {
+                            
+                            const neighborCell = this.grid[neighbor.y][neighbor.x];
+                            if (neighborCell.collapsed) {
+                                const rules = this.adjacencyRules[tileId];
+                                if (!rules || !rules.includes(neighborCell.tileId)) {
+                                    isValid = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (isValid) {
+                        newPossibilities.push(tileId);
+                    }
+                }
+
+                const changed = newPossibilities.length !== cell.possibilities.length;
+                cell.possibilities = newPossibilities;
+                
+                return changed;
+            }
+
+            getLowestEntropy() {
+                let minEntropy = Infinity;
+                let candidates = [];
+
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const cell = this.grid[y][x];
+                        if (!cell.collapsed && cell.possibilities.length > 0) {
+                            if (cell.possibilities.length < minEntropy) {
+                                minEntropy = cell.possibilities.length;
+                                candidates = [{x, y}];
+                            } else if (cell.possibilities.length === minEntropy) {
+                                candidates.push({x, y});
+                            }
+                        }
+                    }
+                }
+
+                return candidates.length > 0 ? 
+                    candidates[Math.floor(Math.random() * candidates.length)] : null;
+            }
+
+            generate() {
+                let iterations = 0;
+                const maxIterations = this.width * this.height * 2;
+
+                while (iterations < maxIterations) {
+                    const cell = this.getLowestEntropy();
+                    if (!cell) break;
+
+                    if (this.collapse(cell.x, cell.y)) {
+                        this.propagate(cell.x, cell.y);
+                    }
+
+                    iterations++;
+                    
+                    // Progress callback
+                    if (iterations % 100 === 0) {
+                        updateProgress(iterations, maxIterations);
+                    }
+                }
+
+                // Fill remaining cells
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (!this.grid[y][x].collapsed) {
+                            this.grid[y][x].collapsed = true;
+                            this.grid[y][x].tileId = this.tileset[0].id;
+                        }
+                    }
+                }
+
+                return this.grid;
+            }
+        }
+
+        // Định nghĩa tilesets cho mỗi ecosystem (3x3 mỗi cái)
+        const ECOSYSTEMS = {
+            OCEAN: {
+                name: '🌊 Ocean',
+                color: '#1e88e5',
+                tiles: [
+                    {id: 'ocean_0', name: 'Deep Water', color: '#0d47a1', ecosystem: 'OCEAN'},
+                    {id: 'ocean_1', name: 'Water', color: '#1565c0', ecosystem: 'OCEAN'},
+                    {id: 'ocean_2', name: 'Shallow', color: '#1976d2', ecosystem: 'OCEAN'},
+                    {id: 'ocean_3', name: 'Wave L', color: '#1e88e5', ecosystem: 'OCEAN'},
+                    {id: 'ocean_4', name: 'Wave C', color: '#2196f3', ecosystem: 'OCEAN'},
+                    {id: 'ocean_5', name: 'Wave R', color: '#42a5f5', ecosystem: 'OCEAN'},
+                    {id: 'ocean_6', name: 'Shore L', color: '#64b5f6', ecosystem: 'OCEAN'},
+                    {id: 'ocean_7', name: 'Beach', color: '#ffcc02', ecosystem: 'OCEAN'},
+                    {id: 'ocean_8', name: 'Shore R', color: '#90caf9', ecosystem: 'OCEAN'}
+                ]
+            },
+            MOUNTAIN: {
+                name: '🏔️ Mountain',
+                color: '#8d6e63',
+                tiles: [
+                    {id: 'mount_0', name: 'Snow Peak', color: '#ffffff', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_1', name: 'Snow', color: '#f5f5f5', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_2', name: 'Ice', color: '#e0e0e0', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_3', name: 'Rock H', color: '#8d6e63', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_4', name: 'Rock', color: '#795548', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_5', name: 'Stone', color: '#6d4c41', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_6', name: 'Forest H', color: '#2e7d32', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_7', name: 'Forest', color: '#388e3c', ecosystem: 'MOUNTAIN'},
+                    {id: 'mount_8', name: 'Grass', color: '#4caf50', ecosystem: 'MOUNTAIN'}
+                ]
+            },
+            DESERT: {
+                name: '🏜️ Desert',
+                color: '#ff9800',
+                tiles: [
+                    {id: 'desert_0', name: 'Dune H', color: '#ffcc02', ecosystem: 'DESERT'},
+                    {id: 'desert_1', name: 'Dune', color: '#ffc107', ecosystem: 'DESERT'},
+                    {id: 'desert_2', name: 'Sand H', color: '#ffb300', ecosystem: 'DESERT'},
+                    {id: 'desert_3', name: 'Sand L', color: '#ffa000', ecosystem: 'DESERT'},
+                    {id: 'desert_4', name: 'Sand', color: '#ff9800', ecosystem: 'DESERT'},
+                    {id: 'desert_5', name: 'Sand R', color: '#ff8f00', ecosystem: 'DESERT'},
+                    {id: 'desert_6', name: 'Rock L', color: '#ff6f00', ecosystem: 'DESERT'},
+                    {id: 'desert_7', name: 'Rock', color: '#e65100', ecosystem: 'DESERT'},
+                    {id: 'desert_8', name: 'Rock R', color: '#d84315', ecosystem: 'DESERT'}
+                ]
+            },
+            ARCTIC: {
+                name: '🧊 Arctic',
+                color: '#37474f',
+                tiles: [
+                    {id: 'arctic_0', name: 'Blizzard', color: '#eceff1', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_1', name: 'Snow S', color: '#cfd8dc', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_2', name: 'Snow D', color: '#b0bec5', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_3', name: 'Ice L', color: '#90a4ae', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_4', name: 'Ice', color: '#78909c', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_5', name: 'Ice R', color: '#607d8b', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_6', name: 'Frozen L', color: '#546e7a', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_7', name: 'Frozen', color: '#455a64', ecosystem: 'ARCTIC'},
+                    {id: 'arctic_8', name: 'Frozen R', color: '#37474f', ecosystem: 'ARCTIC'}
+                ]
+            }
+        };
+
+        // Tạo combined tileset và adjacency rules
+        function createCombinedTileset() {
+            const tileset = [];
+            const adjacencyRules = {};
+
+            for (let ecosystem in ECOSYSTEMS) {
+                tileset.push(...ECOSYSTEMS[ecosystem].tiles);
+            }
+
+            // Tạo adjacency rules cho mỗi tileset
+            for (let ecosystem in ECOSYSTEMS) {
+                const tiles = ECOSYSTEMS[ecosystem].tiles;
+                
+                // 3x3 grid adjacency rules
+                const rules = {
+                    0: [1, 3], 1: [0, 2, 4], 2: [1, 5],
+                    3: [0, 4, 6], 4: [1, 3, 5, 7], 5: [2, 4, 8],
+                    6: [3, 7], 7: [4, 6, 8], 8: [5, 7]
+                };
+
+                for (let i = 0; i < tiles.length; i++) {
+                    const tileId = tiles[i].id;
+                    adjacencyRules[tileId] = rules[i].map(idx => tiles[idx].id);
+                    
+                    // Add cross-ecosystem transition rules (more permissive)
+                    if (i === 4 || i === 7) { // center tiles can connect to other ecosystems
+                        for (let otherEco in ECOSYSTEMS) {
+                            if (otherEco !== ecosystem) {
+                                const otherTiles = ECOSYSTEMS[otherEco].tiles;
+                                adjacencyRules[tileId].push(otherTiles[4].id, otherTiles[7].id);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { tileset, adjacencyRules };
+        }
+
+        // Ecosystem seeds và influence calculation
+        let width = 80, height = 60, seedCount = 4;
+        let ecosystemSeeds = [];
+
+        function generateEcosystemSeeds() {
+            ecosystemSeeds = [];
+            const ecosystemTypes = Object.keys(ECOSYSTEMS);
+            
+            for (let i = 0; i < seedCount; i++) {
+                ecosystemSeeds.push({
+                    x: Math.floor(Math.random() * width),
+                    y: Math.floor(Math.random() * height),
+                    type: ecosystemTypes[i % ecosystemTypes.length],
+                    influence: 0.4 + Math.random() * 0.4
+                });
+            }
+            
+            updateSeedDisplay();
+        }
+
+        function updateSeedDisplay() {
+            const seedInfo = document.getElementById('seedInfo');
+            seedInfo.innerHTML = ecosystemSeeds.map(seed => 
+                `${ECOSYSTEMS[seed.type].name}(${seed.x},${seed.y})`
+            ).join(' | ');
+        }
+
+        function calculateInfluenceMap() {
+            const influenceMap = [];
+            
+            for (let y = 0; y < height; y++) {
+                influenceMap[y] = [];
+                for (let x = 0; x < width; x++) {
+                    const influences = {};
+                    let totalInfluence = 0;
+                    
+                    for (let seed of ecosystemSeeds) {
+                        const distance = Math.sqrt((x - seed.x) ** 2 + (y - seed.y) ** 2);
+                        const maxDistance = Math.sqrt(width ** 2 + height ** 2);
+                        const normalizedDistance = distance / maxDistance;
+                        const influence = seed.influence * Math.exp(-normalizedDistance * 2.5);
+                        
+                        influences[seed.type] = influence;
+                        totalInfluence += influence;
+                    }
+                    
+                    // Normalize
+                    if (totalInfluence > 0) {
+                        for (let type in influences) {
+                            influences[type] /= totalInfluence;
+                        }
+                    }
+                    
+                    influenceMap[y][x] = influences;
+                }
+            }
+            
+            return influenceMap;
+        }
+
+        function updateProgress(current, max) {
+            const status = document.getElementById('generationStatus');
+            const percent = Math.floor((current / max) * 100);
+            status.innerHTML = `<span class="loading">Generating... ${percent}%</span>`;
+        }
+
+        function renderSpriteSheets() {
+            for (let ecosystem in ECOSYSTEMS) {
+                const container = document.getElementById(`${ecosystem.toLowerCase()}-tiles`);
+                container.innerHTML = '';
+                
+                for (let i = 0; i < 9; i++) {
+                    const tile = ECOSYSTEMS[ecosystem].tiles[i];
+                    const div = document.createElement('div');
+                    div.className = 'sprite-tile';
+                    div.style.backgroundColor = tile.color;
+                    div.textContent = i;
+                    div.title = tile.name;
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        function renderMap(grid, canvas, showInfluence = false) {
+            const ctx = canvas.getContext('2d');
+            const cellWidth = canvas.width / width;
+            const cellHeight = canvas.height / height;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const { tileset } = createCombinedTileset();
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const cell = grid[y][x];
+                    const tile = tileset.find(t => t.id === cell.tileId);
+                    
+                    if (tile) {
+                        ctx.fillStyle = tile.color;
+                        ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+                    }
+                }
+            }
+            
+            // Draw ecosystem seeds
+            if (showInfluence) {
+                for (let seed of ecosystemSeeds) {
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(
+                        seed.x * cellWidth - 2, 
+                        seed.y * cellHeight - 2, 
+                        cellWidth + 4, 
+                        cellHeight + 4
+                    );
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(
+                        ECOSYSTEMS[seed.type].name, 
+                        seed.x * cellWidth + 2, 
+                        seed.y * cellHeight - 5
+                    );
+                }
+            }
+        }
+
+        let currentGrid = null;
+        let currentInfluenceMap = null;
+        let showingZones = false;
+
+        async function generateMap() {
+            if (ecosystemSeeds.length === 0) {
+                generateEcosystemSeeds();
+            }
+            
+            const canvas = document.getElementById('mapCanvas');
+            const status = document.getElementById('generationStatus');
+            const { tileset, adjacencyRules } = createCombinedTileset();
+            
+            status.innerHTML = '<span class="loading">Initializing WFC...</span>';
+            
+            // Create influence map
+            currentInfluenceMap = calculateInfluenceMap();
+            
+            // Initialize WFC
+            const wfc = new SimplifiedWFC(width, height, tileset, adjacencyRules);
+            wfc.setInfluenceMap(currentInfluenceMap);
+            
+            // Generate map
+            status.innerHTML = '<span class="loading">Generating map...</span>';
+            currentGrid = wfc.generate();
+            
+            // Render result
+            showingZones = false;
+            document.getElementById('mapTitle').textContent = '🗺️ Generated Map';
+            renderMap(currentGrid, canvas, false);
+            status.innerHTML = '<span style="color: #4caf50;">✓ Generation completed!</span>';
+        }
+
+        function regenerateSeeds() {
+            generateEcosystemSeeds();
+            generateMap();
+        }
+
+        function showEcosystemZones() {
+            if (!currentGrid || !currentInfluenceMap) {
+                generateMap();
+                return;
+            }
+            
+            showingZones = !showingZones;
+            const canvas = document.getElementById('mapCanvas');
+            
+            if (showingZones) {
+                // Render influence zones
+                const ctx = canvas.getContext('2d');
+                const cellWidth = canvas.width / width;
+                const cellHeight = canvas.height / height;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const influences = currentInfluenceMap[y][x];
+                        let dominantEcosystem = null;
+                        let maxInfluence = 0;
+                        
+                        for (let type in influences) {
+                            if (influences[type] > maxInfluence) {
+                                maxInfluence = influences[type];
+                                dominantEcosystem = type;
+                            }
+                        }
+                        
+                        if (dominantEcosystem) {
+                            const eco = ECOSYSTEMS[dominantEcosystem];
+                            ctx.fillStyle = eco.color;
+                            ctx.globalAlpha = Math.min(1, maxInfluence * 1.5);
+                            ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+                }
+                
+                // Draw seeds
+                renderMap(currentGrid, canvas, true);
+                document.getElementById('mapTitle').textContent = '🗺️ Ecosystem Influence Zones';
+            } else {
+                renderMap(currentGrid, canvas, false);
+                document.getElementById('mapTitle').textContent = '🗺️ Generated Map';
+            }
+        }
+
+        // Initialize
+        renderSpriteSheets();
+        generateEcosystemSeeds();
+        
+        // Size selector
+        document.getElementById('sizeSelect').addEventListener('change', function() {
+            const size = parseInt(this.value);
+            width = size;
+            height = Math.floor(size * 0.75);
+            regenerateSeeds();
+        });
+    </script>
+</body>
+</html>
