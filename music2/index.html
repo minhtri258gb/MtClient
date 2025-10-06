@@ -730,9 +730,6 @@
 				},
 				onEnd(event) { // Kết thúc chạy nhạc
 
-					// Cập nhật Icon khi kết thúc
-					this.setIconPause(false);
-
 					// CASE 1: Nếu có loop thì chạy lại
 					let loop = this.c_loop.value;
 					if (loop > 0) {
@@ -741,6 +738,9 @@
 						this.c_audio.play();
 						return
 					}
+
+					// Cập nhật Icon khi kết thúc
+					this.setIconPause(false);
 
 					// CASE 2: Lấy từ danh sách chờ nếu có
 					// CASE 3: Lấy ngẫu nhiên từ danh sách nhạc
