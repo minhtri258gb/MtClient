@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Abbott Web",
+    "host": "192.168.1.222",
+    "port": "8082",
+    "tags": ["DMS", "Abbott", "Web"]
+  },
+  {
+    "name": "Abbott Web 2",
+    "host": "192.168.1.222",
+    "port": "8180",
+    "tags": ["DMS", "Abbott", "Web", "Tessel"]
+  },
+  {
+    "name": "Vinamilk Web",
+    "host": "192.168.1.222",
+    "port": "8150",
+    "tags": ["DMS", "Vinamilk", "Web"]
+  },
+  {
+    "name": "Vinamilk Database Doris FrontEnd",
+    "host": "192.168.1.248",
+    "port": "8030",
+    "tags": ["DMS", "Vinamilk", "Database", "Doris", "FE"]
+  },
+  {
+    "name": "Vinamilk Database Doris BackEnd",
+    "host": "192.168.1.248",
+    "port": "9050",
+    "tags": ["DMS", "Vinamilk", "Database", "Doris", "BE"]
+  },
+  {
+    "name": "Vinamilk Database Doris MySQL",
+    "host": "192.168.1.248",
+    "port": "9030",
+    "tags": ["DMS", "Vinamilk", "Database", "Doris", "MySQL"]
+  }
+]

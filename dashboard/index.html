@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Dashboard</title>
+	
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
+	
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+			min-height: 100vh;
+			padding: 24px;
+			color: #fff;
+		}
+
+		.container {
+			max-width: 1280px;
+			margin: 0 auto;
+		}
+
+		.header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 32px;
+		}
+
+		.header-title {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.header-title h1 {
+			font-size: 30px;
+			font-weight: bold;
+		}
+
+		.header-subtitle {
+			color: #94a3b8;
+			margin-top: 4px;
+		}
+
+		.refresh-btn {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 12px 24px;
+			background: #2563eb;
+			color: white;
+			border: none;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 500;
+			transition: all 0.2s;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+		}
+
+		.refresh-btn:hover {
+			background: #1d4ed8;
+			box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+		}
+
+		.refresh-btn:disabled {
+			background: #1e40af;
+			cursor: not-allowed;
+		}
+
+		.refresh-btn.spinning svg {
+			animation: spin 1s linear infinite;
+		}
+
+		@keyframes spin {
+			from { transform: rotate(0deg); }
+			to { transform: rotate(360deg); }
+		}
+
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 24px;
+			margin-bottom: 32px;
+		}
+
+		.stat-card {
+			background: rgba(30, 41, 59, 0.5);
+			backdrop-filter: blur(10px);
+			border: 1px solid #334155;
+			border-radius: 12px;
+			padding: 24px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.stat-info p:first-child {
+			color: #94a3b8;
+			font-size: 14px;
+		}
+
+		.stat-info p:last-child {
+			font-size: 30px;
+			font-weight: bold;
+			margin-top: 8px;
+		}
+
+		.stat-icon {
+			width: 56px;
+			height: 56px;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.stat-icon.blue {
+			background: rgba(37, 99, 235, 0.2);
+		}
+
+		.stat-icon.green {
+			background: rgba(34, 197, 94, 0.2);
+		}
+
+		.stat-icon.red {
+			background: rgba(239, 68, 68, 0.2);
+		}
+
+		.stat-icon svg {
+			width: 28px;
+			height: 28px;
+		}
+
+		.stat-icon.blue svg {
+			color: #60a5fa;
+		}
+
+		.stat-icon.green svg {
+			color: #4ade80;
+		}
+
+		.stat-icon.red svg {
+			color: #f87171;
+		}
+
+		.server-table-container {
+			background: rgba(30, 41, 59, 0.5);
+			backdrop-filter: blur(10px);
+			border: 1px solid #334155;
+			border-radius: 12px;
+			overflow: hidden;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		thead {
+			background: rgba(15, 23, 42, 0.5);
+		}
+
+		thead th {
+			padding: 16px 24px;
+			text-align: left;
+			font-size: 12px;
+			font-weight: 600;
+			text-transform: uppercase;
+			color: #cbd5e1;
+			letter-spacing: 0.05em;
+		}
+
+		tbody tr {
+			border-top: 1px solid #334155;
+			transition: background 0.2s;
+		}
+
+		tbody tr:hover {
+			background: rgba(51, 65, 85, 0.3);
+		}
+
+		tbody td {
+			padding: 10px 24px;
+		}
+
+		.status-cell {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.status-dot {
+			width: 12px;
+			height: 12px;
+			border-radius: 50%;
+		}
+
+		.status-dot.online {
+			background: #4ade80;
+		}
+
+		.status-dot.offline {
+			background: #f87171;
+		}
+
+		.status-text {
+			font-size: 14px;
+			font-weight: 500;
+		}
+
+		.status-text.online {
+			color: #4ade80;
+		}
+
+		.status-text.offline {
+			color: #f87171;
+		}
+
+		.server-name {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.server-name svg {
+			color: #94a3b8;
+			width: 20px;
+			height: 20px;
+		}
+
+		.server-name span {
+			font-weight: 500;
+		}
+
+		.ip-address {
+			color: #cbd5e1;
+			font-family: 'Courier New', monospace;
+			font-size: 14px;
+		}
+
+		.uptime {
+			color: #94a3b8;
+		}
+
+		.footer {
+			margin-top: 24px;
+			text-align: center;
+			color: #64748b;
+			font-size: 14px;
+		}
+
+		@media (max-width: 768px) {
+			.header {
+				flex-direction: column;
+				gap: 16px;
+			}
+
+			.stats-grid {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		/* Button */
+		button.iconButton {
+			width: 21px;
+			height: 21px;
+			color: #444;
+			border: 1px solid #bbb;
+			border-radius: 5px;
+			cursor: pointer;
+
+			&:hover {
+				background-color: #eaf2ff;
+				border: 1px solid #b7d2ff;
+			}
+
+			&.confirmButton {
+				color: #0054e9;
+			}
+			&.dangerButton {
+				color: #c5000f;
+			}
+		}
+
+		/* Loading */
+		.loading-spinner {
+			border: 4px solid #f3f3f3;
+			border-top: 4px solid #3498db;
+			border-radius: 50%;
+			width: 20px;
+			height: 20px;
+			animation: spin 1s linear infinite;
+		}
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+
+		<!-- Header -->
+		<div class="header">
+			<div>
+				<div class="header-title">
+					<i data-lucide="server" style="width: 32px; height: 32px;"></i>
+					<h1>Server Dashboard</h1>
+				</div>
+				<p class="header-subtitle">Giám sát trạng thái máy chủ</p>
+			</div>
+			
+			<button class="refresh-btn" id="refreshBtn" onclick="mt.btnRefreshAll()">
+				<i data-lucide="refresh-cw" style="width: 20px; height: 20px;"></i>
+				Refresh
+			</button>
+		</div>
+
+		<!-- Stats Cards -->
+		<div class="stats-grid">
+			<div class="stat-card">
+				<div class="stat-info">
+					<p>Tổng số máy chủ</p>
+					<p id="totalServers">6</p>
+				</div>
+				<div class="stat-icon blue">
+					<i data-lucide="server"></i>
+				</div>
+			</div>
+
+			<div class="stat-card">
+				<div class="stat-info">
+					<p>Đang hoạt động</p>
+					<p id="onlineServers" style="color: #4ade80;">4</p>
+				</div>
+				<div class="stat-icon green">
+					<i data-lucide="circle" style="fill: currentColor;"></i>
+				</div>
+			</div>
+
+			<div class="stat-card">
+				<div class="stat-info">
+					<p>Không hoạt động</p>
+					<p id="offlineServers" style="color: #f87171;">2</p>
+				</div>
+				<div class="stat-icon red">
+					<i data-lucide="circle" style="fill: currentColor;"></i>
+				</div>
+			</div>
+		</div>
+
+		<!-- Server Table -->
+		<div class="server-table-container">
+			<table>
+				<thead>
+					<tr>
+						<th>Trạng thái</th>
+						<th>Tên máy chủ</th>
+						<th>Địa chỉ IP</th>
+						<th>Uptime</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody id="serverTableBody">
+					<!-- Rows will be populated by JavaScript -->
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Footer -->
+		<div class="footer" id="lastUpdate">
+			Cập nhật lần cuối: --
+		</div>
+
+	</div>
+
+	<script type="module">
+		import mtAuthen from '/common/authen.js';
+		var mt = {
+			h_pathDB: '/res/DB/server.json',
+			h_pathNmap: 'D:/Apps/Nmap',
+			p_authen: mtAuthen,
+			d_servers: [],
+
+			async init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// Init
+				await this.p_authen.init();
+
+				// Load
+				await this.load();
+				this.updateUI();
+				this.renderTable();
+				this.updateLastUpdateTime();
+			},
+			async load() {
+
+				let response = await fetch(this.h_pathDB, { method: 'GET' });
+
+				if (!response.ok) {
+					if (response.status == 404) { } // skip
+					else
+						throw { error: true, message: await response.text() };
+				}
+				else
+					this.d_servers = await response.json();
+			},
+			async check(host, port) {
+
+				let response = await fetch('/common/cmd', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+					},
+					body: JSON.stringify({
+						path: [this.h_pathNmap],
+						cmd: `nmap -p ${port} ${host}`
+					}),
+				});
+
+				let result = null;
+				if (!response.ok) {
+					if (response.status == 404) { } // skip
+					else
+						throw { error: true, message: await response.text() };
+				}
+				else
+					result = await response.json();
+
+				let stdout = result?.stdout || '';
+				let stderr = result?.stderr || '';
+
+				return stdout.includes('open');
+			},
+			updateUI() {
+				const onlineCount = this.d_servers.filter(s => s.status === true).length;
+				const offlineCount = this.d_servers.filter(s => s.status === false).length;
+				
+				document.getElementById('totalServers').textContent = this.d_servers.length;
+				document.getElementById('onlineServers').textContent = onlineCount;
+				document.getElementById('offlineServers').textContent = offlineCount;
+			},
+			renderTable() {
+				const tbody = document.getElementById('serverTableBody');
+				tbody.innerHTML = '';
+
+				for (let i=0; i<this.d_servers.length; i++) {
+					let server = this.d_servers[i];
+					const row = document.createElement('tr');
+					row.innerHTML = `
+						<td>
+							<div id="status-cell-${i}" class="status-cell">
+								<div class="loading-spinner"></div>
+							</div>
+						</td>
+						<td>
+							<div class="server-name">
+								<i data-lucide="server"></i>
+								<span>${server.name}</span>
+							</div>
+						</td>
+						<td>
+							<span class="ip-address">${server.host + ':' + server.port}</span>
+						</td>
+						<td>
+							<span class="uptime">${server.uptime || '7 ngày'}</span>
+						</td>
+						<td>
+							<button class="iconButton" onclick="mt.btnRefresh(${i})" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+						</td>
+					`;
+					// <button class="iconButton" title="Start"><i class="fa-solid fa-play"></i></button>
+					tbody.appendChild(row);
+
+					// Link Element status-cell
+					server.c_status = document.getElementById(`status-cell-${i}`);
+				}
+			},
+			updateLastUpdateTime() {
+				const now = new Date();
+				const formattedTime = now.toLocaleString('vi-VN');
+				document.getElementById('lastUpdate').textContent = `Cập nhật lần cuối: ${formattedTime}`;
+			},
+			async btnRefreshAll() {
+
+				// for (let server of this.d_servers)
+				// 	server.c_status.innerHTML = '<div class="loading-spinner"></div>';
+
+				// Call API Check port
+				let lstPromise = [];
+				for (let i=0; i<this.d_servers.length; i++) {
+					let promise = this.btnRefresh(i);
+					lstPromise.push(promise);
+				}
+				await Promise.all(lstPromise);
+
+				const btn = document.getElementById('refreshBtn');
+				btn.disabled = true;
+				btn.classList.add('spinning');
+
+				this.updateUI();
+				this.updateLastUpdateTime();
+				
+				btn.disabled = false;
+				btn.classList.remove('spinning');
+			},
+			async btnRefresh(index) {
+				let server = this.d_servers[index];
+
+				// Show Loading
+				server.c_status.innerHTML = '<div class="loading-spinner"></div>';
+
+				// Call CMD Check
+				server.status = await this.check(server.host, server.port);
+
+				// Show status
+				let classNameStatus = server.status ? 'online' : 'offline';
+				server.c_status.innerHTML = `
+					<div class="status-dot ${classNameStatus}"></div>
+					<span class="status-text ${classNameStatus}">
+						${server.status ? 'Online' : 'Offline'}
+					</span>
+				`;
+			},
+
+		};
+		mt.init();
+	</script>
+
+</body>
+</html>
