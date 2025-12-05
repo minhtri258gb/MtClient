@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
+
 	<title>QR</title>
+	<meta charset="utf-8">
 
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
@@ -10,8 +11,8 @@
 	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/plugins/jquery.color.js"></script>
-	<script type="text/javascript" src="./lib/qr-creator.es6.min.js"></script>
-	<script type="text/javascript" src="./lib/qr-scanner.min.js"></script>
+	<script type="text/javascript" src="./lib/qr-creator.min.js"></script>
+	<!-- <script type="text/javascript" src="./lib/qr-scanner.min.js"></script> -->
 	
 </head>
 <body>
@@ -48,8 +49,8 @@
 		<br>
 
 		<div style="text-align:center;">
-			<a href="#" class="easyui-linkbutton" data-options="onClick:generate">Generate</a>
-			<a href="#" class="easyui-linkbutton" data-options="onClick:scan">Scan</a>
+			<a href="#" class="easyui-linkbutton" data-options="onClick:mt.generate">Generate</a>
+			<a href="#" class="easyui-linkbutton" data-options="onClick:mt.scan">Scan</a>
 		</div>
 	
 	</div>
@@ -57,54 +58,69 @@
 	<div id="qr-code" style="float:left;"></div>
 
 
-	<script>
-		var container = document.getElementById('qr-code');
-		function generate() {
-			container.innerHTML = '';
-			QrCreator.render({
-				text: $('#text').val(),
-				radius: $('#radius').val(),
-				ecLevel: $('#ecLevel').val(),
-				fill: $('#fill').val(),
-				background: $('#transparent').checkbox('options').checked ? null : $('#background').val(),
-				size: $('#size').val()
-			}, container);
-		}
+	<script type="module">
+		// import * as QrCreator from './lib/qr-creator.min.js';
+		// import QrCreator from './lib/qr-creator.min.js';
+		// import * as QrScanner from './lib/qr-scanner.min.js';
+		import QrScanner from './lib/qr-scanner.min.js';
+		var mt = {
+			c_container: null,
 
-		function scan(file) {
+			init() {
 
-			// Draw Image
+				// Bind Global
+				window.mt = this;
 
-			$('#image')[0].src = URL.createObjectURL(file);
+				this.c_container = document.getElementById('qr-code');
 
-			// Scan
-			QrScanner.scanImage(file, { returnDetailedScanResult: false })
-				.then(result => alert(result.data))
-				.catch(error => alert(error || 'No QR code found.'));
-		}
-
-		document.onpaste = (event) => {
-			const auth = navigator.permissions.query({ name: "clipboard-read" });
-			if (auth.state !== 'denied') {
-				navigator.clipboard.read().then(item_list => {
-					let image_type;
-					const item = item_list.find(item =>
-						item.types.some( type => {
-							if (type.startsWith('image/')) {
-								image_type = type;
-								return true;
+				document.onpaste = (event) => {
+					const auth = navigator.permissions.query({ name: "clipboard-read" });
+					if (auth.state !== 'denied') {
+						navigator.clipboard.read().then(item_list => {
+							let image_type;
+							const item = item_list.find(item =>
+								item.types.some( type => {
+									if (type.startsWith('image/')) {
+										image_type = type;
+										return true;
+									}
+								})
+							);
+							if (item) {
+								item.getType(image_type).then(file => {
+									mt.scan(file);
+								});
 							}
-						})
-					);
-					if (item) {
-						item.getType(image_type).then(file => {
-							scan(file);
 						});
 					}
-				});
-			}
-		}
+				};
+			},
+			generate() {
 
+				mt.c_container.innerHTML = '';
+
+				QrCreator.render({
+					text: $('#text').val(),
+					radius: $('#radius').val(),
+					ecLevel: $('#ecLevel').val(),
+					fill: $('#fill').val(),
+					background: $('#transparent').checkbox('options').checked ? null : $('#background').val(),
+					size: $('#size').val()
+				}, mt.c_container);
+			},
+			scan(file) {
+				debugger
+
+				// Draw Image
+				$('#image')[0].src = URL.createObjectURL(file);
+
+				// Scan
+				QrScanner.scanImage(file, { returnDetailedScanResult: false })
+					.then(result => alert(result.data))
+					.catch(error => alert(error || 'No QR code found.'));
+			},
+		};
+		mt.init();
 	</script>
 </body>
 </html>
