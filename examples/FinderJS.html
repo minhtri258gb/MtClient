@@ -4,17 +4,16 @@
 	<title>FinderJS</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="/lib/semantic/semantic.min.css">
-	<link rel="stylesheet" type="text/css" href="/lib/tabulator/css/tabulator_semanticui.min.css">
+	
+	<link href="/lib/semantic/semantic.min.css" rel="stylesheet" type="text/css">
+	<link href="/lib/tabulator-6.3/css/tabulator_semanticui.min.css" rel="stylesheet" type="text/css">
 	<link href="/lib/finderjs-1.3.1/example/finderjs.css" media="all" rel="stylesheet" />
-	<link
-		rel="stylesheet"
-		href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"
-		lazyload
-	/>
-	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
-	<script type="text/javascript" src="/lib/semantic/semantic.min.js"></script>
-	<script type="text/javascript" src="/lib/finderjs-1.3.1/build/finder.min.js"></script>
+	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" lazyload />
+	
+	<script src="/lib/jquery/jquery-3.6.0.min.js" type="text/javascript"></script>
+	<script src="/lib/semantic/semantic.min.js" type="text/javascript"></script>
+	<script src="/lib/finderjs-1.3.1/build/finder.min.js" type="text/javascript"></script>
+	
 	<!-- <script type="text/javascript" src="/test/script.js"></script> -->
 	<!-- <script type="text/javascript" src="/common/config.js"></script> -->
 	<style>
@@ -208,6 +207,7 @@
 	<div id="container"></div>
 
 	<script type="module">
+		import mtAuthen from '/common/authen.js';
 
 		var _ = {
 			isElement: function(element) {
@@ -355,40 +355,47 @@
 		};
 
 		var mt = {
-			h_host: `http://localhost:80`, // Host
-			h_folder: 'C:/Users/Windows/Downloads', // Đường dẫn gốc
-			m_accessToken: '', // Quyền truy cập
+			h_folder: 'D:/Work', // Đường dẫn gốc
+			p_authen: mtAuthen,
 			c_emitter: null, // Object Finder
 			c_container: null, // Element container
+			m_accessToken: '', // Quyền truy cập
 			d_list: [], // Danh sách dữ liệu
 
 			init: async function() {
-				window.mt = this; // Bind Global
-				await this.authen();
+				
+				// Bind Global
+				window.mt = this;
+
+				// Authen
+				await this.p_authen.init();
+				
+				// await this.authen();
 				await this.initFinder();
 			},
-			authen: async function() {
-				try {
-					// Call API - Authen
-					const responseAuthen = await fetch(this.h_host + '/authorize', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ password: "-1393153393" })
-					});
+			// authen: async function() {
+			// 	try {
 
-					const resultAuth = await responseAuthen.json();
-					if (resultAuth.result == true)
-						this.m_accessToken = resultAuth.token;
-					else
-						throw { error: true, msg: "Lỗi phân quyền" };
-				}
-				catch (e) {
-					if (typeof e.msg == 'string')
-						alert(e.msg);
-					else
-						console.error("[ERROR] ", e);
-				}
-			},
+			// 		// Call API - Authen
+			// 		const responseAuthen = await fetch('/authorize', {
+			// 			method: 'POST',
+			// 			headers: { 'Content-Type': 'application/json' },
+			// 			body: JSON.stringify({ password: "-1393153393" })
+			// 		});
+
+			// 		const resultAuth = await responseAuthen.json();
+			// 		if (resultAuth.result == true)
+			// 			this.m_accessToken = resultAuth.token;
+			// 		else
+			// 			throw { error: true, msg: "Lỗi phân quyền" };
+			// 	}
+			// 	catch (e) {
+			// 		if (typeof e.msg == 'string')
+			// 			alert(e.msg);
+			// 		else
+			// 			console.error("[ERROR] ", e);
+			// 	}
+			// },
 			initFinder: async function() {
 				try {
 
@@ -611,28 +618,28 @@
 					// Prepare Call API
 					let paramsURL = new  URLSearchParams();
 					paramsURL.append('folder', this.h_folder + path);
-					let url = this.h_host + '/file/list?' + paramsURL.toString();
+					let url = '/file/list?' + paramsURL.toString();
 
 					// Call API - Get list
 					const responseList = await fetch(url, {
 						method: 'GET',
-						headers: { 'Content-Type': 'application/json' }
+						headers: {
+							'Content-Type': 'application/json',
+							'Authorization': 'Bearer ' + this.p_authen.getToken(),
+						}
 					});
-					let lstName = await responseList.json();
+					let lstDirItem = await responseList.json();
 
 					// Process data
 					let lstFolder = [];
 					let lstFile = [];
-					for (let name of lstName) {
+					for (let dirItem of lstDirItem) {
 						let item = {
 							size: '10 KB',
 							modified: '02/21/2015 at 10:04am',
-							label: name,
+							label: dirItem.name,
 						};
-						if (name.indexOf('.') > 0) {
-							item.children = null;
-							lstFile.push(item);
-						} else {
+						if (dirItem.isFolder) {
 							item.children = [
 								{
 									size: '2 KB',
@@ -641,6 +648,10 @@
 								}
 							];
 							lstFolder.push(item);
+						}
+						else {
+							item.children = null;
+							lstFile.push(item);
 						}
 					}
 					return lstFolder.concat(lstFile);

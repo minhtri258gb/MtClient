@@ -57,9 +57,30 @@
 		<span id="outputHashString"></span>
 	</div>
 
+	<div id="fixUnicode">
+		<h2 id="labelFixUnicode">Asscii -> Unicode</h2>
+		<input id="inputFixUnicode" type="text" />
+		<button onclick="mt.convert('FixUnicode')">Convert</button>
+		<span id="outputFixUnicode"></span>
+	</div>
+
 	<script type="module">
 		import mtImport from '/common/import.js';
 		var mt = {
+
+			func: {
+				fixUnicode(text) {
+					try {
+						return text.replace(/\\u\{([0-9A-Fa-f]+)\}|\\u([0-9A-Fa-f]{4})/g, (_, codePoint, hex) =>
+							String.fromCodePoint(parseInt(codePoint || hex, 16))
+						);
+					}
+					catch (e) {
+						console.error("Decode error:", e);
+						return text;
+					}
+				}
+			},
 
 			async init() {
 				window.mt = this; // Bind Global
@@ -106,6 +127,11 @@
 						else if (typeHashString == 'SHA-1') {
 							// #TODO
 						}
+						break;
+					case 'FixUnicode':
+						let valueFixUnicode = $('#inputFixUnicode').val();
+						let resFixUnicode = this.func.fixUnicode(valueFixUnicode);
+						$('#outputFixUnicode').html(resFixUnicode);
 						break;
 					default:
 						console.error('type:', type);

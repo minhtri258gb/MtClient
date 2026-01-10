@@ -2,38 +2,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>mgr</title>
+
+	<title>Manager</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<link rel="stylesheet" type="text/css" href="/lib/w2ui/w2ui-2.0.min.css">
-	<link rel="stylesheet" type="text/css" href="/mgr/style.css">
-
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<link href="/lib/w2ui/w2ui-2.0.min.css" type="text/css" rel="stylesheet">
 	<!-- <script src="/lib/w2ui/w2ui-2.0.min.js"></script> -->
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" rel="stylesheet" integrity="sha512-..." crossorigin="anonymous" />
+
+
+	<script src='/lib/fullcalendar-6.1.18/index.global.min.js'></script>
+	<link href="/manager3/style.css" type="text/css" rel="stylesheet">
 	<!-- <script src="/common/config.js"></script> -->
 
 	<style>
-		#grid { height: 450px; }
-		#tabs { width: 100%; }
-		#tabContent { padding: 10px 0px; }
+		/* #grid { height: 450px; } */
+		/* #tabs { width: 100%; } */
+		/* #tabContent { padding: 10px 0px; } */
 	</style>
-
 </head>
 <body>
-
-	<div id="tabs"></div>
-	<div id="listContent">
-		<div id="manager" class="content">
-			<button class="w2ui-btn" onclick="mt.openTab('anime', 'Anime')">Anime</button>
-			<button class="w2ui-btn" onclick="mt.openTab('game', 'Game')">Game</button>
-			<button class="w2ui-btn" onclick="mt.openTab('movie', 'Movie')">Movie</button>
-			<button class="w2ui-btn" onclick="mt.openTab('manga', 'Mange')">Mange</button>
-			<button class="w2ui-btn" onclick="mt.openTab('contact', 'Contact')">Contact</button>
-			<button class="w2ui-btn" onclick="mt.openTab('account', 'Account')">Account</button>
-		</div>
-	</div>
-
+	<div id="layout" style="height:100%;"></div>
 	<script type="importmap">
 		{
 			"imports": {
@@ -42,6 +33,6 @@
 			}
 		}
 	</script>
-	<script type="module" src="/mgr/script.js"></script>
+	<script type="module" src="/manager3/script.js"></script>
 </body>
 </html>

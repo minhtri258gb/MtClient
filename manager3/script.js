@@ -1,102 +1,866 @@
-import { w2grid, w2field, w2tabs } from 'w2ui';
+import { w2ui, w2layout, w2tabs, w2sidebar
+	, w2grid, w2form, w2field
+	, w2popup, w2alert, w2confirm
+	, w2utils
+} from 'w2ui';
+import mtAuthen from '/common/authen.js';
+
+/**
+ * https://w2ui.com/web/docs/2.0/w2layout.set
+ * https://fullcalendar.io/
+ * https://fontawesome.com/v6/search?ic=free-collection
+ */
 
 var mt = {
+	h_debug: true,
+	p_authen: mtAuthen,
 
-	// Const
-	h_path: '/mgr/',
+	// Module
+	common: {
+		m_clientPath: '', // Đường dẫn client
+		c_w2layout: null,
+		e_contain: null,
 
-	// Component
-	c_w2tabs: null,
+		init() {
 
-	// Properties
+			// Left Sidebar
+			let c_w2sidebar = new w2sidebar({
+				name: 'sidebar',
+				nodes: [
+					{ id: 'entertainment', text: 'Entertainment', group: true, expanded: true, nodes: [
+						{ id: 'anime', text: 'Anime', icon: 'fa-brands fa-gratipay' },
+						{ id: 'game', text: 'Game', icon: 'fa-solid fa-gamepad' },
+						{ id: 'movie', text: 'Movie', icon: 'fa-solid fa-film' },
+						{ id: 'manga', text: 'Manga', icon: 'fa-solid fa-book' },
+					]},
+					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
+						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-circle-user' },
+						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
+						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
+						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
+					]},
+				],
+				onClick(event) {
+					let tabs = w2ui.layout_main_tabs;
+					if (tabs.get(event.target)) {
+						tabs.click(event.target);
+					}
+					else {
+						tabs.add({ id: event.target, text: event.object.text, closable: true });
+						tabs.refresh();
+						tabs.click(event.target);
+					}
+				},
+			});
 
+			// Center Tab
+			let tabs = {
+				active: 'manager',
+				tabs: [],
+				onClick: (event) => {
 
-	// Method
-	init: async function() {
+					// Hide all container
+					for (let i = 0; i < this.e_contain.children.length; i++)
+						this.e_contain.children[i].style.display = 'none';
 
-		// Call API Init App
-		let resInit = await $.ajax({
-			type: 'POST',
-			url: '/init',
-			data: JSON.stringify({ app: 'manager/manager' }),
-			contentType: 'application/json',
-		});
+					let module = event.target;
+					mt[module].open();
+				},
+				onClose: () => {
 
-		// Init UI - Tab
-		mt.c_w2tabs = new w2tabs({
-			box: '#tabs',
-			name: 'tabs',
-			active: 'manager',
-			tabs: [{ id: 'manager', text: 'Manager' }],
-			onClick(event) {
-				mt.openPage(event.target);
+					// Hide all container
+					for (let i = 0; i < this.e_contain.children.length; i++)
+						this.e_contain.children[i].style.display = 'none';
+				}
+			};
+
+			// Layout
+			this.c_w2layout = new w2layout({
+				box: '#layout',
+				name: 'layout',
+				panels: [
+					// { type: 'top', size: 60, html: 'top panel' },
+					{ type: 'main', style: 'background-color: #f5fff1', tabs, html: '<div id="contain" style="height:100%"><div>' },
+					{ type: 'left', size: 150, resizable: true, html: c_w2sidebar },
+				]
+			});
+			// this.c_w2layout.render('#layout');
+
+			this.e_contain = document.getElementById('contain');
+
+			this.processParams();
+		},
+		processParams() {
+			let urlParams = new URLSearchParams(window.location.search);
+			let tabCode = urlParams.get('tab');
+			if (tabCode != null) {
+
+				// Search tab
+				let tab = null;
+				for (let group of w2ui.sidebar.nodes) {
+					for (let node of group.nodes) {
+						if (node.id == tabCode) {
+							tab = node;
+							break;
+						}
+					}
+					if (tab != null)
+						break;
+				}
+
+				// Open tab
+				let tabs = w2ui.layout_main_tabs;
+				tabs.add({ id: tabCode, text: tab.text, closable: true });
+				tabs.refresh();
+				tabs.click(tabCode);
 			}
-		});
+		},
+		// openTab(pageCode, pageName) {
 
-		// Quick Open Tab
-		// mt.openTab('anime', 'Anime'); // #DEV
-		mt.openTab('game', 'Game'); // #DEV
-	},
-	openTab: function(pageCode, pageName) {
+		// 	// Nếu chưa có tab thì thêm mới
+		// 	if (this.c_w2tabs.get(pageCode) == null) {
+		// 		this.c_w2tabs.add({ id: pageCode, text: pageName, closable: true });
+		// 		this.c_w2tabs.refresh();
+		// 	}
 
-		// Nếu chưa có tab thì thêm mới
-		if (mt.c_w2tabs.get(pageCode) == null) {
-			mt.c_w2tabs.add({ id: pageCode, text: pageName, closable: true });
-			mt.c_w2tabs.refresh();
-		}
+		// 	// Mở tab
+		// 	this.c_w2tabs.click(pageCode); // Trigger mt.openPage
+		// },
+		async loadJson(url) {
+			try {
 
-		// Mở tab
-		mt.c_w2tabs.click(pageCode); // Trigger mt.openPage
-	},
-	openPage: async function(pageCode) {
+				// Call API
+				let response = await fetch(url, { method: 'GET' });
+				if (!response.ok) {
+					if (response.status == 404)
+						{ } // skip
+					else
+						throw { error: true, message: await response.text() };
+				}
+				else
+					return await response.json() || [];
 
-		// Nếu chưa có trang thì load lên
-		if ($('#'+pageCode).length == 0) {
-			let html = await mt.utils.load.html(mt.h_path+pageCode+'/index.html');
-			$('#listContent').append(`
-				<div id="${pageCode}" class="content">
-					${html}
-				</div>
-			`);
-			mt.utils.load.css(mt.h_path+pageCode+'/style.css');
-			mt.utils.load.js(mt.h_path+pageCode+'/script.js');
-		}
+				return [];
+			}
+			catch (ex) {
+				console.error('[mt.common.loadJson] Exception', ex);
+				throw ex;
+			}
+		},
+		async saveJson(filepath, data) {
+			try {
 
-		// Ẩn toàn bộ trang và hiện trang đã chọn
-		$('.content').hide();
-		$('#'+pageCode).show();
-	},
-	loadContent: async function(pageCode) {
-		let response = await fetch(mt.h_path+pageCode+"/index.html");
-		let html = await response.text();
-		query('#tabContent').html(html);
-	},
-	addTab: function(pageCode, pageName) {
-	},
-	utils: {
-		load: {
-			html: async function(path) {
-				let response = await fetch(path);
-				return await response.text();
-			},
-			js: function(path) {
-				let head = $('head')[0];
-				let script = document.createElement('script');
-				script.src = path;
-				script.type = 'module';
-				// script.type = 'text/javascript';
-				head.append(script);
-			},
-			css: function(path) {
-				let head = $('head')[0];
-				let style = document.createElement('link');
-				style.href = path;
-				style.type = 'text/css';
-				style.rel = 'stylesheet';
-				head.append(style);
-			},
+				// Authen
+				if (mt.p_authen.checkAuthn() == false)
+					await mt.p_authen.init();
+
+				// Kiểm tra và lấy client path
+				if (this.m_clientPath.length == 0) {
+					let response = await fetch('/file/getClientPath', {
+						method: 'GET',
+						headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
+					});
+					if (!response.ok)
+						throw { error: true, message: await response.text() };
+
+					this.m_clientPath = await response.text();
+				}
+
+				// Call API - Lưu dữ liệu
+				let paramURL = new URLSearchParams();
+				paramURL.set('file', this.m_clientPath + filepath);
+				paramURL.set('force', true);
+				let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'text/plain',
+						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+					},
+					body: JSON.stringify(data),
+				});
+				if (!responseSave.ok) {
+					let errorMessage = await responseSave.text();
+					// this.toast('error', errorMessage);
+					console.error(errorMessage);
+					return;
+				}
+			}
+			catch (ex) {
+				console.error('[mt.common.saveJson] Exception', ex);
+				throw ex;
+			}
+		},
+		async cmd(cmd, path) {
+			let response = await fetch('/common/cmd', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+				},
+				body: JSON.stringify({ path, cmd }),
+			});
+
+			if (!response.ok) {
+				if (response.status == 404) { } // skip
+				else
+					throw { error: true, message: await response.text() };
+			}
+			
+			return await response.json();
 		},
 	},
+	anime: {
+		h_pathDB: '/res/DB/anime.json',
+		d_list: [],
+		c_w2grid: null,
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-anime';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			// Column score
+			let ratingProp = {
+				size: '60px',
+				sortable: true,
+				attr: 'align=center',
+				editable: { type: 'int', min: 1, max: 5 },
+				render: (row, target) => {
+					if (target.value >= 1 && target.value <= 5)
+						return `<img src="/res/icons/rating${target.value}.png" />`;
+					return 'N/A';
+				},
+			};
+
+			// Grid
+			this.c_w2grid = new w2grid({
+				name: 'grid-anime',
+				recid: 'id',
+				show: {
+					toolbar: true,
+					footer: true,
+					lineNumbers: true,
+					selectColumn: true,
+					expandColumn: true,
+					toolbarAdd: true,
+					toolbarSave: true,
+				},
+				// toolbar: {
+				// 	items: [
+				// 		{ id: 'add', type: 'button', text: 'Add Record', icon: 'w2ui-icon-plus' },
+				// 		{ type: 'break' },
+				// 		{ type: 'button', id: 'showChanges', text: 'Show Changes' }
+				// 	],
+				// 	onClick(event) {
+				// 		if (event.target == 'add') {
+							
+				// 		}
+				// 		else if (event.target == 'showChanges') {
+				// 			showChanged()
+				// 		}
+				// 	}
+				// },
+				columns: [
+					{ field: 'img', text: 'Image', size: '120px', resizable: true, editable: { type: 'text' } },
+					{ field: 'name', text: 'Name', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'story', text: 'Story', ...ratingProp },
+					{ field: 'art', text: 'Art', ...ratingProp },
+					{ field: 'sound', text: 'Sound', ...ratingProp },
+					{ field: 'fantasy', text: 'Fantasy', ...ratingProp },
+					{ field: 'sad', text: 'Sad', ...ratingProp },
+					{ field: 'joke', text: 'Joke', ...ratingProp },
+					{ field: 'brand', text: 'Brand', ...ratingProp },
+					{ field: 'review', text: 'Review', ...ratingProp },
+					{ field: 'end', text: 'End', size: '120px', sortable: true, editable: { type: 'text' } },
+					{ field: 'character', text: 'Character', size: '120px', sortable: true, editable: { type: 'text' } },
+					{ field: 'time', text: 'Time', size: '120px', sortable: true },
+				],
+				liveSearch: true,
+				multiSearch: false,
+				textSearch: 'contains',
+				searches: [
+					{ field: 'name', label: 'Name', type: 'text' },
+				],
+				onExpand: function(event) {
+
+					let row = this.get(event.detail.recid);
+					
+					$('#'+event.detail.box_id).html(`
+						<img src="${row.img}" style="max-width:100%;">
+					`).animate({ height: 220 }, 100);
+
+					$('#'+event.detail.fbox_id).animate({ height: 220 }, 100);
+
+					if (mt.h_debug)
+						console.log('[mt.anime.init.w2grid.onExpand]', { event, row });
+				},
+				onAdd: function (event) {
+					let id = this.records.length + 1;
+					let time = Math.floor(Date.now() / 1000);
+					this.add({ id, time });
+					this.scrollIntoView(1); // Scroll top
+				},
+				onEdit: function (event) {
+					w2alert('edit');
+				},
+				onSave: async function (event) {
+					let confirm = await new Promise((resolve, reject) => {
+						w2popup.open({
+							title: 'Records Changes',
+							with: 600,
+							height: 550,
+							body: `<pre>${JSON.stringify(this.getChanges(), null, 4)}</pre>`,
+							actions: {
+								Ok: () => resolve(true),
+								Cancel: () => resolve(false),
+							}
+						});
+					});
+					if (!confirm)
+						event.preventDefault();
+					w2popup.close();
+				},
+			});
+
+			// Load data
+			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			for (let i=0, sz=this.d_list.length; i<sz; i++) {
+				let anime = this.d_list[i];
+				anime.id = i+1; // Thêm ID
+			}
+
+			// this.c_w2grid.total = this.d_list.length + 100;
+			this.c_w2grid.records = this.d_list;
+			this.c_w2grid.sort('time', 'desc');
+			// this.c_w2grid.refresh();
+
+			// this.c_w2grid.box = this.e_contain;
+			this.c_w2grid.render(this.e_contain);
+			// this.e_contain.innerHTML = 'AAAAAAAAAA';
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+	},
+	game: {
+		h_pathDB: '/res/DB/game.json',
+		d_list: [],
+		c_w2grid: null,
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-game';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			// Column score
+			let ratingProp = {
+				size: '60px',
+				sortable: true,
+				attr: 'align=center',
+				editable: { type: 'int', min: 1, max: 5 },
+				render: (row, target) => {
+					if (target.value >= 1 && target.value <= 5)
+						return `<img src="/res/icons/rating${target.value}.png" />`;
+					return 'N/A';
+				},
+			};
+
+			// Grid
+			this.c_w2grid = new w2grid({
+				name: 'grid-anime',
+				recid: 'id',
+				show: {
+					toolbar: true,
+					footer: true,
+					lineNumbers: true,
+					selectColumn: true,
+					expandColumn: true,
+					toolbarAdd: true,
+					toolbarSave: true,
+				},
+				// toolbar: {
+				// 	items: [
+				// 		{ id: 'add', type: 'button', text: 'Add Record', icon: 'w2ui-icon-plus' },
+				// 		{ type: 'break' },
+				// 		{ type: 'button', id: 'showChanges', text: 'Show Changes' }
+				// 	],
+				// 	onClick(event) {
+				// 		if (event.target == 'add') {
+							
+				// 		}
+				// 		else if (event.target == 'showChanges') {
+				// 			showChanged()
+				// 		}
+				// 	}
+				// },
+				columns: [
+					{ field: 'img', text: 'Image', size: '120px', resizable: true, editable: { type: 'text' } },
+					{ field: 'name', text: 'Name', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'story', text: 'Story', ...ratingProp },
+					{ field: 'art', text: 'Art', ...ratingProp },
+					{ field: 'sound', text: 'Sound', ...ratingProp },
+					{ field: 'fantasy', text: 'Fantasy', ...ratingProp },
+					{ field: 'sad', text: 'Sad', ...ratingProp },
+					{ field: 'joke', text: 'Joke', ...ratingProp },
+					{ field: 'brand', text: 'Brand', ...ratingProp },
+					{ field: 'review', text: 'Review', ...ratingProp },
+					{ field: 'end', text: 'End', size: '120px', sortable: true, editable: { type: 'text' } },
+					{ field: 'character', text: 'Character', size: '120px', sortable: true, editable: { type: 'text' } },
+					{ field: 'time', text: 'Time', size: '120px', sortable: true },
+				],
+				liveSearch: true,
+				multiSearch: false,
+				textSearch: 'contains',
+				searches: [
+					{ field: 'name', label: 'Name', type: 'text' },
+				],
+				onExpand: function(event) {
+
+					let row = this.get(event.detail.recid);
+					
+					$('#'+event.detail.box_id).html(`
+						<img src="${row.img}" style="max-width:100%;">
+					`).animate({ height: 220 }, 100);
+
+					$('#'+event.detail.fbox_id).animate({ height: 220 }, 100);
+
+					if (mt.h_debug)
+						console.log('[mt.anime.init.w2grid.onExpand]', { event, row });
+				},
+				onAdd: function (event) {
+					let id = this.records.length + 1;
+					let time = Math.floor(Date.now() / 1000);
+					this.add({ id, time });
+					this.scrollIntoView(1); // Scroll top
+				},
+				onEdit: function (event) {
+					w2alert('edit');
+				},
+				onSave: async function (event) {
+					let confirm = await new Promise((resolve, reject) => {
+						w2popup.open({
+							title: 'Records Changes',
+							with: 600,
+							height: 550,
+							body: `<pre>${JSON.stringify(this.getChanges(), null, 4)}</pre>`,
+							actions: {
+								Ok: () => resolve(true),
+								Cancel: () => resolve(false),
+							}
+						});
+					});
+					if (!confirm)
+						event.preventDefault();
+					w2popup.close();
+				},
+			});
+
+			// Load data
+			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			for (let i=0, sz=this.d_list.length; i<sz; i++) {
+				let anime = this.d_list[i];
+				anime.id = i+1; // Thêm ID
+			}
+
+			// this.c_w2grid.total = this.d_list.length + 100;
+			this.c_w2grid.records = this.d_list;
+			this.c_w2grid.sort('time', 'desc');
+			// this.c_w2grid.refresh();
+
+			// this.c_w2grid.box = this.e_contain;
+			this.c_w2grid.render(this.e_contain);
+			// this.e_contain.innerHTML = 'AAAAAAAAAA';
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+	},
+	calendar: {
+		h_pathDB: 'res/DB/calendar/',
+		m_init: false,
+		d_events: {}, // Map year -> list event
+		c_calendar: null,
+		e_content: null,
+
+		async init() {
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-calendar';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.c_calendar = new FullCalendar.Calendar(this.e_contain, {
+				initialView: 'dayGridMonth',
+				// initialDate: '2024-12-08', // #DEBUG
+				locale: 'vi',
+				timeZone: 'Asia/Ho_Chi_Minh',
+				// Toolbar
+				headerToolbar: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'addEvent dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+				},
+				// UI Setting
+				firstDay: 1,
+				weekNumbers: true,
+				businessHours: false, // Sẫm màu 2 ngày cuối tuần
+				showNonCurrentDates: false, // Sâm 4màu các ngày ko thuộc tháng
+				buttonText: { // Phiên dịch
+					today: 'Hôm nay',
+					month: 'Tháng',
+					week: 'Tuần',
+					day: 'Ngày',
+					list: 'Sự kiện'
+				},
+				// Other
+				editable: false,
+				selectable: true,
+				dayMaxEvents: true, // allow "more" link when too many events
+				// Data
+				events: [],
+				// Custom Button
+				customButtons: {
+					addEvent: { text: 'Thêm', click: () => mt.form.open(null) },
+				},
+				// Register Event
+				// datesSet: (info) => this.changeDate(info),
+				// eventClick: (item) => mt.form.open(item),
+				// dateClick: () => this.dateClick(),
+			});
+
+			this.c_calendar.render();
+
+			// Load data
+			let year = new Date().getFullYear();
+			await this.load(year);
+		},
+		async open() {
+			
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		async load(year) {
+
+			let urlDB = '/' + this.h_pathDB + year + '.json';
+
+			// Call API
+			let listEvent = await mt.common.loadJson(urlDB);
+
+			// Auto gen
+			if (listEvent.length == 0)
+				listEvent = await this.generate(year);
+
+			this.d_events[year] = listEvent;
+
+			// Set into calendar
+			this.setEvents(listEvent);
+
+			// Log
+			mt.h_debug && console.log('[mt.calendar.load]', { year, listEvent });
+		},
+		async generate(year) { // Tạo data của năm
+
+			// Generate
+			let urlDB = '/' + this.h_pathDB + 'gen.json';
+
+			// Call API load
+			let listGen = await mt.common.loadJson(urlDB);
+
+			// Gen
+			let listEvent = [];
+			for (let gen of listGen) {
+				if (gen.type == 'yearly') {
+					listEvent.push({
+						date: year + gen.date.slice(4),
+						name: gen.name
+					});
+				}
+			}
+
+			// Lưu lại
+			mt.common.saveJson('/' + this.h_pathDB + year + '.json', listEvent);
+
+			// Thông báo
+			// w2alert(`Đã tạo dữ liệu năm ${year}.`);
+			w2utils.notify(`Đã tạo dữ liệu năm ${year}.`, { class: 'custom-class', where: '#preview-box' });
+			
+			// Log
+			mt.h_debug && console.log('[mt.calendar.generate]', { listGen, listEvent });
+
+			// Return
+			return listEvent;
+		},
+		setEvents(listEvent) {
+			let lstData = [];
+			for (let i=0, sz=listEvent.length; i<sz; i++) {
+				let event = listEvent[i];
+				lstData.push({
+					id: i+1,
+					title: event.name,
+					start: event.date,
+					extendedProps: event,
+				});
+			}
+			this.c_calendar.addEventSource(lstData);
+		},
+	},
+	server: {
+		h_pathDB: '/res/DB/server.json',
+		h_pathNmap: 'D:/Apps/Nmap',
+		d_list: [],
+		d_map: {},
+		c_w2grid: null,
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-server';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			let renderAction = (row, actions) => {
+				let htmlBtn = '<div style="display:flex;gap:4px;">';
+				let act = ',' + actions + ',';
+				if (act.includes(',refresh,'))
+					htmlBtn += `<button onclick="mt.server.btnRefresh(${row.id})"><i class="fa-solid fa-arrows-rotate"></i></button>`;
+				// if (act.includes(',build,'))
+				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},true)"><i class="fa-solid fa-hammer"></i></button>`;
+				// if (row.status === false && act.includes(',start,'))
+				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},false)"><i class="fa-solid fa-play"></i></button>`;
+				if (row.status === true && act.includes(',link,'))
+					htmlBtn += `<button onclick="mt.server.btnLink(${row.id})"><i class="fa-solid fa-link"></i></button>`;
+				return htmlBtn + '</div>';
+			}
+			let renderStatus = (status) => {
+				if (status === undefined)
+					return `...`;
+				else if (status === null)
+					return `<i class="fa-solid fa-spinner fa-lg anim-rotate"></i>`;
+				return `<i class="fa-solid fa-circle-${status === true ? 'check' : 'xmark'} fa-lg"
+					style="color:#${status === true ? '4ade80' : 'f87171'}"></i>`;
+			}
+			let renderTag = (tags) => {
+				let htmlBtn = '<div style="display:flex;gap:4px;">';
+				for (let tag of tags) {
+					htmlBtn += `<button onclick="mt.server.btnTag('${tag}')">${tag}</button>`;
+				}
+				return htmlBtn + '</div>';
+			}
+
+			// Grid
+			this.c_w2grid = new w2grid({
+				name: 'grid-server',
+				recid: 'id',
+				group: 'group',
+				show: {
+					toolbar: true,
+					footer: true,
+					lineNumbers: true,
+					// toolbarAdd: true,
+					// toolbarSave: true,
+				},
+				toolbar: {
+					items: [
+						// { type: 'button', id: 'add', text: 'Add Record', icon: 'w2ui-icon-plus' },
+						// { type: 'break' },
+						// { type: 'button', id: 'showChanges', text: 'Show Changes' },
+						{ type: 'button', id: 'refresh_all', text: 'Refresh All', icon: 'fa-solid fa-arrows-rotate' },
+					],
+					onClick: (event) => {
+						if (event.target == 'refresh_all')
+							this.btnRefreshAll();
+					}
+				},
+				columns: [
+					{ field: 'actions', text: 'Actions', size: '120px', render: (row, target) => renderAction(row, target.value) },
+					{ field: 'status', text: 'Status', size: '52px', attr: 'align=center', render: (row, target) => renderStatus(target.value)},
+					{ field: 'name', text: 'Name', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'url', text: 'URL', size: '128px', sortable: true, resizable: true, editable: { type: 'text' } },
+					{ field: 'tags', text: 'Tags', size: '300px', render: (row, target) => renderTag(target.value) },
+				],
+				liveSearch: true,
+				multiSearch: true,
+				textSearch: 'contains',
+				searches: [
+					{ field: 'name', label: 'Name', type: 'text', operator: 'contains' },
+					{ field: 'tags', label: 'Tags', type: 'text', operator: 'contains' },
+				],
+				onExpand: function(event) {
+
+					let row = this.get(event.detail.recid);
+					
+					$('#'+event.detail.box_id).html(`
+						<img src="${row.img}" style="max-width:100%;">
+					`).animate({ height: 220 }, 100);
+
+					$('#'+event.detail.fbox_id).animate({ height: 220 }, 100);
+
+					if (mt.h_debug)
+						console.log('[mt.anime.init.w2grid.onExpand]', { event, row });
+				},
+				onAdd: function (event) {
+					let id = this.records.length + 1;
+					let time = Math.floor(Date.now() / 1000);
+					this.add({ id, time });
+					this.scrollIntoView(1); // Scroll top
+				},
+				onEdit: function (event) {
+					w2alert('edit');
+				},
+				onSave: async function (event) {
+					let confirm = await new Promise((resolve, reject) => {
+						w2popup.open({
+							title: 'Records Changes',
+							with: 600,
+							height: 550,
+							body: `<pre>${JSON.stringify(this.getChanges(), null, 4)}</pre>`,
+							actions: {
+								Ok: () => resolve(true),
+								Cancel: () => resolve(false),
+							}
+						});
+					});
+					if (!confirm)
+						event.preventDefault();
+					w2popup.close();
+				},
+			});
+
+			// Load
+			this.c_w2grid.render(this.e_contain);
+
+			// Load data
+			await this.load();
+			
+			// this.c_w2grid.total = this.d_list.length + 100;
+			this.c_w2grid.records = this.d_list;
+			// this.c_w2grid.sort('time', 'desc');
+			this.c_w2grid.refresh();
+
+			// Process Params
+			this.processParams();
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		async load() {
+
+			this.d_list = await mt.common.loadJson(this.h_pathDB);
+
+			let processNode = (server, id) => {
+
+				// Bổ sung id
+				server.id = id;
+
+				// Lấy host và port
+				let pathUrl = server.url.split(':');
+				server.host = pathUrl[0];
+				server.port = +pathUrl[1];
+				
+				// Link reference
+				this.d_map[id] = server;
+			}
+
+			let id = 1;
+			for (let server of this.d_list) {
+				processNode(server, id++);
+
+				// Cấu trúc cây w2ui
+				if (server.list == null)
+					continue;
+
+				for (let subserver of server.list) // Bổ sung id
+					processNode(subserver, id++);
+
+				server.w2ui = { children: server.list };
+				delete server.list;
+			}
+		},
+		processParams() {
+			let urlParams = new URLSearchParams(window.location.search);
+			let tag = urlParams.get('tag');
+			if (tag != null) {
+				this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
+			}
+		},
+		async check(host, port) {
+			let result = await mt.common.cmd(`nmap -p ${port} ${host}`, [this.h_pathNmap]);
+			let stdout = result?.stdout || '';
+			// let stderr = result?.stderr || '';
+			mt.h_debug && console.log('[mt.server.check]', { result });
+			return stdout.includes('open');
+		},
+		btnRefreshAll() {
+			this.c_w2grid.selectAll();
+			let ids = this.c_w2grid.getSelection();
+			this.c_w2grid.selectNone();
+
+			for (let id of ids) {
+				this.btnRefresh(id); // No Await
+			}
+		},
+		async btnRefresh(serverId) {
+			this.c_w2grid.set(serverId, { status: null });
+			let server = this.d_map[serverId];
+			this.c_w2grid.set(serverId, { status: await this.check(server.host, server.port) });
+		},
+		btnLink(serverId) {
+			let server = this.d_map[serverId];
+			window.open('http://' + server.url, '_blank');
+		},
+		btnTag(tag) {
+			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
+		},
+	},
+
+	// Method
+	async init() {
+
+		// Bind Global
+		window.mt = this;
+
+		// Init
+		await this.p_authen.init();
+
+		// Init
+		this.common.init();
+	},
 };
-window.mt = mt;
-mt.init();
+document.addEventListener('DOMContentLoaded', () => mt.init());

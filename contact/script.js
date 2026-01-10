@@ -21,7 +21,6 @@ var mt = {
 
 		// Init
 		this.initUI();
-
 	},
 	initUI: function() {
 

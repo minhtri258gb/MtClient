@@ -1,337 +1,69 @@
 [
-	{
-		"name": "Ngày Quốc tế Điều dưỡng",
-		"date": "2000-05-12",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Nguyên Đán",
-		"date": "2000-02-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Giỗ Tổ Hùng Vương",
-		"date": "2000-04-18",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Dương Lịch",
-		"date": "2000-01-01",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Truyền Thống Học sinh, Sinh viên Việt Nam",
-		"date": "2000-01-09",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đảng Cộng sản Việt Nam",
-		"date": "2000-02-03",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thầy thuốc Việt Nam",
-		"date": "2000-02-27",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày sinh của Đồng chí Phạm Văn Đồng",
-		"date": "2000-03-01",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Truyền Thống Bộ đội Biên phòng",
-		"date": "2000-03-03",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc tế Phụ nữ",
-		"date": "2000-03-08",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc tế Hạnh phúc",
-		"date": "2000-03-20",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Nước sạch Thế giới",
-		"date": "2000-03-22",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đoàn Thanh niên Cộng sản Hồ Chí Minh",
-		"date": "2000-03-26",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thể thao Việt Nam",
-		"date": "2000-03-27",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Lực Lượng Dân Quân Tự Vệ",
-		"date": "2000-03-28",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày sách Việt Nam",
-		"date": "2000-04-21",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày mất của Đồng chí Phạm Văn Đồng",
-		"date": "2000-04-29",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Giải phóng Miền Nam, Thống nhất Đất nước",
-		"date": "2000-04-30",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc tế Lao động",
-		"date": "2000-05-01",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày giỗ của Đồng chí Phạm Văn Đồng",
-		"date": "2000-05-06",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày chiến thắng Điện Biên Phủ",
-		"date": "2000-05-07",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đội Thiếu niên Tiền phong Hồ Chí Minh",
-		"date": "2000-05-15",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày sinh của Chủ tịch Hồ Chí Minh",
-		"date": "2000-05-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Mặt trận Việt Minh",
-		"date": "2000-05-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc tế Thiếu nhi",
-		"date": "2000-06-01",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Bác Hồ ra đi tìm đường cứu nước",
-		"date": "2000-06-05",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Môi trường Thế giới",
-		"date": "2000-06-05",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Báo chí Cách mạng Việt Nam",
-		"date": "2000-06-21",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Gia đình Việt Nam",
-		"date": "2000-06-28",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Bảo hiểm Y tế Việt Nam",
-		"date": "2000-07-01",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Truyền thống Lực lượng Thanh niên xung phong Việt Nam",
-		"date": "2000-07-15",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thương binh Liệt sĩ",
-		"date": "2000-07-27",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Công đoàn Việt Nam",
-		"date": "2000-07-28",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Cách mạng tháng Tám thành công",
-		"date": "2000-08-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập CAND Việt Nam",
-		"date": "2000-08-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày hội Toàn dân bảo vệ an ninh Tổ quốc",
-		"date": "2000-08-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đài Truyền hình Kỹ thuật số VTC",
-		"date": "2000-08-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc khánh",
-		"date": "2000-09-02",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày mất của Chủ tịch Hồ Chí Minh",
-		"date": "2000-09-02",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đài Tiếng nói Việt Nam",
-		"date": "2000-09-07",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Đài Truyền hình Việt Nam",
-		"date": "2000-09-07",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Mặt trận Tổ quốc Việt Nam",
-		"date": "2000-09-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Khuyến học Việt Nam",
-		"date": "2000-10-20",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày giải phóng thủ đô",
-		"date": "2000-10-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Thăng Long - Hà Nội",
-		"date": "2000-10-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Truyền thống Luật sư Việt Nam",
-		"date": "2000-10-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Hội Nông dân Việt Nam",
-		"date": "2000-10-14",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày truyền thống Hội Liên hiệp Thanh niên Việt Nam",
-		"date": "2000-10-15",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Phụ nữ Việt Nam",
-		"date": "2000-10-20",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Pháp luật Việt Nam",
-		"date": "2000-11-09",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thành lập Mặt trận Dân tộc Thống nhất Việt Nam",
-		"date": "2000-11-18",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Quốc Tế Nam Giới",
-		"date": "2000-11-19",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Nhà giáo Việt Nam",
-		"date": "2000-11-20",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thành lập Hội Cựu Chiến binh Việt Nam",
-		"date": "2000-12-06",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Thành lập Mặt trận Dân tộc Giải phóng miền Nam Việt Nam",
-		"date": "2000-12-20",
-		"type": "yearly"
-	},
-	{
-		"name": "Lễ Giáng Sinh",
-		"date": "2000-12-24",
-		"type": "yearly"
-	},
-	{
-		"name": "Lễ Giáng Sinh",
-		"date": "2000-12-25",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày thành lập Quân đội Nhân dân Việt Nam",
-		"date": "2000-12-22",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày hội Quốc phòng toàn dân",
-		"date": "2000-12-22",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Nguyên Tiêu",
-		"date": "2000-02-24",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Hàn Thực",
-		"date": "2000-04-11",
-		"type": "yearly"
-	},
-	{
-		"name": "Lễ Phật Đản",
-		"date": "2000-05-22",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Đoan Ngọ",
-		"date": "2000-06-10",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Trung nguyên / Lễ Vu-lan",
-		"date": "2000-08-18",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Sân Khấu Việt Nam",
-		"date": "2000-09-14",
-		"type": "yearly"
-	},
-	{
-		"name": "Tết Trung Thu",
-		"date": "2000-09-17",
-		"type": "yearly"
-	},
-	{
-		"name": "Ngày Đưa Ông Táo Về Trời",
-		"date": "2000-02-02",
-		"type": "yearly"
-	}
+	{ "type": "yearly", "date": "2000-01-01", "name": "Tết Dương Lịch" },
+	{ "type": "yearly", "date": "2000-01-09", "name": "Ngày Truyền Thống Học sinh, Sinh viên Việt Nam" },
+	{ "type": "yearly", "date": "2000-02-02", "name": "Ngày Đưa Ông Táo Về Trời" },
+	{ "type": "yearly", "date": "2000-02-03", "name": "Ngày thành lập Đảng Cộng sản Việt Nam" },
+	{ "type": "yearly", "date": "2000-02-10", "name": "Tết Nguyên Đán" },
+	{ "type": "yearly", "date": "2000-02-24", "name": "Tết Nguyên Tiêu" },
+	{ "type": "yearly", "date": "2000-02-27", "name": "Ngày Thầy thuốc Việt Nam" },
+	{ "type": "yearly", "date": "2000-03-01", "name": "Ngày sinh của Đồng chí Phạm Văn Đồng" },
+	{ "type": "yearly", "date": "2000-03-03", "name": "Ngày Truyền Thống Bộ đội Biên phòng" },
+	{ "type": "yearly", "date": "2000-03-08", "name": "Ngày Quốc tế Phụ nữ" },
+	{ "type": "yearly", "date": "2000-03-20", "name": "Ngày Quốc tế Hạnh phúc" },
+	{ "type": "yearly", "date": "2000-03-22", "name": "Ngày Nước sạch Thế giới" },
+	{ "type": "yearly", "date": "2000-03-26", "name": "Ngày thành lập Đoàn Thanh niên Cộng sản Hồ Chí Minh" },
+	{ "type": "yearly", "date": "2000-03-27", "name": "Ngày Thể thao Việt Nam" },
+	{ "type": "yearly", "date": "2000-03-28", "name": "Ngày thành lập Lực Lượng Dân Quân Tự Vệ" },
+	{ "type": "yearly", "date": "2000-04-11", "name": "Tết Hàn Thực" },
+	{ "type": "yearly", "date": "2000-04-18", "name": "Giỗ Tổ Hùng Vương" },
+	{ "type": "yearly", "date": "2000-04-21", "name": "Ngày sách Việt Nam" },
+	{ "type": "yearly", "date": "2000-04-29", "name": "Ngày mất của Đồng chí Phạm Văn Đồng" },
+	{ "type": "yearly", "date": "2000-04-30", "name": "Ngày Giải phóng Miền Nam, Thống nhất Đất nước" },
+	{ "type": "yearly", "date": "2000-05-01", "name": "Ngày Quốc tế Lao động" },
+	{ "type": "yearly", "date": "2000-05-06", "name": "Ngày giỗ của Đồng chí Phạm Văn Đồng" },
+	{ "type": "yearly", "date": "2000-05-07", "name": "Ngày chiến thắng Điện Biên Phủ" },
+	{ "type": "yearly", "date": "2000-05-12", "name": "Ngày Quốc tế Điều dưỡng" },
+	{ "type": "yearly", "date": "2000-05-15", "name": "Ngày thành lập Đội Thiếu niên Tiền phong Hồ Chí Minh" },
+	{ "type": "yearly", "date": "2000-05-19", "name": "Ngày sinh của Chủ tịch Hồ Chí Minh" },
+	{ "type": "yearly", "date": "2000-05-19", "name": "Ngày thành lập Mặt trận Việt Minh" },
+	{ "type": "yearly", "date": "2000-05-22", "name": "Lễ Phật Đản" },
+	{ "type": "yearly", "date": "2000-06-01", "name": "Ngày Quốc tế Thiếu nhi" },
+	{ "type": "yearly", "date": "2000-06-05", "name": "Ngày Bác Hồ ra đi tìm đường cứu nước" },
+	{ "type": "yearly", "date": "2000-06-05", "name": "Ngày Môi trường Thế giới" },
+	{ "type": "yearly", "date": "2000-06-10", "name": "Tết Đoan Ngọ" },
+	{ "type": "yearly", "date": "2000-06-21", "name": "Ngày Báo chí Cách mạng Việt Nam" },
+	{ "type": "yearly", "date": "2000-06-28", "name": "Ngày Gia đình Việt Nam" },
+	{ "type": "yearly", "date": "2000-07-01", "name": "Ngày Bảo hiểm Y tế Việt Nam" },
+	{ "type": "yearly", "date": "2000-07-15", "name": "Ngày Truyền thống Lực lượng Thanh niên xung phong Việt Nam" },
+	{ "type": "yearly", "date": "2000-07-27", "name": "Ngày Thương binh Liệt sĩ" },
+	{ "type": "yearly", "date": "2000-07-28", "name": "Ngày thành lập Công đoàn Việt Nam" },
+	{ "type": "yearly", "date": "2000-08-18", "name": "Tết Trung nguyên / Lễ Vu-lan" },
+	{ "type": "yearly", "date": "2000-08-19", "name": "Ngày Cách mạng tháng Tám thành công" },
+	{ "type": "yearly", "date": "2000-08-19", "name": "Ngày thành lập CAND Việt Nam" },
+	{ "type": "yearly", "date": "2000-08-19", "name": "Ngày hội Toàn dân bảo vệ an ninh Tổ quốc" },
+	{ "type": "yearly", "date": "2000-08-19", "name": "Ngày thành lập Đài Truyền hình Kỹ thuật số VTC" },
+	{ "type": "yearly", "date": "2000-09-02", "name": "Ngày Quốc khánh" },
+	{ "type": "yearly", "date": "2000-09-02", "name": "Ngày mất của Chủ tịch Hồ Chí Minh" },
+	{ "type": "yearly", "date": "2000-09-07", "name": "Ngày thành lập Đài Tiếng nói Việt Nam" },
+	{ "type": "yearly", "date": "2000-09-07", "name": "Ngày thành lập Đài Truyền hình Việt Nam" },
+	{ "type": "yearly", "date": "2000-09-10", "name": "Ngày thành lập Mặt trận Tổ quốc Việt Nam" },
+	{ "type": "yearly", "date": "2000-09-14", "name": "Ngày Sân Khấu Việt Nam" },
+	{ "type": "yearly", "date": "2000-09-17", "name": "Tết Trung Thu" },
+	{ "type": "yearly", "date": "2000-10-20", "name": "Ngày Khuyến học Việt Nam" },
+	{ "type": "yearly", "date": "2000-10-10", "name": "Ngày giải phóng thủ đô" },
+	{ "type": "yearly", "date": "2000-10-10", "name": "Thăng Long - Hà Nội" },
+	{ "type": "yearly", "date": "2000-10-10", "name": "Ngày Truyền thống Luật sư Việt Nam" },
+	{ "type": "yearly", "date": "2000-10-14", "name": "Ngày thành lập Hội Nông dân Việt Nam" },
+	{ "type": "yearly", "date": "2000-10-15", "name": "Ngày truyền thống Hội Liên hiệp Thanh niên Việt Nam" },
+	{ "type": "yearly", "date": "2000-10-20", "name": "Ngày Phụ nữ Việt Nam" },
+	{ "type": "yearly", "date": "2000-11-09", "name": "Ngày Pháp luật Việt Nam" },
+	{ "type": "yearly", "date": "2000-11-18", "name": "Ngày Thành lập Mặt trận Dân tộc Thống nhất Việt Nam" },
+	{ "type": "yearly", "date": "2000-11-19", "name": "Ngày Quốc Tế Nam Giới" },
+	{ "type": "yearly", "date": "2000-11-20", "name": "Ngày Nhà giáo Việt Nam" },
+	{ "type": "yearly", "date": "2000-12-06", "name": "Ngày Thành lập Hội Cựu Chiến binh Việt Nam" },
+	{ "type": "yearly", "date": "2000-12-20", "name": "Ngày Thành lập Mặt trận Dân tộc Giải phóng miền Nam Việt Nam" },
+	{ "type": "yearly", "date": "2000-12-22", "name": "Ngày thành lập Quân đội Nhân dân Việt Nam" },
+	{ "type": "yearly", "date": "2000-12-22", "name": "Ngày hội Quốc phòng toàn dân" },
+	{ "type": "yearly", "date": "2000-12-24", "name": "Lễ Giáng Sinh" },
+	{ "type": "yearly", "date": "2000-12-25", "name": "Lễ Giáng Sinh" }
 ]

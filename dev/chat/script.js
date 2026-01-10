@@ -18,24 +18,22 @@ const createChatLi = (message, className) => {
 	return chatLi;
 }
 
+
+
 const generateResponse = (incomingChatLi) => {
-	const API_URL = "https://api.openai.com/v1/chat/completions";
-	const messageElement = incomingChatLi
-	.querySelector("p");
+	const API_URL = "http://192.168.1.220:11434/api/chat";
+	const messageElement = incomingChatLi.querySelector("p");
 	const requestOptions = {
 		method: "POST",
 		headers: {
-			"Content-Type": "application/json",
-			"Authorization": `Bearer ${API_KEY}`
+			"Content-Type": "application/json"
 		},
 		body: JSON.stringify({
-			"model": "gpt-3.5-turbo",
+			"model": "qwen2.5-coder:7b",
 			"messages": [
-				{
-					role: "user",
-					content: userMessage
-				}
-			]
+				{"role": "user", "content": userMessage}
+			],
+			"stream": false
 		})
 	};
 
@@ -47,8 +45,7 @@ const generateResponse = (incomingChatLi) => {
 			return res.json();
 		})
 		.then(data => {
-			messageElement
-			.textContent = data.choices[0].message.content;
+			messageElement.textContent = data.message.content;
 		})
 		.catch((error) => {
 			messageElement

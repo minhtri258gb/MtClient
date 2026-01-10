@@ -2,7 +2,6 @@ var mt = {
 	init() { // Khởi tạo
 		this.skip = true; // Skip for before interact
 
-		this.core.init();
 		this.gui.init();
 		this.player.init();
 		this.next.init();
@@ -24,16 +23,6 @@ var mt = {
 	},
 	core: {
 		interactName: '',
-
-		init() {
-
-			// Call API - Init Music App
-			// this.musics = $.ajax({
-			// 	type: 'GET',
-			// 	url: '/music/init',
-			// 	async: false
-			// });
-		},
 		isLocal() {
 			return window.location.href.startsWith('http://localhost/');
 		},

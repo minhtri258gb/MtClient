@@ -17,6 +17,8 @@
 </head>
 <body>
 
+	<p>Ngôn ngữ: vie</p>
+
 	<image id="image" style="border:solid;border-width:1px;"></image>
 
 	<div id="result" style="border:solid;border-width:1px;"></div>
@@ -32,7 +34,7 @@
 				window.mt = this;
 
 				// Init 
-				let worker = await Tesseract.createWorker('vie', 1, {
+				let worker = await Tesseract.createWorker('eng', 1, { // vie, eng
 					workerPath: '/lib/tesseract.js-6.0.1/worker.min.js',
 					langPath: '/lib/tesseract.js-6.0.1/res/',
 					// corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',

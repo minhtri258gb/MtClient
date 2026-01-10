@@ -229,6 +229,9 @@ var mt = {
 				console.error('[mt.grid.save]', ex);
 			}
 		},
+		buildContent() {
+			
+		},
 		async onWidgetClick(elWidget) {
 
 			// Lấy Id widget

@@ -1,28 +1,15 @@
-<!-- http://localhost/examples/w2ui.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 	<title>w2ui</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="stylesheet" type="text/css" href="/lib/w2ui/w2ui-2.0.min.css">
-
 	<!-- <script src="/lib/jquery/jquery-3.7.1.min.js"></script> -->
 	<!-- <script src="/lib/w2ui/w2ui-2.0.min.js"></script> -->
 	<!-- <script src="/common/config.js"></script> -->
-
-	<style>
-		#myGrid {
-			height: 450px;
-		}
-	</style>
-
-</head>
-<body>
-
-	<div id="myGrid"></div>
-
 	<script type="importmap">
 		{
 			"imports": {
@@ -30,19 +17,35 @@
 			}
 		}
 	</script>
+	<style>
+		#myGrid {
+			height: 450px;
+		}
+	</style>
+</head>
+<body>
+	<div id="layout" style="height: 400px"></div>
 	<script type="module">
-		import { w2grid, w2field, query } from 'w2ui';
-
+		import { w2layout, w2grid, w2field, query } from 'w2ui';
 		var app = {
+			c_w2grid: null,
 
-			// Properties
-			m_w2grid: null,
+			init() {
 
-			// Method
-			init: function() {
+				// Init UI - Layout
+				let layout = new w2layout({
+					name: 'myLayout',
+					panels: [
+						{ type: 'top', size: 60, html: 'top panel' },
+						{ type: 'main', style: 'background-color: #f5fff1', html: '<div id="myGrid"></div>' },
+						{ type: 'left', size: 150, resizable: true, html: 'left' },
+						{ type: 'right', size: 150, resizable: true, html: 'right' }
+					]
+				});
+				layout.render('#layout');
 
 				// Init UI - Grid
-				this.m_w2grid = new w2grid({
+				this.c_w2grid = new w2grid({
 					name: 'myGrid',
 					box: '#myGrid',
 					columns: [
@@ -116,9 +119,7 @@
 				});
 			},
 		};
-
 		app.init();
-
 	</script>
 </body>
 </html>

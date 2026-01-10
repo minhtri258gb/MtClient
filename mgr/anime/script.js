@@ -121,7 +121,7 @@ var mt = {
 				{ title: "Time", field: 'time', width: 69, vertAlign: 'middle', formatter: (cell) => {
 					let timestamp = cell.getValue();
 					if (timestamp == null)
-						return ''
+						return '';
 					return mtUtil.date.date_to_str(new Date(timestamp * 1000), 'dd/MM/yy');
 				} },
 			],
