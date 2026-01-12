@@ -6,3 +6,4 @@ node_modules
 /res/assets
 /res/midi
 /.vscode/chrome-debug
+/package-lock.json
