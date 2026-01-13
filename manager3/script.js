@@ -8,6 +8,16 @@ import mtAuthen from '/common/authen.js';
  * https://github.com/markdown-it/markdown-it
  */
 
+/** TODO
+ * MATH
+ * - https://www.mathjax.org/
+ * MIDI
+ * - https://www.abcjs.net/
+ * - https://lilypond.org/
+ * - https://www.vexflow.com/
+ * - https://flat.io/en-GB
+ */
+
 var mt = {
 	h_debug: true,
 	p_authen: mtAuthen,
@@ -36,6 +46,12 @@ var mt = {
 						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
 						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
 						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
+					]},
+					{ id: 'editor', text: 'Editor', group: true, expanded: true, nodes: [
+						{ id: 'markdown', text: 'Markdown', icon: 'fa-brands fa-markdown' },
+						{ id: 'midi', text: 'Midi', icon: 'fa-brands fa-medium' },
+						{ id: 'image', text: 'Image', icon: 'fa-solid fa-image' },
+						{ id: 'diagram', text: 'Diagram', icon: 'fa-solid fa-diagram-project' },
 					]},
 				],
 				onClick(event) {
@@ -115,28 +131,37 @@ var mt = {
 			// Hide right panel
 			this.c_w2layout.hide('right');
 		},
-		// openTab(pageCode, pageName) {
+		async loadJS(format, url, lib) {
 
-		// 	// Nếu chưa có tab thì thêm mới
-		// 	if (this.c_w2tabs.get(pageCode) == null) {
-		// 		this.c_w2tabs.add({ id: pageCode, text: pageName, closable: true });
-		// 		this.c_w2tabs.refresh();
-		// 	}
+			if (window[lib] != undefined)
+				return;
 
-		// 	// Mở tab
-		// 	this.c_w2tabs.click(pageCode); // Trigger mt.openPage
-		// },
-		async loadJS(url, exportName) {
-			let module = await new Promise((resolve, reject) => {
-				const script = document.createElement('script');
-				script.src = url;
-				script.onload = () => resolve(window[exportName]);
-				script.onerror = reject;
-				document.head.appendChild(script);
-			});
-			window[exportName] = module;
+			let module = null;
+			switch (format) {
+				case 'umd':
+					await import(url);
+					break;
+				case 'es':
+					module = await import(url);
+					window[lib] = module.default;
+					break;
+				case 'cjs':
+					module = await new Promise((resolve, reject) => {
+						const script = document.createElement('script');
+						script.src = url;
+						script.onload = () => resolve(window[lib]);
+						script.onerror = reject;
+						document.head.appendChild(script);
+					});
+					window[lib] = module;
+					break;
+			}
 		},
-		async loadCSS(url) {
+		async loadCSS(url, lib) {
+			
+			if (window[lib] != undefined)
+				return;
+
 			return new Promise((resolve, reject) => {
 				const link = document.createElement('link');
 				link.rel = 'stylesheet';
@@ -267,7 +292,7 @@ var mt = {
 					toolbar: true,
 					footer: true,
 					lineNumbers: true,
-					selectColumn: true,
+					selectColumn: false,
 					expandColumn: true,
 					toolbarAdd: true,
 					toolbarSave: true,
@@ -516,22 +541,25 @@ var mt = {
 
 		async init() {
 
+			// Import library - pre
+			await mt.common.loadJS('cjs', '/lib/mermaid-11.12.2/mermaid.min.js', 'mermaid');
+
 			// Import library
 			await Promise.all([
-				import('/lib/markdown-it/markdown-it.min.js'),
-				import('/lib/markdown-it/markdown-it-deflist.min.js'),
-				import('/lib/markdown-it/markdown-it-emoji-light.min.js'),
-				import('/lib/markdown-it/markdown-it-emoji.min.js'),
-				import('/lib/markdown-it/markdown-it-footnote.min.js'),
-				import('/lib/markdown-it/markdown-it-ins.min.js'),
-				import('/lib/markdown-it/markdown-it-mark.min.js'),
-				import('/lib/markdown-it/markdown-it-multimd-table.min.js'),
-				import('/lib/markdown-it/markdown-it-sub.min.js'),
-				import('/lib/markdown-it/markdown-it-sup.min.js'),
-				import('/lib/markdown-it/markdownItAnchor.umd.js'),
-				import('/lib/markdown-it/markdownItTocDoneRight.umd.js'),
-				mt.common.loadCSS('/lib/highlightjs/default.min.css'),
-				mt.common.loadJS('/lib/highlightjs/highlight.min.js', 'hljs'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-deflist.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-emoji-light.min.js',),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-emoji.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-footnote.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-ins.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-mark.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-multimd-table.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-sub.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-sup.min.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdownItAnchor.umd.js'),
+				mt.common.loadJS('umd', '/lib/markdown-it/markdownItTocDoneRight.umd.js'),
+				mt.common.loadCSS('/lib/highlightjs/default.min.css', 'hljs'),
+				mt.common.loadJS('cjs', '/lib/highlightjs/highlight.min.js', 'hljs'),
 			]);
 
 			// Add container
@@ -601,25 +629,29 @@ var mt = {
 				highlight: function (str, lang) {
 					if (lang && hljs.getLanguage(lang)) {
 						try {
-							return `<pre><code class="hljs">${hljs.highlight(str, { language: lang, ignoreIllegals: true }).value}</code></pre>`;
+							return hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
 						}
 						catch (__) {}
 					}
-					return ''; // use external default escaping
+					return str;
 				}
 			});
 
-			// Markdown Plugin - Anchor
-			this.c_markdown.use(markdownItAnchor, {
-				permalink: markdownItAnchor.permalink.headerLink()
-			});
+			// Markdown Plugin
+			this.c_markdown.use(markdownItAnchor, { permalink: markdownItAnchor.permalink.headerLink() });
+			this.c_markdown.use(markdownItTocDoneRight, { containerId: 'mdToC', listType: 'ol' });
+			this.c_markdown.use(markdownitDeflist);
+			this.c_markdown.use(markdownitEmoji);
+			this.c_markdown.use(markdownitFootnote);
+			this.c_markdown.use(markdownitIns);
+			this.c_markdown.use(markdownitIns);
+			this.c_markdown.use(markdownitMultimdTable);
+			this.c_markdown.use(markdownitSub);
+			this.c_markdown.use(markdownitSup);
 
-			// Markdown Plugin - Table of content
-			this.c_markdown.use(markdownItTocDoneRight, {
-				containerId: 'mdToC',
-				listType: 'ol',
-			});
-
+			// Init Mermaid
+			mermaid.initialize({ startOnLoad: false });
+			
 			// Init CSS
 			this.initCSS();
 
@@ -758,6 +790,14 @@ var mt = {
 				</div>
 			`.trim());
 
+			// Render Mermaid
+			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
+				let el = document.getElementById(svgId);
+				let pre = el.parentElement.parentElement;
+				pre.after(el);
+				pre.remove();
+			}});
+
 			// Log
 			// mt.h_debug && console.log('[mt.document.btnRead]', { content, html });
 		},
@@ -802,7 +842,7 @@ var mt = {
 		async init() {
 
 			// Import Library
-			await mt.common.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js', 'FullCalendar');
+			await mt.common.loadJS('cjs', '/lib/fullcalendar-6.1.18/index.global.min.js', 'FullCalendar');
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -1108,6 +1148,86 @@ var mt = {
 		btnTag(tag) {
 			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
 		},
+	},
+	midi: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Import Library
+			await new Promise.all([
+				mt.common.loadCSS('/lib/abcjs/abcjs-audio.css', 'ABCJS'),
+				mt.common.loadJS('cjs', '/lib/abcjs/abcjs-basic-min.js', 'ABCJS'),
+				// mt.common.loadJS('cjs', '/lib/abcjs/abcjs-plugin-min.js', '???'),
+			]);
+			
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-midi';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<textarea id="abc-input" rows="10" cols="60">
+X: 1
+T: Cooley's
+M: 4/4
+L: 1/8
+K: Emin
+|:D2|"Em"EBBA B2 EB|\
+    ~B2 AB dBAG|\
+    "D"FDAD BDAD|\
+    FDAD dAFD|
+"Em"EBBA B2 EB|\
+    B2 AB defg|\
+    "D"afe^c dBAF|\
+    "Em"DEFD E2:|
+|:gf|"Em"eB B2 efge|\
+    eB B2 gedB|\
+    "D"A2 FA DAFA|\
+    A2 FA defg|
+"Em"eB B2 eBgB|\
+    eB B2 defg|\
+    "D"afe^c dBAF|\
+    "Em"DEFD E2:|
+				</textarea>
+				<br>
+				<button onclick="mt.midi.renderABC()">Render</button>
+				<br>
+				<div id="audio"></div>
+				<br>
+				<div id="notation"></div>
+			`;
+
+			// `G/2 F/2 E1 G/2 F/2 E1 G1 E1 B1 d1 d3/2 B3/2 e4`
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		async renderABC() {
+			const abcString = document.getElementById("abc-input").value;
+
+			// Hiển thị bản nhạc
+			ABCJS.renderAbc("notation", abcString, { responsive: "resize" });
+
+			// Phát nhạc (MIDI/WebAudio)
+			if (ABCJS.synth.supportsAudio()) {
+				const synthControl = new ABCJS.synth.SynthController();
+				synthControl.load("#audio", null, { displayRestart: true });
+				const visualObj = ABCJS.renderAbc("notation", abcString)[0];
+				const synth = new ABCJS.synth.CreateSynth();
+				synth.init({ visualObj: visualObj }).then(() => {
+					synthControl.setTune(visualObj, true);
+				});
+			}
+		}
 	},
 
 	// Method
