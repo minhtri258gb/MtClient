@@ -1,5 +1,7 @@
 [
+  { "name": "TEST", "path": "D:/Work/test.md", "tags": [] },
   { "name": "SQL", "path": "D:/Document/DOC/SQL.md", "tags": ["Lang"] },
+  { "name": "Markdown", "path": "D:/Document/DOC/Markdown.md", "tags": ["Lang"] },
   { "name": "HIN", "path": "D:/Work/HIN/HIN.md", "tags": ["HIN"] },
   { "name": "DMS", "path": "D:/Work/DMS/DMS.md", "tags": ["DMS"] },
   { "name": "TABLET", "path": "D:/Work/DMS/Tablet/TABLET.md", "tags": ["DMS"] }

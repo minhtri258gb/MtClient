@@ -6,16 +6,12 @@ import mtAuthen from '/common/authen.js';
  * https://fullcalendar.io/
  * https://fontawesome.com/v6/search?ic=free-collection
  * https://github.com/markdown-it/markdown-it
+ * https://www.abcjs.net/
  */
 
 /** TODO
  * MATH
  * - https://www.mathjax.org/
- * MIDI
- * - https://www.abcjs.net/
- * - https://lilypond.org/
- * - https://www.vexflow.com/
- * - https://flat.io/en-GB
  */
 
 var mt = {
@@ -131,48 +127,6 @@ var mt = {
 			// Hide right panel
 			this.c_w2layout.hide('right');
 		},
-		async loadJS(format, url, lib) {
-
-			if (window[lib] != undefined)
-				return;
-
-			let module = null;
-			switch (format) {
-				case 'umd':
-					await import(url);
-					break;
-				case 'es':
-					module = await import(url);
-					window[lib] = module.default;
-					break;
-				case 'cjs':
-					module = await new Promise((resolve, reject) => {
-						const script = document.createElement('script');
-						script.src = url;
-						script.onload = () => resolve(window[lib]);
-						script.onerror = reject;
-						document.head.appendChild(script);
-					});
-					window[lib] = module;
-					break;
-			}
-		},
-		async loadCSS(url, lib) {
-			
-			if (window[lib] != undefined)
-				return;
-
-			return new Promise((resolve, reject) => {
-				const link = document.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = url;
-				
-				link.onload = () => resolve();
-				link.onerror = () => reject(new Error(`Không thể tải CSS từ: ${url}`));
-				
-				document.head.appendChild(link);
-			});
-		},
 		async loadJson(url) {
 			try {
 
@@ -255,6 +209,105 @@ var mt = {
 			
 			return await response.json();
 		},
+	},
+	lib: {
+		async import(libs) {
+			let promise = [];
+			for (let name of libs) {
+				let lib = this[name];
+
+				if (lib.init)
+					continue;
+				lib.init = true;
+
+				let p = lib.load();
+				promise.push(p);
+			}
+			await Promise.all(promise); // Đơi load toàn bộ
+		},
+		async loadJS(url, format, lib) {
+			let module = null;
+			switch (format) {
+				case 'es':
+					module = await import(url);
+					window[lib] = module.default;
+					break;
+				case 'cjs':
+					module = await new Promise((resolve, reject) => {
+						const script = document.createElement('script');
+						script.src = url;
+						script.onload = () => resolve(window[lib]);
+						script.onerror = reject;
+						document.head.appendChild(script);
+					});
+					window[lib] = module;
+					break;
+				default: // umd
+					await import(url);
+			}
+		},
+		async loadCSS(url, lib) {
+			return new Promise((resolve, reject) => {
+				const link = document.createElement('link');
+				link.rel = 'stylesheet';
+				link.href = url;
+				
+				link.onload = () => resolve();
+				link.onerror = () => reject(new Error(`Không thể tải CSS từ: ${url}`));
+				
+				document.head.appendChild(link);
+			});
+		},
+		
+		'ABCJS': { init: false, async load () {
+			await Promise.all([
+				mt.lib.loadCSS('/lib/abcjs/abcjs-audio.css'),
+				mt.lib.loadJS('/lib/abcjs/abcjs-basic-min.js'),
+				// mt.lib.loadJS('/res/soundfont/marimba-mp3.js'),
+			]);
+			await mt.lib.loadJS('/lib/abcjs/abcjs-plugin-min.js');
+		}},
+		'CodeMirror': { init: false, async load () {
+			await Promise.all([
+				mt.lib.loadCSS('/lib/codemirror5-5.65.18/lib/codemirror.css'),
+				mt.lib.loadCSS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.css'),
+				mt.lib.loadJS('/lib/codemirror5-5.65.18/lib/codemirror.js'),
+			]);
+			await Promise.all([
+				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/foldcode.js'),
+				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.js'),
+			]);
+		}},
+		'FullCalendar': { init: false, async load () {
+			await mt.lib.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js');
+		}},
+		'highlightjs': { init: false, async load () {
+			await Promise.all([
+				mt.lib.loadCSS('/lib/highlightjs/default.min.css'),
+				mt.lib.loadJS('/lib/highlightjs/highlight.min.js'),
+			]);
+		}},
+		'markdownIt': { init: false, async load () {
+			if (window.mermaid == null)
+				throw new Error('Import mermaid trước markdownIt');
+			await Promise.all([
+				mt.lib.loadJS('/lib/markdown-it/markdown-it.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-deflist.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-emoji-light.min.js',),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-emoji.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-footnote.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-ins.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-mark.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-multimd-table.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-sub.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdown-it-sup.min.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdownItAnchor.umd.js'),
+				mt.lib.loadJS('/lib/markdown-it/markdownItTocDoneRight.umd.js'),
+			]);
+		}},
+		'mermaid': { init: false, async load () {
+			await mt.lib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
+		}},
 	},
 	anime: {
 		h_pathDB: '/res/DB/anime.json',
@@ -541,26 +594,9 @@ var mt = {
 
 		async init() {
 
-			// Import library - pre
-			await mt.common.loadJS('cjs', '/lib/mermaid-11.12.2/mermaid.min.js', 'mermaid');
-
 			// Import library
-			await Promise.all([
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-deflist.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-emoji-light.min.js',),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-emoji.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-footnote.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-ins.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-mark.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-multimd-table.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-sub.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdown-it-sup.min.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdownItAnchor.umd.js'),
-				mt.common.loadJS('umd', '/lib/markdown-it/markdownItTocDoneRight.umd.js'),
-				mt.common.loadCSS('/lib/highlightjs/default.min.css', 'hljs'),
-				mt.common.loadJS('cjs', '/lib/highlightjs/highlight.min.js', 'hljs'),
-			]);
+			await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
+			await mt.lib.import(['markdownIt', 'highlightjs']);
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -842,7 +878,7 @@ var mt = {
 		async init() {
 
 			// Import Library
-			await mt.common.loadJS('cjs', '/lib/fullcalendar-6.1.18/index.global.min.js', 'FullCalendar');
+			await mt.lib.import(['FullCalendar']);
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -1033,10 +1069,13 @@ var mt = {
 						// { type: 'break' },
 						// { type: 'button', id: 'showChanges', text: 'Show Changes' },
 						{ type: 'button', id: 'refresh_all', text: 'Refresh All', icon: 'fa-solid fa-arrows-rotate' },
+						{ type: 'button', id: 'share', text: 'Share', icon: 'fa-solid fa-share-from-square' },
 					],
 					onClick: (event) => {
 						if (event.target == 'refresh_all')
 							this.btnRefreshAll();
+						else if (event.target == 'share')
+							this.btnShare();
 					}
 				},
 				columns: [
@@ -1141,6 +1180,42 @@ var mt = {
 			let server = this.d_map[serverId];
 			this.c_w2grid.set(serverId, { status: await this.check(server.host, server.port) });
 		},
+		async btnShare() {
+
+			// Lấy Port hiện tại
+			let URL = location.origin + location.pathname;
+			if (URL.indexOf('localhost') > -1) {
+
+				// Call API - Get IP
+				let response = await fetch('/common/getIPLocal', { method: 'GET' });
+				if (!response.ok)
+					throw { error: true, message: await response.text() };
+				let IP = await response.text();
+
+				URL = URL.replace('localhost', IP);
+			}
+
+			// Thêm params query
+			let paramURL = new URLSearchParams();
+			let tabName = w2ui.layout_main_tabs.active;
+			paramURL.set('tab', tabName);
+			let tags = mt.server.c_w2grid.getSearchData('tags');
+			if (tags != null)
+				paramURL.set('tag', tags.value);
+			URL += '?' + paramURL.toString();
+			if (window.location.hash)
+				URL += decodeURIComponent(window.location.hash);
+
+			// Tự động copy
+			if (window.isSecureContext) {
+				await navigator.clipboard.writeText(URL);
+				// mt.utils.toast('success', 'Đã copy link nhạc.');
+			}
+			else {
+				console.log(URL);
+				// mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+			}
+		},
 		btnLink(serverId) {
 			let server = this.d_map[serverId];
 			window.open('http://' + server.url, '_blank');
@@ -1156,12 +1231,8 @@ var mt = {
 		async init() {
 
 			// Import Library
-			await new Promise.all([
-				mt.common.loadCSS('/lib/abcjs/abcjs-audio.css', 'ABCJS'),
-				mt.common.loadJS('cjs', '/lib/abcjs/abcjs-basic-min.js', 'ABCJS'),
-				// mt.common.loadJS('cjs', '/lib/abcjs/abcjs-plugin-min.js', '???'),
-			]);
-			
+			await mt.lib.import(['ABCJS', 'CodeMirror']);
+
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'contain-midi';
@@ -1169,38 +1240,102 @@ var mt = {
 			mt.common.e_contain.appendChild(this.e_contain);
 
 			this.e_contain.innerHTML = `
-				<textarea id="abc-input" rows="10" cols="60">
-X: 1
-T: Cooley's
-M: 4/4
-L: 1/8
-K: Emin
-|:D2|"Em"EBBA B2 EB|\
-    ~B2 AB dBAG|\
-    "D"FDAD BDAD|\
-    FDAD dAFD|
-"Em"EBBA B2 EB|\
-    B2 AB defg|\
-    "D"afe^c dBAF|\
-    "Em"DEFD E2:|
-|:gf|"Em"eB B2 efge|\
-    eB B2 gedB|\
-    "D"A2 FA DAFA|\
-    A2 FA defg|
-"Em"eB B2 eBgB|\
-    eB B2 defg|\
-    "D"afe^c dBAF|\
-    "Em"DEFD E2:|
-				</textarea>
+				<textarea id="midi-input" rows="10" cols="60"></textarea>
 				<br>
 				<button onclick="mt.midi.renderABC()">Render</button>
 				<br>
-				<div id="audio"></div>
+				<div id="midi-audio"></div>
 				<br>
-				<div id="notation"></div>
-			`;
+				<div id="midi-notation"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
 
-			// `G/2 F/2 E1 G/2 F/2 E1 G1 E1 B1 d1 d3/2 B3/2 e4`
+			// Init Editor
+			CodeMirror.defineMode('abc', function(config) {
+				return {
+					token: function(stream) {
+						if (stream.match(/[A-Ga-g]/)) return 'abc-note';
+						if (stream.match(/\d+\/?\d*/)) return 'abc-duration';
+						if (stream.match(/K:[A-G]/)) return 'abc-key';
+						if (stream.match(/M:\d+\/\d+/)) return 'abc-meter';
+						if (stream.match(/w:.*/)) return 'abc-lyric';
+						stream.next();
+						return null;
+					}
+				};
+			});
+
+			let textarea = document.getElementById('midi-input');
+			this.m_editor = CodeMirror.fromTextArea(textarea, {
+				mode: 'abc',
+				lineNumbers: true,
+				lineWrapping: true,
+				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+				foldGutter: true,
+				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+			});
+			this.setCode(`
+				X: 1
+				T: Level Two - DJ Striden
+				M: 4/4
+				L: 1/8
+				Q: 1/4=144
+				K: Emin
+				%%MIDI program 12
+				G/2F/2E G/2F/2E|G E B d|d3/2B3/2 e2 z2
+				e/2f/2 g/2f/2e g/2f/2e|g a/2 b d'|d'3/2b3/2 e'2 z2
+			`.trim().split('\n').map(v=>v.trim()).join('\n'));
+
+			/*
+				G/2 F/2 E|G/2 F/2 E|G E|B d|d3/2 B3/2 e2 z2
+				e/2 f/2|g/2 f/2 e|g/2 f/2 e|g a/2 b d' d'3/2 b3/2 e'2 z2
+			*/
+
+			/*
+				|:D2|"Em"EBBA B2 EB|\
+						~B2 AB dBAG|\
+						"D"FDAD BDAD|\
+						FDAD dAFD|
+				"Em"EBBA B2 EB|\
+						B2 AB defg|\
+						"D"afe^c dBAF|\
+						"Em"DEFD E2:|
+				|:gf|"Em"eB B2 efge|\
+						eB B2 gedB|\
+						"D"A2 FA DAFA|\
+						A2 FA defg|
+				"Em"eB B2 eBgB|\
+						eB B2 defg|\
+						"D"afe^c dBAF|\
+						"Em"DEFD E2:|
+			*/
+
+			// abcjsEditor = new ABCJS.Editor("midi-input", {
+			//   canvas_id: "paper",
+			//   warnings_id: "warnings",
+			//   synth: {
+			//     el: "#audio",
+			//     options: { displayLoop: true, displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true }
+			//   },
+			//   abcjsParams: {
+			//     add_classes: true,
+			//     clickListener: clickListener
+			//   },
+			//   selectionChangeCallback: selectionChangeCallback
+			// });
+
+			// Init CSS
+			this.initCSS();
+		},
+		async initCSS() {
+			const style = document.createElement('style');
+			style.textContent = `
+				.abc-note { color: blue; font-weight: bold; }
+				.abc-duration { color: green; }
+				.abc-key { color: purple; }
+				.abc-meter { color: orange; }
+				.abc-lyric { color: brown; font-style: italic; }
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+			document.head.appendChild(style);
 		},
 		async open() {
 			if (!this.m_init) {
@@ -1211,19 +1346,48 @@ K: Emin
 				this.e_contain.style.display = '';
 			}
 		},
+		setCode(code) {
+			this.m_editor.setValue(code);
+		},
+		getCode() {
+			return this.m_editor.getValue();
+		},
 		async renderABC() {
-			const abcString = document.getElementById("abc-input").value;
+			const abcString = this.getCode();
 
 			// Hiển thị bản nhạc
-			ABCJS.renderAbc("notation", abcString, { responsive: "resize" });
+			ABCJS.renderAbc('midi-notation', abcString, {
+				responsive: 'resize',
+				add_classes: true,
+				jazzchords: true,
+				drum: 'dddd 76 77 77 77 60 30 30 30',
+			});
 
 			// Phát nhạc (MIDI/WebAudio)
 			if (ABCJS.synth.supportsAudio()) {
 				const synthControl = new ABCJS.synth.SynthController();
-				synthControl.load("#audio", null, { displayRestart: true });
-				const visualObj = ABCJS.renderAbc("notation", abcString)[0];
+				synthControl.load('#midi-audio', null, {
+					// soundFontUrl: "/res/soundfont/marimba-mp3.js",
+					displayLoop: true,
+					displayRestart: true,
+					displayPlay: true,
+					displayProgress: true,
+					displayWarp: true,
+					displayClock: true,
+				});
+				const visualObj = ABCJS.renderAbc('midi-notation', abcString)[0];
 				const synth = new ABCJS.synth.CreateSynth();
-				synth.init({ visualObj: visualObj }).then(() => {
+				synth.init({
+					visualObj: visualObj,
+					options: {
+						// soundFontUrl: "/res/soundfont/marimba-mp3.js",
+						soundFontUrl: '/res/soundfont/FluidR3_Salamander_GM/',
+						// instruments: ['marimba'],
+						// program: 12, // marimba-mp3
+						format: 'mp3',
+						soundFontVolume: 1.0,
+					}
+				}).then(() => {
 					synthControl.setTune(visualObj, true);
 				});
 			}
