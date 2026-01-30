@@ -969,7 +969,7 @@ var mt = {
 				events: [],
 				// Custom Button
 				customButtons: {
-					addEvent: { text: 'Thêm', click: () => this.openForm({ id: -1, name: "New Event", date: mt.utils.convert_DateToStr(new Date()) }) },
+					addEvent: { text: 'Thêm', click: () => this.openForm({ id: -1, name: '', date: mt.utils.convert_DateToStr(new Date()) }) },
 				},
 				// Register Event
 				datesSet: async (info) => { // khi đổi tháng, kiểu view, ngày, ...
@@ -980,7 +980,7 @@ var mt = {
 				dateClick: (info) => {
 					if (this.t_tmp.clickDate == info.dateStr) {
 						delete this.t_tmp.clickDate;
-						this.openForm({ id: -1, name: "New Event", date: info.dateStr }); // Dupclick thì thêm sự kiện
+						this.openForm({ id: -1, name: '', date: info.dateStr }); // Dupclick thì thêm sự kiện
 					} else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
 				},
 			});
@@ -1024,8 +1024,8 @@ var mt = {
 					required: ['name', 'date'],
 					properties: {
 						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
-						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0 },
-						'date': { title: 'Date', type: 'string', format: 'date', options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
+						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
+						'date': { title: 'Date', type: 'string', format: 'date', readonly: true, options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
 						'save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
 						'cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
 					}
@@ -1096,6 +1096,7 @@ var mt = {
 				// Get year
 				let year = Number.parseInt(formData.date.substring(0, 4));
 
+				// Lưu và cập nhật UI
 				if (formData.id == -1) { // Add event
 					let newid = this.d_events[year].length;
 					formData.id = newid;
@@ -1115,8 +1116,19 @@ var mt = {
 
 					let event = this.c_calendar.getEventById(formData.id);
 					event.setProp('title', formData.name);
-					event.setExtendedProp('name', formData.name);
+					for (let prop in formData) {
+						if (prop == 'id' || prop == 'date')
+							continue;
+						event.setExtendedProp(prop, formData[prop]);
+					}
 				}
+
+				// Save data
+				let urlDB = '/' + this.h_pathDB + year + '.json';
+				let cloneData = JSON.parse(JSON.stringify(this.d_events[year]));
+				for (let event of cloneData)
+					delete event.id;
+				await mt.common.saveJson(urlDB, cloneData);
 
 				// Close modal
 				this.c_modal.close();
@@ -1126,7 +1138,7 @@ var mt = {
 			}
 			catch (ex) {
 				// Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
-				// console.error('[mt.form.open.preConfirm] Exception:', ex);
+				console.error('[mt.calendar.saveForm] Exception:', ex);
 			}
 		},
 		async generate(year) { // Tạo data của năm
