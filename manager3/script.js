@@ -5,6 +5,7 @@ import mtAuthen from '/common/authen.js';
  * https://w2ui.com/web/docs/2.0/w2layout.set
  * https://fullcalendar.io/
  * https://fontawesome.com/v6/search?ic=free-collection
+ * https://codemirror.net/
  * https://github.com/markdown-it/markdown-it
  * https://www.abcjs.net/
  */
@@ -48,6 +49,9 @@ var mt = {
 						{ id: 'midi', text: 'Midi', icon: 'fa-brands fa-medium' },
 						{ id: 'image', text: 'Image', icon: 'fa-solid fa-image' },
 						{ id: 'diagram', text: 'Diagram', icon: 'fa-solid fa-diagram-project' },
+					]},
+					{ id: 'viewer', text: 'Viewer', group: true, expanded: true, nodes: [
+						{ id: 'pdf', text: 'PDF', icon: 'fa-regular fa-file-pdf' },
 					]},
 				],
 				onClick(event) {
@@ -259,7 +263,7 @@ var mt = {
 			});
 		},
 		
-		'ABCJS': { init: false, async load () {
+		'ABCJS': { init: false, async load() {
 			await Promise.all([
 				mt.lib.loadCSS('/lib/abcjs/abcjs-audio.css'),
 				mt.lib.loadJS('/lib/abcjs/abcjs-basic-min.js'),
@@ -267,7 +271,7 @@ var mt = {
 			]);
 			await mt.lib.loadJS('/lib/abcjs/abcjs-plugin-min.js');
 		}},
-		'CodeMirror': { init: false, async load () {
+		'CodeMirror': { init: false, async load() {
 			await Promise.all([
 				mt.lib.loadCSS('/lib/codemirror5-5.65.18/lib/codemirror.css'),
 				mt.lib.loadCSS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.css'),
@@ -278,16 +282,40 @@ var mt = {
 				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.js'),
 			]);
 		}},
-		'FullCalendar': { init: false, async load () {
+		'CodeMirror-md': { init: false, async load() {
+			await Promise.all([
+				mt.lib.loadJS('/lib/codemirror5-5.65.18/mode/markdown/markdown.js'),
+				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/markdown-fold.js'),
+			]);
+		}},
+		'flatpickr': { init: false, async load() {
+			await Promise.all([
+				mt.lib.loadCSS('/lib/flatpickr/flatpickr.min.css'),
+				mt.lib.loadJS('/lib/flatpickr/flatpickr.min.js'),
+			]);
+			await mt.lib.loadJS('/lib/flatpickr/l10n/vn.js');
+		}},
+		'FullCalendar': { init: false, async load() {
 			await mt.lib.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js');
 		}},
-		'highlightjs': { init: false, async load () {
+		'highlightjs': { init: false, async load() {
 			await Promise.all([
 				mt.lib.loadCSS('/lib/highlightjs/default.min.css'),
 				mt.lib.loadJS('/lib/highlightjs/highlight.min.js'),
 			]);
 		}},
-		'markdownIt': { init: false, async load () {
+		'jsonEditor': { init: false, async load() {
+			await Promise.all([
+				mt.lib.loadCSS('/lib/mt/json-editor/mt-style.css'),
+				mt.lib.loadJS('/lib/json-editor-2.15.2/jsoneditor.min.js'),
+			]);
+		}},
+		'marked': { init: false, async load() {
+			await Promise.all([
+				mt.lib.loadJS('/lib/marked-16.1.2/marked.umd.js'),
+			]);
+		}},
+		'markdownIt': { init: false, async load() {
 			if (window.mermaid == null)
 				throw new Error('Import mermaid trước markdownIt');
 			await Promise.all([
@@ -305,9 +333,27 @@ var mt = {
 				mt.lib.loadJS('/lib/markdown-it/markdownItTocDoneRight.umd.js'),
 			]);
 		}},
-		'mermaid': { init: false, async load () {
+		'mermaid': { init: false, async load() {
 			await mt.lib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
 		}},
+		'SimpleMDE': { init: false, async load() {
+			await mt.lib.loadCSS('/lib/simplemde-1.11.2-0/simplemde.min.css');
+			await mt.lib.loadJS('/lib/simplemde-1.11.2-0/simplemde.min.js');
+		}},
+		'solarLunar': { init: false, async load() {
+			await mt.lib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
+		}},
+		'tingle': { init: false, async load() {
+			await mt.lib.loadCSS('/lib/tingle/tingle.min.css');
+			await mt.lib.loadCSS('/lib/mt/tingle/mt-style.css');
+			await mt.lib.loadJS('/lib/tingle/tingle.min.js');
+		}},
+	},
+	utils: {
+		convert_DateToStr(date) {
+			let pad = (num) => date < 10 ? '0'+num : ''+num;
+			return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+		},
 	},
 	anime: {
 		h_pathDB: '/res/DB/anime.json',
@@ -872,21 +918,27 @@ var mt = {
 		h_pathDB: 'res/DB/calendar/',
 		m_init: false,
 		d_events: {}, // Map year -> list event
-		c_calendar: null,
+		c_calendar: null, // fullcalendar
+		c_modal: null, // tingle
+		c_form: null, // jsoneditor
 		e_content: null,
+		t_tmp: {}, // Quản lý sự kiện tạm
 
 		async init() {
 
 			// Import Library
-			await mt.lib.import(['FullCalendar']);
+			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr']);
 
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'contain-calendar';
 			this.e_contain.style.height = '100%';
+			this.e_contain.style.padding = '4px';
 			mt.common.e_contain.appendChild(this.e_contain);
 
+			// Init Calendar
 			this.c_calendar = new FullCalendar.Calendar(this.e_contain, {
+				height: 'parent',
 				initialView: 'dayGridMonth',
 				// initialDate: '2024-12-08', // #DEBUG
 				locale: 'vi',
@@ -917,19 +969,68 @@ var mt = {
 				events: [],
 				// Custom Button
 				customButtons: {
-					addEvent: { text: 'Thêm', click: () => mt.form.open(null) },
+					addEvent: { text: 'Thêm', click: () => this.openForm({ id: -1, name: "New Event", date: mt.utils.convert_DateToStr(new Date()) }) },
 				},
 				// Register Event
-				// datesSet: (info) => this.changeDate(info),
-				// eventClick: (item) => mt.form.open(item),
-				// dateClick: () => this.dateClick(),
+				datesSet: async (info) => { // khi đổi tháng, kiểu view, ngày, ...
+					let year = info.view.currentStart.getFullYear();
+					await this.load(year);
+				},
+				eventClick: (info) => this.openForm(info.event.extendedProps),
+				dateClick: (info) => {
+					if (this.t_tmp.clickDate == info.dateStr) {
+						delete this.t_tmp.clickDate;
+						this.openForm({ id: -1, name: "New Event", date: info.dateStr }); // Dupclick thì thêm sự kiện
+					} else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
+				},
 			});
-
 			this.c_calendar.render();
 
-			// Load data
-			let year = new Date().getFullYear();
-			await this.load(year);
+			// Init popup - tingle
+			this.c_modal = new tingle.modal({
+				footer: false,
+				stickyFooter: false,
+				closeMethods: ['button', 'escape'], // 'overlay'
+				closeLabel: "Đóng",
+				onOpen: function() {
+					// console.log('modal opened');
+				},
+				onClose: function() {
+					// console.log('modal closed');
+				},
+				beforeClose: function() {
+					// Return true to close the modal, false to prevent closing
+					return true;
+				},
+			});
+			this.c_modal.setContent('<div id="calenar-form" class="json-editor"></div>');
+
+			// Init form - JsonEditor
+			// JsonEditorEX.RateRegister();
+			// JsonEditorEX.TagBoxRegister();
+			const element = document.getElementById('calenar-form');
+			element.style.width = '500px';
+			element.parentElement.parentElement.style.width = 'unset'; // Bỏ width gốc
+			this.c_form = new JSONEditor(element, {
+				use_name_attributes: false,
+				theme: 'barebones',
+				iconlib: 'fontawesome5',
+				disable_edit_json: true,
+				disable_properties: true,
+				disable_collapse: true,
+				schema: {
+					title: 'Lịch sự kiện',
+					type: 'object',
+					required: ['name', 'date'],
+					properties: {
+						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
+						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0 },
+						'date': { title: 'Date', type: 'string', format: 'date', options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
+						'save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
+						'cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
+					}
+				},
+			});
 		},
 		async open() {
 			
@@ -943,6 +1044,10 @@ var mt = {
 		},
 		async load(year) {
 
+			// Nếu đã có data thì bỏ qua
+			if (this.d_events[year] != null)
+				return;
+
 			let urlDB = '/' + this.h_pathDB + year + '.json';
 
 			// Call API
@@ -952,6 +1057,13 @@ var mt = {
 			if (listEvent.length == 0)
 				listEvent = await this.generate(year);
 
+			// Process
+			for (let i=0; i<listEvent.length; i++) {
+				let event = listEvent[i];
+				event.id = i+1; // Bổ sung Id
+			}
+
+			// Bind Data
 			this.d_events[year] = listEvent;
 
 			// Set into calendar
@@ -959,6 +1071,63 @@ var mt = {
 
 			// Log
 			mt.h_debug && console.log('[mt.calendar.load]', { year, listEvent });
+		},
+		async openForm(formData) {
+
+			// Set form data
+			this.c_form.setValue(formData);
+			
+			// Open Modal
+			this.c_modal.open();
+
+			// Log
+			mt.h_debug && console.log('[mt.calendar.openForm]', { formData });
+		},
+		async saveForm() {
+			try {
+
+				// Lấy data form
+				let formData = this.c_form.getValue();
+
+				// Validate
+				// if (formData == null || formData.date == null)
+				// 	throw 'Chưa chọn ngày!'
+
+				// Get year
+				let year = Number.parseInt(formData.date.substring(0, 4));
+
+				if (formData.id == -1) { // Add event
+					let newid = this.d_events[year].length;
+					formData.id = newid;
+
+					this.d_events[year].push(formData);
+
+					this.c_calendar.addEvent({
+						id: formData.id,
+						title: formData.name,
+						start: formData.date,
+						extendedProps: formData,
+					});
+				}
+				else { // Update event
+					// let oldData = this.d_events[year][formData.id-1];
+					this.d_events[year][formData.id-1] = formData;
+
+					let event = this.c_calendar.getEventById(formData.id);
+					event.setProp('title', formData.name);
+					event.setExtendedProp('name', formData.name);
+				}
+
+				// Close modal
+				this.c_modal.close();
+
+				// Log
+				mt.h_debug && console.log('[mt.calendar.saveForm]', { formData });
+			}
+			catch (ex) {
+				// Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+				// console.error('[mt.form.open.preConfirm] Exception:', ex);
+			}
 		},
 		async generate(year) { // Tạo data của năm
 
@@ -971,11 +1140,13 @@ var mt = {
 			// Gen
 			let listEvent = [];
 			for (let gen of listGen) {
-				if (gen.type == 'yearly') {
-					listEvent.push({
-						date: year + gen.date.slice(4),
-						name: gen.name
-					});
+				switch (gen.type) {
+					case 'yearly':
+						listEvent.push({ date: year + gen.date.slice(4), name: gen.name });
+						break;
+					case 'yearly-lunar':
+						listEvent.push({ date: this.convert_Lunar2Solar(year + gen.date.slice(4)), name: gen.name });
+						break;
 				}
 			}
 
@@ -997,13 +1168,21 @@ var mt = {
 			for (let i=0, sz=listEvent.length; i<sz; i++) {
 				let event = listEvent[i];
 				lstData.push({
-					id: i+1,
+					id: event.id,
 					title: event.name,
 					start: event.date,
 					extendedProps: event,
 				});
 			}
 			this.c_calendar.addEventSource(lstData);
+		},
+		convert_Lunar2Solar(lunarDateStr) {
+			let year = Number.parseInt(lunarDateStr.substring(0, 4));
+			let month = Number.parseInt(lunarDateStr.substring(5, 7));
+			let day = Number.parseInt(lunarDateStr.substring(8, 10));
+			let sonarDate = solarLunar.lunar2solar(year, month, day, false);
+			let funcPad = (num) => (num < 10) ? '0'+num : ''+num;
+			return `${sonarDate.cYear}-${funcPad(sonarDate.cMonth)}-${funcPad(sonarDate.cDay)}`;
 		},
 	},
 	server: {
@@ -1224,6 +1403,100 @@ var mt = {
 			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
 		},
 	},
+	markdown: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+			
+			// Import Library
+			let isNeedInitMermaid = !mt.lib.mermaid.init;
+			await mt.lib.import(['SimpleMDE','marked','mermaid']);
+
+			if (isNeedInitMermaid) {
+				mermaid.initialize({
+					startOnLoad: false,
+					theme: 'default'
+				});
+			}
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-markdown';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `<textarea id="markdown-editor"></textarea>`;
+
+			// Init marked
+			const renderer = new marked.Renderer();
+			renderer.code = (params) => {
+				// Kiểm tra nếu ngôn ngữ của khối mã là 'mermaid'
+				if (params.lang === 'mermaid')
+					return '<div class="mermaid">' + params.text + '</div>';
+				// Đối với các loại mã khác, sử dụng renderer mặc định của Marked.js
+				return '<pre><code class="' + params.lang + '">' + params.text + '</code></pre>';
+			};
+			marked.setOptions({ renderer: renderer });
+
+			// Init SimpleMDE
+			let toggleState = false;
+			this.m_editor = new SimpleMDE({
+				element: document.getElementById("markdown-editor"),
+				spellChecker: false,
+				status: false,
+				tabSize: 4,
+				toolbar: [
+					'bold','italic','strikethrough','|',
+					'heading-1','heading-2','heading-3','|',
+					'code','quote','unordered-list','ordered-list','clean-block','|',
+					'link','image','table','horizontal-rule','|',
+					{ name: "mermaid", title: "Insert Mermaid Diagram", className: "fa fa-area-chart", action: (editor) => {
+
+						toggleState = !toggleState; // Đảo trạng thái
+
+						// // Ví dụ: thay đổi nội dung hoặc style theo trạng thái
+						// if (toggleState) {
+						// 		editor.codemirror.setOption("theme", "monokai"); // bật theme tối
+						// 		alert("Toggle ON");
+						// } else {
+						// 		editor.codemirror.setOption("theme", "default"); // tắt
+						// 		alert("Toggle OFF");
+						// }
+
+						// // Cập nhật icon / style của nút trên toolbar
+						// let toolbarButton = editor.toolbarElements.mermaid;
+						// if (!toolbarButton)
+						// 	return;
+
+						// if (toggleState)
+						// 	toolbarButton.classList.add("active");
+						// else
+						// 	toolbarButton.classList.remove("active");
+
+						editor.codemirror.replaceSelection('```mermaid\ngraph TD;\n    A-->B;\n```\n');
+					}},'|',
+					'preview','side-by-side','fullscreen','|',
+					'guide',
+				],
+				previewRender: (plainText, preview) => {
+					preview.innerHTML = marked.parse(plainText);
+					setTimeout(() => mermaid.run({ querySelector: '.mermaid' }), 0);
+					return preview.innerHTML;
+				},
+			});
+
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+	},
 	midi: {
 		m_init: false,
 		e_contain: null,
@@ -1392,6 +1665,69 @@ var mt = {
 				});
 			}
 		}
+	},
+	diagram: {
+		m_init: false,
+		e_contain: null,
+		
+		async init() {
+
+			// Import Library
+			await mt.lib.import(['CodeMirror']);
+			await mt.lib.import(['CodeMirror-md',]);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contain-diagram';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<textarea id="diagram-input" rows="10" cols="60"></textarea>
+				<br>
+				<button onclick="mt.diagram.renderABC()">Render</button>
+				<br>
+				<div id="diagram-audio"></div>
+				<br>
+				<div id="diagram-notation"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+			// Init Editor
+			let textarea = document.getElementById('diagram-input');
+			this.m_editor = CodeMirror.fromTextArea(textarea, {
+				mode: 'markdown',
+				lineNumbers: true,
+				lineWrapping: true,
+				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+				foldGutter: true,
+				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+			});
+			this.setCode(`
+				# Header 1
+				## Header 2
+				* Wat
+					- tree1
+					- tree2
+					- tree3
+				- [ ] TODO 1
+				- [ ] TODO 2
+			`.trim().split('\n').map(v=>v.trim()).join('\n'));
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		setCode(code) {
+			this.m_editor.setValue(code);
+		},
+		getCode() {
+			return this.m_editor.getValue();
+		},
 	},
 
 	// Method

@@ -25,6 +25,7 @@
   { "name": "DamCaMau Core","url": "192.168.1.222:8135", "actions": "", "tags": ["222", "DMS", "DamCaMau", "Core"] },
   { "name": "DamCaMau Core Farmer","url": "192.168.1.222:8132", "actions": "", "tags": ["222", "DMS", "DamCaMau", "Core", "Farmer"] },
   { "name": "DamCaMau Mobile","url": "192.168.1.222:8136", "actions": "", "tags": ["222", "DMS", "DamCaMau", "Mobile"] },
+  { "name": "DamCaMau Cms","url": "192.168.1.222:8138", "actions": "link", "tags": ["222", "DMS", "DamCaMau", "Cms"] },
   { "name": "DamCaMau API Agri","url": "192.168.1.222:8149", "actions": "", "tags": ["222", "DMS", "DamCaMau", "API", "Agri"] },
   { "name": "DamCaMau NongDan BE","url": "192.168.1.222:8148", "actions": "", "tags": ["222", "DMS", "DamCaMau", "NongDan", "BE"] },
   { "name": "Oracle 236","url": "192.168.1.236:8003", "actions": "", "tags": ["236", "DMS", "Database", "Oracle", "19c"] },

@@ -7,6 +7,12 @@ body {
 		padding: 8px;
 		height: calc(100% - 44px);
 	}
+
+	#layout {
+		#contain {
+			background-color: white;
+		}
+	}
 }
 #manager {
 	padding: 16px;
