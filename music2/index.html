@@ -3,7 +3,6 @@
 <head>
 
 	<title>Music</title>
-
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,6 +12,9 @@
 	<script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js"></script>
 	<link href="/lib/tabulator-6.3/css/tabulator.min.css" type="text/css" rel="stylesheet">
 	<script src="/lib/tabulator-6.3/js/tabulator.min.js" type="text/javascript"></script>
+	<link href="/lib/tingle/tingle.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/mt/tingle/mt-style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/tingle/tingle.min.js" type="text/javascript"></script>
 	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
 	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
 
@@ -485,61 +487,46 @@
 				},
 			},
 			form: {
-				m_editor: null, // Json Editor
+				c_modal: null, // tingle
+				c_form: null, // jsoneditor
 
 				// Method
 				init() {
 
-					// Init Editor
-					JsonEditorEX.RateRegister();
-					JsonEditorEX.TagBoxRegister();
-				},
-				async open(music) {
-
-					// Open Modal
-					let result = await Swal.fire({
-						title: 'Sự kiện',
-						html: '<div id="json-editor" class="json-editor"></div>',
-						showCancelButton: true,
-						confirmButtonText: 'Lưu',
-						cancelButtonText: 'Đóng',
-						didOpen: () => {
-							this.initForm(music);
+					// Init Modal - tingle
+					this.c_modal = new tingle.modal({
+						footer: false,
+						stickyFooter: false,
+						closeMethods: ['button', 'escape'], // 'overlay'
+						closeLabel: "Đóng",
+						onOpen: function() {
+							// console.log('modal opened');
 						},
-						didClose: () => {
-							this.m_editor.destroy();
-
-							// Scroll lại cột edit (lỗi do modal của Sweetalert2 Modal ẩn scroll để ko lỗi hiển thị làm mất vị trí scroll tabulator)
-							mt.list.p_table.scrollToRow(music.id, 'center', true);
+						onClose: function() {
+							// console.log('modal closed');
 						},
-						preConfirm: () => {
-							try {
-								let value = this.m_editor.getValue();
-								return this.cv_outForm(value);
-							}
-							catch (ex) {
-								Swal.showValidationMessage('Dữ liệu nhập chưa hợp lệ!');
-								console.error('[mt.form.open.preConfirm] Exception:', ex);
-							}
+						beforeClose: function() {
+							// Return true to close the modal, false to prevent closing
+							return true;
 						},
 					});
-					if (result.isConfirmed)
-						this.onSave(result.value);
-				},
-				initForm(music) {
+					this.c_modal.setContent('<div id="music-form" class="json-editor"></div>');
 
-					// Init Form
-					const element = document.getElementById('json-editor');
-					this.m_editor = new JSONEditor(element, {
+					// Init Form - jsoneditor
+					JsonEditorEX.RateRegister();
+					JsonEditorEX.TagBoxRegister();
+					const elementForm = document.getElementById('music-form');
+					elementForm.style.width = '500px';
+					elementForm.parentElement.parentElement.style.width = 'unset'; // Bỏ width gốc
+					this.c_form = new JSONEditor(elementForm, {
 						use_name_attributes: false,
 						theme: 'barebones',
 						iconlib: 'fontawesome5',
 						disable_edit_json: true,
 						disable_properties: true,
 						disable_collapse: true,
-						startval: this.cv_inForm(music),
 						schema: {
-							title: 'Event Calendar',
+							title: 'Music',
 							type: 'object',
 							required: [],
 							properties: {
@@ -551,13 +538,35 @@
 								'decibel': { title: 'Decibel', type: 'number', minimum: 0, maximum: 500 },
 								'trackbegin': { title: 'Track begin', type: 'number', minimum: 0 },
 								'trackend': { title: 'Track end', type: 'number', minimum: 0 },
-								'miss': { title: 'Miss', type: 'string', format: 'checkbox' },
+								'miss': { title: 'Miss', type: 'boolean', format: 'checkbox' },
+								'save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.save() }}},
+								'cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
 							},
 						},
 					});
 				},
-				async onSave(data) {
+				async open(music) {
+
+					// Set form data
+					this.c_form.setValue(music);
+
+					// Open Modal
+					this.c_modal.open();
+
+					// Log
+					mt.h_debug && console.log('[mt.form.open]', { music });
+				},
+				async save() {
 					try {
+						
+						// Get data
+						let data = this.c_form.getValue(); // mt.form.c_form.getValue()
+
+						// Process data
+						if (data.trackbegin == '')
+							data.trackbegin = null;
+						if (data.trackend == '')
+							data.trackend = null;
 
 						if (data.id === 0) { // Add
 
@@ -597,12 +606,16 @@
 						// Save data
 						await mt.mgr.saveToJson();
 
+						// Close modal
+						this.c_modal.close();
+
 						// Notify
 						mt.utils.toast('success', "Lưu dữ liệu ảnh thành công.");
 					}
 					catch (ex) {
-						console.error('[mt.form.onSave] Exception', ex);
+						// Swal.showValidationMessage('Dữ liệu nhập chưa hợp lệ!');
 						mt.utils.toast('error', ex.message);
+						console.error('[mt.form.saveForm] Exception:', ex);
 					}
 				},
 				async delete(music) {
