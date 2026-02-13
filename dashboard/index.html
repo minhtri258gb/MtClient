@@ -390,7 +390,7 @@
 		var mt = {
 			h_pathDB: '/res/DB/server.json',
 			h_pathNmap: 'D:/Apps/Nmap',
-			p_authen: mtAuthen,
+			auth: mtAuthen,
 			d_servers: [],
 
 			async init() {
@@ -399,7 +399,7 @@
 				window.mt = this;
 
 				// Init
-				await this.p_authen.init();
+				await this.auth.init();
 
 				// Load
 				await this.load();
@@ -425,7 +425,7 @@
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+						'Authorization': 'Bearer ' + mt.auth.getToken(),
 					},
 					body: JSON.stringify({
 						path: [this.h_pathNmap],

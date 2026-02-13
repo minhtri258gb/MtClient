@@ -72,6 +72,22 @@ div.row {
 }
 
 
+/* Field Button */
+.je-ready button[type="button"] {
+	min-width: 25px;
+	height: 25px;
+	color: #444;
+	border: 1px solid #bbb;
+	border-radius: 5px;
+	cursor: pointer;
+
+	&:hover {
+		background-color: #eaf2ff;
+		border: 1px solid #b7d2ff;
+	}
+}
+
+
 /* Field Range */
 .je-range-control {
 	display: flex;

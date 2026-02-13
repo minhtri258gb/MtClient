@@ -356,7 +356,7 @@
 
 		var mt = {
 			h_folder: 'D:/Work', // Đường dẫn gốc
-			p_authen: mtAuthen,
+			auth: mtAuthen,
 			c_emitter: null, // Object Finder
 			c_container: null, // Element container
 			m_accessToken: '', // Quyền truy cập
@@ -368,7 +368,7 @@
 				window.mt = this;
 
 				// Authen
-				await this.p_authen.init();
+				await this.auth.init();
 				
 				// await this.authen();
 				await this.initFinder();
@@ -625,7 +625,7 @@
 						method: 'GET',
 						headers: {
 							'Content-Type': 'application/json',
-							'Authorization': 'Bearer ' + this.p_authen.getToken(),
+							'Authorization': 'Bearer ' + this.auth.getToken(),
 						}
 					});
 					let lstDirItem = await responseList.json();

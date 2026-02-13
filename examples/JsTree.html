@@ -32,7 +32,7 @@
 		import mtAuthen from '/common/authen.js';
 
 		var mt = {
-			p_authen: mtAuthen,
+			auth: mtAuthen,
 			m_clientPath: '',
 
 			config: {
@@ -66,13 +66,13 @@
 				window.mt = mt;
 
 				// Authen auto
-				await this.p_authen.login('-1393153393');
+				await this.auth.login('-1393153393');
 
 				// Read config
 				let resClientPath = await fetch('/file/getClientPath', {
 					method: 'GET',
 					headers: {
-						'Authorization': 'Bearer '+this.p_authen.getToken(),
+						'Authorization': 'Bearer '+this.auth.getToken(),
 					},
 				});
 				this.m_clientPath = await resClientPath.json();
@@ -88,7 +88,7 @@
 						data: {
 							url: '/file/jstree',
 							headers: {
-								'Authorization': 'Bearer '+this.p_authen.getToken(),
+								'Authorization': 'Bearer '+this.auth.getToken(),
 							},
 							dataType: 'json',
 							data: (node) => {

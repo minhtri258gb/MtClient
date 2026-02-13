@@ -11,6 +11,8 @@ body {
 	#layout {
 		#contain {
 			background-color: white;
+			height: 100%;
+			overflow: auto;
 		}
 	}
 }
@@ -23,4 +25,9 @@ body {
 @keyframes anim-rotate {
 	from { transform: rotate(0deg); }
 	to { transform: rotate(360deg); }
+}
+
+/* #gallery-nanogallery2 .nGY2Viewer tự lấy zIndex cao nhất, ghim tại 999 */
+.nGY2Viewer {
+	z-index: 999 !important;
 }

@@ -1,14 +1,18 @@
-import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 import mtAuthen from '/common/authen.js';
+import mtLib from '/common/lib.js';
+import mtShow from '/common/show.js';
 
 /**
- * https://fontawesome.com/v6/search?ic=free&o=r
+ * https://fontawesome.com/v6/search?ic=free-collection
  * https://github.com/gridstack/gridstack.js
  * https://gridstackjs.com/doc/html/index.html
  */
 
 var mt = {
-	p_authen: mtAuthen,
+	auth: mtAuthen,
+	lib: mtLib,
+	show: mtShow,
+
 	apps: [
 		'music', 'manager', 'piano', 'midi',
 		'API', 'image', 'request',
@@ -54,7 +58,7 @@ var mt = {
 			let resClientPath = await fetch('/file/getClientPath', {
 				method: 'GET',
 				headers: {
-					'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+					'Authorization': 'Bearer ' + mt.auth.getToken(),
 				},
 			});
 			this.m_clientPath = await resClientPath.text();
@@ -81,7 +85,7 @@ var mt = {
 				if (this.m_clientPath.length == 0) {
 					let response = await fetch('/file/getClientPath', {
 						method: 'GET',
-						headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
+						headers: { 'Authorization': 'Bearer '+mt.auth.getToken() },
 					});
 					if (!response.ok)
 						throw { error: true, message: await response.text() };
@@ -97,7 +101,7 @@ var mt = {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'text/plain',
-						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+						'Authorization': 'Bearer ' + mt.auth.getToken(),
 					},
 					body: JSON.stringify(data),
 				});
@@ -222,10 +226,10 @@ var mt = {
 				this.edit(false);
 
 				// Notify
-				mt.utils.toast('success', 'Đã lưu grid.');
+				mt.show.toast('success', 'Đã lưu grid.');
 			}
 			catch (ex) {
-				mt.utils.toast('error', ex.message);
+				mt.show.toast('error', ex.message);
 				console.error('[mt.grid.save]', ex);
 			}
 		},
@@ -259,7 +263,7 @@ var mt = {
 						window.open(data.link);
 				}
 				else
-					mt.utils.toast('warning', 'Chưa có link ứng dụng!');
+					mt.show.toast('warning', 'Chưa có link ứng dụng!');
 			}
 
 			// Log
@@ -268,143 +272,115 @@ var mt = {
 	},
 	form: {
 		h_defaultData: { id: 0, name: '', icon: '', link: '' },
-		m_editor: null, // Json Editor
+		c_modal: null, // tingle
+		c_form: null, // jsoneditor
+		m_widget: null, // Current widget
 
-		init() {
+		async init() {
 
-			// Init Editor
-			JsonEditorEX.RateRegister();
-		},
-		async open(widget) {
+			// Import Library
+			await mt.lib.import(['tingle','jsonEditor']);
 
-			// Open Modal
-			let result = await Swal.fire({
-				title: 'Sự kiện',
-				html: '<div id="json-editor" class="json-editor"></div>',
-				showDenyButton: true,
-				showCancelButton: true,
-				confirmButtonText: 'Lưu',
-				denyButtonText: 'Xóa',
-				cancelButtonText: 'Đóng',
-				// showClass: {
-				// 	popup: '',
-				// },
-				// hideClass: {
-				// 	popup: '',
-				// },
-				didOpen: () => this.initForm(widget),
-				didClose: () => this.m_editor.destroy(),
-				preConfirm: () => {
-					try {
-						return this.m_editor.getValue();
-					}
-					catch (ex) {
-						Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
-						console.error('[mt.form.open.preConfirm] Exception:', ex);
-					}
-				},
+			// Init popup - tingle
+			this.c_modal = new tingle.modal({
+				footer: false,
+				stickyFooter: false,
+				closeMethods: ['button', 'escape'], // 'overlay'
+				closeLabel: 'Đóng',
 			});
-			if (result.isConfirmed)
-				this.onSave(widget, result.value);
-			else if (result.isDenied)
-				this.onDelete(widget, {
-					id: widget.id,
-					...widget.customData
-				});
-		},
-		initForm(widget) {
 
-			let objForm = Object.assign({ ...this.h_defaultData }, widget.gridstackNode.customData);
+			// Contain Form
+			const elementForm = document.createElement('div');
+			elementForm.style.width = '500px';
+			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
+			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
 
-			// Init Form
-			const element = document.getElementById('json-editor');
-			this.m_editor = new JSONEditor(element, {
+			// Init form - JsonEditor
+			mt.lib.jsonEditor.ex.RateRegister();
+			this.c_form = new JSONEditor(elementForm, {
 				use_name_attributes: false,
 				theme: 'barebones',
 				iconlib: 'fontawesome5',
 				disable_edit_json: true,
 				disable_properties: true,
 				disable_collapse: true,
-				startval: objForm,
 				schema: {
-					title: 'Event Calendar',
+					title: 'App Info',
 					type: 'object',
 					required: [],
 					properties: {
-						'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
+						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
 						'name': { title: 'Name', type: 'string', format: 'text' },
 						'icon': { title: 'Icon', type: 'string', format: 'text' },
 						'link': { title: 'Link', type: 'string', format: 'url' },
+						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.onSave() }}},
+						'btn_delete': { title: 'Delete', type: 'string', format: 'button', options: { button: { icon: 'trash-can', action: () => this.onDelete() }}},
+						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
 					},
 				},
 			});
 		},
-		onSave(widget, data) {
+		async open(widget) {
 
-			// Cập nhật id
-			data.id = Number.parseInt(data.id);
+			// Prepare data
+			this.m_widget = widget;
+			let formData = Object.assign({ ...this.h_defaultData }, widget.gridstackNode.customData);
 
-			let widgetOtps = widget.gridstackNode;
-			widgetOtps.content = data.name;
-			widgetOtps.customData = data;
-
-			// Update grid
-			mt.grid.p_grid.update(widget, widgetOtps);
+			// Set form data
+			this.c_form.setValue(formData);
+			
+			// Open Modal
+			this.c_modal.open();
 
 			// Log
-			console.log('[mt.form.onSave]', { widget, data });
+			mt.h_debug && console.log('[mt.form.open]', { widget, formData });
 		},
-		onDelete(widget, data) {
+		onSave() {
+			try {
 
+				let widget = this.m_widget;
+				this.m_widget = null;
+				let formData = this.c_form.getValue();
+
+				// Cập nhật id
+				formData.id = Number.parseInt(formData.id);
+
+				let widgetOtps = widget.gridstackNode;
+				widgetOtps.content = formData.name;
+				widgetOtps.customData = formData;
+
+				// Update grid
+				mt.grid.p_grid.update(widget, widgetOtps);
+				
+				// Toast
+				mt.show.toast('success', 'Đã lưu thay đổi');
+
+				// Close modal
+				this.c_modal.close();
+
+				// Log
+				mt.h_debug && console.log('[mt.form.onSave]', { widget, formData });
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.form.onSave]', ex);
+			}
+		},
+		onDelete() {
+			try {
+				let widget = this.m_widget;
+				this.m_widget = null;
+				let formData = this.c_form.getValue();
+				// #TODO
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.form.onDelete]', ex);
+			}
 		},
 	},
 	utils: {
-		p_toast: null, // Sweetalert2 - Toast
 
-		init() {
-
-			// Init Sweetlert2
-			this.p_toast = Swal.mixin({
-				toast: true,
-				position: 'bottom-end',
-				showConfirmButton: false,
-				timer: 3000,
-				timerProgressBar: true,
-				didOpen: (toast) => {
-					toast.onmouseenter = Swal.stopTimer;
-					toast.onmouseleave = Swal.resumeTimer;
-				},
-			});
-		},
-		toast(type, message) {
-
-			let title = '';
-			switch (type) {
-				case 'info':
-					title = 'Thông báo';
-					break;
-				case 'success':
-					title = 'Thành công';
-					break;
-				case 'warning':
-					title = 'Cảnh báo';
-					break;
-				case 'error':
-					title = 'Lỗi';
-					break;
-				default:
-					throw { error: true, message: 'Type không hợp lệ!' };
-			}
-
-			// Prepare
-			let opts = {
-				icon: type,
-				title: message,
-			};
-
-			// Show Toast
-			this.p_toast.fire(opts);
-		},
 		async confirmPrimary(message, action) {
 			let result = await Swal.fire({
 				title: message,
@@ -436,15 +412,16 @@ var mt = {
 		window.mt = mt;
 
 		// Authen
-		await this.p_authen.init();
+		await this.auth.init();
+		await this.show.initToast();
 
 		// Read config
 		await this.mgr.loadConfig();
 
 		// Init
 		this.grid.init();
+		this.form.init();
 		this.initUI();
-		this.utils.init();
 
 		// First load
 		await this.mgr.loadFromJson();
@@ -488,7 +465,7 @@ var mt = {
 				data: {
 					url: '/file/jstree',
 					headers: {
-						'Authorization': 'Bearer '+this.p_authen.getToken(),
+						'Authorization': 'Bearer '+this.auth.getToken(),
 					},
 					dataType: 'json',
 					data: (node) => {

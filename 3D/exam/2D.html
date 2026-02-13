@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>MtRPG</title>
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background: #222;
+			font-family: Arial, sans-serif;
+			overflow: hidden;
+		}
+		#gameContainer {
+			position: relative;
+			width: 100vw;
+			height: 100vh;
+		}
+		#instructions {
+			position: absolute;
+			top: 10px;
+			left: 10px;
+			color: white;
+			font-size: 14px;
+			z-index: 100;
+			background: rgba(0,0,0,0.7);
+			padding: 10px;
+			border-radius: 5px;
+		}
+		#canvas {
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<div id="gameContainer">
+		<div id="instructions">
+			<strong>Điều khiển:</strong><br>
+			W/A/S/D - Di chuyển nhân vật<br>
+			Arrow keys - Di chuyển camera
+		</div>
+		<canvas id="canvas"></canvas>
+	</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+	<script>
+		// Biến global
+		let scene, camera, renderer, player;
+		let keys = {};
+		let playerPosition = { x: 5, y: 5 };
+		let cameraPosition = { x: 0, y: 0 };
+		let tileSize = 32;
+		let mapWidth = 20;
+		let mapHeight = 15;
+		
+		// Tilemap - 0: cỏ, 1: đá, 2: nước, 3: cây
+		const tilemap = [
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,0,0,0,0,0,0,3,0,0,0,0,3,0,0,0,0,0,0,1],
+			[1,0,0,3,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,1],
+			[1,0,0,0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,2,2,2,2,0,0,1,1,1,0,0,0,0,0,1],
+			[1,0,0,0,0,2,2,2,2,0,0,1,1,1,0,0,0,3,0,1],
+			[1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,3,0,0,0,0,0,0,0,0,0,3,0,0,0,0,1],
+			[1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,3,0,0,1],
+			[1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+			[1,0,0,0,0,0,3,0,0,0,0,0,0,3,0,0,0,0,0,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+		];
+
+		function init() {
+			// Tạo scene
+			scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x87CEEB); // Màu xanh da trời
+
+			// Tạo orthographic camera cho 2D
+			const aspect = window.innerWidth / window.innerHeight;
+			const frustumSize = 400;
+			camera = new THREE.OrthographicCamera(
+				-frustumSize * aspect / 2, frustumSize * aspect / 2,
+				frustumSize / 2, -frustumSize / 2,
+				1, 1000
+			);
+			camera.position.set(0, 0, 10);
+
+			// Tạo renderer
+			const canvas = document.getElementById('canvas');
+			renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+			// Tạo tilemap
+			createTilemap();
+			
+			// Tạo nhân vật
+			createPlayer();
+
+			// Event listeners
+			setupControls();
+			
+			// Bắt đầu game loop
+			animate();
+		}
+
+		function createTileTexture(color) {
+			// Tạo canvas để vẽ texture
+			const canvas = document.createElement('canvas');
+			canvas.width = 32;
+			canvas.height = 32;
+			const ctx = canvas.getContext('2d');
+			
+			// Fill màu nền
+			ctx.fillStyle = color;
+			ctx.fillRect(0, 0, 32, 32);
+			
+			// Thêm viền
+			ctx.strokeStyle = '#333';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(0, 0, 32, 32);
+			
+			// Tạo texture từ canvas
+			const texture = new THREE.CanvasTexture(canvas);
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			
+			return texture;
+		}
+
+		function createSpecialTileTexture(type) {
+			const canvas = document.createElement('canvas');
+			canvas.width = 32;
+			canvas.height = 32;
+			const ctx = canvas.getContext('2d');
+			
+			if (type === 'water') {
+				// Nước - gradient xanh
+				const gradient = ctx.createLinearGradient(0, 0, 32, 32);
+				gradient.addColorStop(0, '#4169E1');
+				gradient.addColorStop(1, '#1E90FF');
+				ctx.fillStyle = gradient;
+				ctx.fillRect(0, 0, 32, 32);
+				
+				// Sóng nước
+				ctx.strokeStyle = '#87CEEB';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				for (let i = 0; i < 32; i += 8) {
+					ctx.moveTo(i, 16);
+					ctx.quadraticCurveTo(i + 4, 12, i + 8, 16);
+				}
+				ctx.stroke();
+				
+			} else if (type === 'tree') {
+				// Cây - nền cỏ
+				ctx.fillStyle = '#90EE90';
+				ctx.fillRect(0, 0, 32, 32);
+				
+				// Thân cây
+				ctx.fillStyle = '#8B4513';
+				ctx.fillRect(12, 20, 8, 12);
+				
+				// Lá cây
+				ctx.fillStyle = '#228B22';
+				ctx.beginPath();
+				ctx.arc(16, 16, 12, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			
+			// Viền
+			ctx.strokeStyle = '#333';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(0, 0, 32, 32);
+			
+			const texture = new THREE.CanvasTexture(canvas);
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			
+			return texture;
+		}
+
+		function createTilemap() {
+			const materials = {
+				0: new THREE.MeshBasicMaterial({ 
+					map: createTileTexture('#90EE90'), 
+					transparent: true 
+				}), // Cỏ
+				1: new THREE.MeshBasicMaterial({ 
+					map: createTileTexture('#696969'), 
+					transparent: true 
+				}), // Đá
+				2: new THREE.MeshBasicMaterial({ 
+					map: createSpecialTileTexture('water'), 
+					transparent: true 
+				}), // Nước
+				3: new THREE.MeshBasicMaterial({ 
+					map: createSpecialTileTexture('tree'), 
+					transparent: true 
+				})  // Cây
+			};
+
+			for (let y = 0; y < mapHeight; y++) {
+				for (let x = 0; x < mapWidth; x++) {
+					const tileType = tilemap[y][x];
+					
+					// Tạo tile 2D phẳng
+					const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
+					const tile = new THREE.Mesh(geometry, materials[tileType]);
+					
+					// Đặt vị trí (chuyển đổi tọa độ grid sang world)
+					tile.position.set(
+						x * tileSize - (mapWidth * tileSize) / 2 + tileSize / 2,
+						-y * tileSize + (mapHeight * tileSize) / 2 - tileSize / 2,
+						0
+					);
+					
+					scene.add(tile);
+				}
+			}
+		}
+
+		function createPlayerTexture() {
+			const canvas = document.createElement('canvas');
+			canvas.width = 32;
+			canvas.height = 32;
+			const ctx = canvas.getContext('2d');
+			
+			// Nền trong suốt
+			ctx.clearRect(0, 0, 32, 32);
+			
+			// Thân người - hình chữ nhật
+			ctx.fillStyle = '#FF6B6B';
+			ctx.fillRect(8, 12, 16, 16);
+			
+			// Đầu - hình tròn
+			ctx.fillStyle = '#FFDBB5';
+			ctx.beginPath();
+			ctx.arc(16, 8, 6, 0, Math.PI * 2);
+			ctx.fill();
+			
+			// Mắt
+			ctx.fillStyle = '#000';
+			ctx.beginPath();
+			ctx.arc(13, 7, 1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.arc(19, 7, 1, 0, Math.PI * 2);
+			ctx.fill();
+			
+			// Chân
+			ctx.fillStyle = '#4169E1';
+			ctx.fillRect(10, 28, 4, 4);
+			ctx.fillRect(18, 28, 4, 4);
+			
+			// Viền
+			ctx.strokeStyle = '#333';
+			ctx.lineWidth = 1;
+			ctx.strokeRect(8, 12, 16, 16); // Thân
+			ctx.beginPath();
+			ctx.arc(16, 8, 6, 0, Math.PI * 2);
+			ctx.stroke(); // Đầu
+			
+			const texture = new THREE.CanvasTexture(canvas);
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			
+			return texture;
+		}
+
+		function createPlayer() {
+			// Tạo nhân vật 2D sprite
+			const geometry = new THREE.PlaneGeometry(tileSize, tileSize);
+			const material = new THREE.MeshBasicMaterial({
+				map: createPlayerTexture(),
+				transparent: true
+			});
+			
+			player = new THREE.Mesh(geometry, material);
+			
+			// Đặt vị trí ban đầu
+			updatePlayerPosition();
+			player.position.z = 1; // Đặt phía trên tiles
+			
+			scene.add(player);
+		}
+
+		function updatePlayerPosition() {
+			player.position.set(
+				playerPosition.x * tileSize - (mapWidth * tileSize) / 2 + tileSize / 2,
+				-playerPosition.y * tileSize + (mapHeight * tileSize) / 2 - tileSize / 2,
+				1
+			);
+		}
+
+		function setupControls() {
+			// Phím bấm
+			window.addEventListener('keydown', (event) => {
+				keys[event.code] = true;
+			});
+
+			window.addEventListener('keyup', (event) => {
+				keys[event.code] = false;
+			});
+
+			// Resize window
+			window.addEventListener('resize', () => {
+				const aspect = window.innerWidth / window.innerHeight;
+				const frustumSize = 400;
+				
+				camera.left = -frustumSize * aspect / 2;
+				camera.right = frustumSize * aspect / 2;
+				camera.top = frustumSize / 2;
+				camera.bottom = -frustumSize / 2;
+				
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			});
+		}
+
+		function canMoveTo(x, y) {
+			// Kiểm tra biên
+			if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) {
+				return false;
+			}
+			
+			// Kiểm tra tile có thể đi được không
+			const tileType = tilemap[y][x];
+			return tileType !== 1 && tileType !== 2 && tileType !== 3; // Không thể đi qua đá, nước, cây
+		}
+
+		function updatePlayer() {
+			let moved = false;
+			let newX = playerPosition.x;
+			let newY = playerPosition.y;
+
+			// Di chuyển theo WASD
+			if (keys['KeyW'] || keys['ArrowUp']) { // Lên
+				newY -= 1;
+				moved = true;
+			}
+			if (keys['KeyS'] || keys['ArrowDown']) { // Xuống
+				newY += 1;
+				moved = true;
+			}
+			if (keys['KeyA'] || keys['ArrowLeft']) { // Trái
+				newX -= 1;
+				moved = true;
+			}
+			if (keys['KeyD'] || keys['ArrowRight']) { // Phải
+				newX += 1;
+				moved = true;
+			}
+
+			// Kiểm tra và áp dụng di chuyển
+			if (moved && canMoveTo(newX, newY)) {
+				playerPosition.x = newX;
+				playerPosition.y = newY;
+				updatePlayerPosition();
+			}
+		}
+
+		function updateCamera() {
+			// Camera theo nhân vật (với offset)
+			const targetX = player.position.x;
+			const targetY = player.position.y;
+			
+			// Lerp để camera di chuyển mượt
+			camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 0.1);
+			camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 0.1);
+			
+			// Di chuyển camera với arrow keys
+			const cameraSpeed = 5;
+			if (keys['ArrowUp']) camera.position.y += cameraSpeed;
+			if (keys['ArrowDown']) camera.position.y -= cameraSpeed;
+			if (keys['ArrowLeft']) camera.position.x -= cameraSpeed;
+			if (keys['ArrowRight']) camera.position.x += cameraSpeed;
+		}
+
+		function animate() {
+			requestAnimationFrame(animate);
+			
+			updatePlayer();
+			updateCamera();
+			
+			renderer.render(scene, camera);
+		}
+
+		// Bắt đầu game
+		init();
+	</script>
+	<script type="module">
+		var mt = {
+			init: function() { }
+		};
+		document.addEventListener("DOMContentLoaded", () => mt.init());
+	</script>
+</body>
+</html>

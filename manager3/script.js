@@ -1,13 +1,19 @@
 import { w2ui, w2layout, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
 import mtAuthen from '/common/authen.js';
+import mtCore from '/common/core.js';
+import mtLib from '/common/lib.js';
+import mtFile from '/common/file.js';
+import mtCmd from '/common/cmd.js';
+import mtShow from '/common/show.js';
 
 /**
+ * https://fontawesome.com/v6/search?ic=free-collection
  * https://w2ui.com/web/docs/2.0/w2layout.set
  * https://fullcalendar.io/
- * https://fontawesome.com/v6/search?ic=free-collection
  * https://codemirror.net/
  * https://github.com/markdown-it/markdown-it
  * https://www.abcjs.net/
+ * https://flatpickr.js.org/examples/#datetime
  */
 
 /** TODO
@@ -17,7 +23,12 @@ import mtAuthen from '/common/authen.js';
 
 var mt = {
 	h_debug: true,
-	p_authen: mtAuthen,
+	auth: mtAuthen,
+	core: mtCore,
+	lib: mtLib,
+	file: mtFile,
+	cmd: mtCmd,
+	show: mtShow,
 
 	// Module
 	common: {
@@ -25,24 +36,25 @@ var mt = {
 		c_w2layout: null,
 		e_contain: null,
 
-		init() {
+		async init() {
 
 			// Left Sidebar
 			let c_w2sidebar = new w2sidebar({
 				name: 'sidebar',
 				nodes: [
+					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
+						{ id: 'document', text: 'Document', icon: 'fa-solid fa-book' },
+						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-address-book' },
+						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
+						{ id: 'map', text: 'Map', icon: 'fa-solid fa-map-location-dot' },
+						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
+						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
+					]},
 					{ id: 'entertainment', text: 'Entertainment', group: true, expanded: true, nodes: [
 						{ id: 'anime', text: 'Anime', icon: 'fa-brands fa-gratipay' },
 						{ id: 'game', text: 'Game', icon: 'fa-solid fa-gamepad' },
 						{ id: 'movie', text: 'Movie', icon: 'fa-solid fa-film' },
 						{ id: 'manga', text: 'Manga', icon: 'fa-solid fa-book-open' },
-					]},
-					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
-						{ id: 'document', text: 'Document', icon: 'fa-solid fa-book' },
-						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-address-book' },
-						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
-						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
-						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
 					]},
 					{ id: 'editor', text: 'Editor', group: true, expanded: true, nodes: [
 						{ id: 'markdown', text: 'Markdown', icon: 'fa-brands fa-markdown' },
@@ -52,6 +64,7 @@ var mt = {
 					]},
 					{ id: 'viewer', text: 'Viewer', group: true, expanded: true, nodes: [
 						{ id: 'pdf', text: 'PDF', icon: 'fa-regular fa-file-pdf' },
+						{ id: 'gallery', text: 'Gallery', icon: 'fa-solid fa-images' },
 					]},
 				],
 				onClick(event) {
@@ -87,9 +100,9 @@ var mt = {
 				name: 'layout',
 				panels: [
 					// { type: 'top', size: 60, html: 'top panel' },
-					{ type: 'main', style: 'background-color: #f5fff1', tabs, html: '<div id="contain" style="height:100%"><div>' },
+					{ type: 'main', style: 'background-color: #f5fff1', tabs, html: '<div id="contain"><div>' },
 					{ type: 'left', size: 150, resizable: true, html: c_w2sidebar },
-					{ type: 'right', size: '50%', resizable: true, hidden: true, html: 'right' },
+					{ type: 'right', size: '50%', resizable: true, hidden: true, html: '' },
 				]
 			});
 
@@ -131,223 +144,6 @@ var mt = {
 			// Hide right panel
 			this.c_w2layout.hide('right');
 		},
-		async loadJson(url) {
-			try {
-
-				// Call API
-				let response = await fetch(url, { method: 'GET' });
-				if (!response.ok) {
-					if (response.status == 404)
-						{ } // skip
-					else
-						throw { error: true, message: await response.text() };
-				}
-				else
-					return await response.json() || [];
-
-				return [];
-			}
-			catch (ex) {
-				console.error('[mt.common.loadJson] Exception', ex);
-				throw ex;
-			}
-		},
-		async saveJson(filepath, data) {
-			try {
-
-				// Authen
-				if (mt.p_authen.checkAuthn() == false)
-					await mt.p_authen.init();
-
-				// Kiểm tra và lấy client path
-				if (this.m_clientPath.length == 0) {
-					let response = await fetch('/file/getClientPath', {
-						method: 'GET',
-						headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
-					});
-					if (!response.ok)
-						throw { error: true, message: await response.text() };
-
-					this.m_clientPath = await response.text();
-				}
-
-				// Call API - Lưu dữ liệu
-				let paramURL = new URLSearchParams();
-				paramURL.set('file', this.m_clientPath + filepath);
-				paramURL.set('force', true);
-				let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'text/plain',
-						'Authorization': 'Bearer ' + mt.p_authen.getToken(),
-					},
-					body: JSON.stringify(data),
-				});
-				if (!responseSave.ok) {
-					let errorMessage = await responseSave.text();
-					// this.toast('error', errorMessage);
-					console.error(errorMessage);
-					return;
-				}
-			}
-			catch (ex) {
-				console.error('[mt.common.saveJson] Exception', ex);
-				throw ex;
-			}
-		},
-		async cmd(cmd, path) {
-			let response = await fetch('/common/cmd', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + mt.p_authen.getToken(),
-				},
-				body: JSON.stringify({ path, cmd }),
-			});
-
-			if (!response.ok) {
-				if (response.status == 404) { } // skip
-				else
-					throw { error: true, message: await response.text() };
-			}
-			
-			return await response.json();
-		},
-	},
-	lib: {
-		async import(libs) {
-			let promise = [];
-			for (let name of libs) {
-				let lib = this[name];
-
-				if (lib.init)
-					continue;
-				lib.init = true;
-
-				let p = lib.load();
-				promise.push(p);
-			}
-			await Promise.all(promise); // Đơi load toàn bộ
-		},
-		async loadJS(url, format, lib) {
-			let module = null;
-			switch (format) {
-				case 'es':
-					module = await import(url);
-					window[lib] = module.default;
-					break;
-				case 'cjs':
-					module = await new Promise((resolve, reject) => {
-						const script = document.createElement('script');
-						script.src = url;
-						script.onload = () => resolve(window[lib]);
-						script.onerror = reject;
-						document.head.appendChild(script);
-					});
-					window[lib] = module;
-					break;
-				default: // umd
-					await import(url);
-			}
-		},
-		async loadCSS(url, lib) {
-			return new Promise((resolve, reject) => {
-				const link = document.createElement('link');
-				link.rel = 'stylesheet';
-				link.href = url;
-				
-				link.onload = () => resolve();
-				link.onerror = () => reject(new Error(`Không thể tải CSS từ: ${url}`));
-				
-				document.head.appendChild(link);
-			});
-		},
-		
-		'ABCJS': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadCSS('/lib/abcjs/abcjs-audio.css'),
-				mt.lib.loadJS('/lib/abcjs/abcjs-basic-min.js'),
-				// mt.lib.loadJS('/res/soundfont/marimba-mp3.js'),
-			]);
-			await mt.lib.loadJS('/lib/abcjs/abcjs-plugin-min.js');
-		}},
-		'CodeMirror': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadCSS('/lib/codemirror5-5.65.18/lib/codemirror.css'),
-				mt.lib.loadCSS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.css'),
-				mt.lib.loadJS('/lib/codemirror5-5.65.18/lib/codemirror.js'),
-			]);
-			await Promise.all([
-				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/foldcode.js'),
-				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/foldgutter.js'),
-			]);
-		}},
-		'CodeMirror-md': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadJS('/lib/codemirror5-5.65.18/mode/markdown/markdown.js'),
-				mt.lib.loadJS('/lib/codemirror5-5.65.18/addon/fold/markdown-fold.js'),
-			]);
-		}},
-		'flatpickr': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadCSS('/lib/flatpickr/flatpickr.min.css'),
-				mt.lib.loadJS('/lib/flatpickr/flatpickr.min.js'),
-			]);
-			await mt.lib.loadJS('/lib/flatpickr/l10n/vn.js');
-		}},
-		'FullCalendar': { init: false, async load() {
-			await mt.lib.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js');
-		}},
-		'highlightjs': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadCSS('/lib/highlightjs/default.min.css'),
-				mt.lib.loadJS('/lib/highlightjs/highlight.min.js'),
-			]);
-		}},
-		'jsonEditor': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadCSS('/lib/mt/json-editor/mt-style.css'),
-				mt.lib.loadJS('/lib/json-editor-2.15.2/jsoneditor.min.js'),
-			]);
-		}},
-		'marked': { init: false, async load() {
-			await Promise.all([
-				mt.lib.loadJS('/lib/marked-16.1.2/marked.umd.js'),
-			]);
-		}},
-		'markdownIt': { init: false, async load() {
-			if (window.mermaid == null)
-				throw new Error('Import mermaid trước markdownIt');
-			await Promise.all([
-				mt.lib.loadJS('/lib/markdown-it/markdown-it.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-deflist.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-emoji-light.min.js',),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-emoji.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-footnote.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-ins.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-mark.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-multimd-table.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-sub.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdown-it-sup.min.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdownItAnchor.umd.js'),
-				mt.lib.loadJS('/lib/markdown-it/markdownItTocDoneRight.umd.js'),
-			]);
-		}},
-		'mermaid': { init: false, async load() {
-			await mt.lib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
-		}},
-		'SimpleMDE': { init: false, async load() {
-			await mt.lib.loadCSS('/lib/simplemde-1.11.2-0/simplemde.min.css');
-			await mt.lib.loadJS('/lib/simplemde-1.11.2-0/simplemde.min.js');
-		}},
-		'solarLunar': { init: false, async load() {
-			await mt.lib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
-		}},
-		'tingle': { init: false, async load() {
-			await mt.lib.loadCSS('/lib/tingle/tingle.min.css');
-			await mt.lib.loadCSS('/lib/mt/tingle/mt-style.css');
-			await mt.lib.loadJS('/lib/tingle/tingle.min.js');
-		}},
 	},
 	utils: {
 		convert_DateToStr(date) {
@@ -366,7 +162,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-anime';
+			this.e_contain.id = 'anime-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -473,7 +269,7 @@ var mt = {
 			});
 
 			// Load data
-			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			this.d_list = await mt.file.loadJson(this.h_pathDB);
 			for (let i=0, sz=this.d_list.length; i<sz; i++) {
 				let anime = this.d_list[i];
 				anime.id = i+1; // Thêm ID
@@ -509,7 +305,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-game';
+			this.e_contain.id = 'game-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -604,7 +400,7 @@ var mt = {
 			});
 
 			// Load data
-			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			this.d_list = await mt.file.loadJson(this.h_pathDB);
 			for (let i=0, sz=this.d_list.length; i<sz; i++) {
 				let anime = this.d_list[i];
 				anime.id = i+1; // Thêm ID
@@ -646,7 +442,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-document';
+			this.e_contain.id = 'document-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -767,7 +563,7 @@ var mt = {
 		async load() {
 			
 			// Call API
-			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			this.d_list = await mt.file.loadJson(this.h_pathDB);
 
 			for (let i=0, sz=this.d_list.length; i<sz; i++) {
 				let doc = this.d_list[i];
@@ -834,11 +630,11 @@ var mt = {
 			// Tự động copy
 			if (window.isSecureContext) {
 				await navigator.clipboard.writeText(URL);
-				// mt.utils.toast('success', 'Đã copy link nhạc.');
+				// mt.show.toast('success', 'Đã copy link nhạc.');
 			}
 			else {
 				console.log(URL);
-				// mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+				// mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
 			}
 		},
 		async btnRead(docId) {
@@ -851,7 +647,8 @@ var mt = {
 			mt.common.c_w2layout.show('right');
 
 			// Load markdown
-			let content = await this.loadMarkdown(doc.path);
+			// let content = await this.loadMarkdown(doc.path);
+			let content = await mt.file.readFile('text', doc.path);
 			content = '${toc}\n' + content;
 
 			// Convert HTML
@@ -883,34 +680,89 @@ var mt = {
 			// Log
 			// mt.h_debug && console.log('[mt.document.btnRead]', { content, html });
 		},
-		async loadMarkdown(filepath) {
-			try {
+	},
+	contact: {
+		h_pathDB: '/res/DB/contact.json',
+		d_list: [],
+		m_init: false,
+		e_content: null,
 
-				// Check auth
-				if (!mt.p_authen.checkAuthn())
-					await mt.p_authen.init();
+		async init() {
 
-				// ParamsURL
-				let params = new URLSearchParams();
-				params.set('file', filepath);
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'contact-contain';
+			this.e_contain.style.height = '100%';
+			this.e_contain.style.padding = '4px';
+			mt.common.e_contain.appendChild(this.e_contain);
+			
+			// Grid
+			this.c_w2grid = new w2grid({
+				name: 'contact-grid',
+				recid: 'id',
+				group: 'group',
+				show: {
+					toolbar: true,
+					footer: true,
+					lineNumbers: true,
+					// toolbarAdd: true,
+					// toolbarSave: true,
+				},
+				toolbar: {
+					items: [
+						// { type: 'button', id: 'add', text: 'Add Record', icon: 'w2ui-icon-plus' },
+						// { type: 'break' },
+						// { type: 'button', id: 'showChanges', text: 'Show Changes' },
+						{ type: 'button', id: 'refresh_all', text: 'Refresh All', icon: 'fa-solid fa-arrows-rotate' },
+						{ type: 'button', id: 'share', text: 'Share', icon: 'fa-solid fa-share-from-square' },
+					],
+					onClick: (event) => {
+						if (event.target == 'refresh_all')
+							this.btnRefreshAll();
+						else if (event.target == 'share')
+							this.btnShare();
+					}
+				},
+				columns: [
+					{ field: 'actions', text: 'Actions', size: '120px', render: (row, target) => renderAction(row, target.value) },
+					{ field: 'status', text: 'Status', size: '52px', attr: 'align=center', render: (row, target) => renderStatus(target.value)},
+					{ field: 'name', text: 'Name', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'url', text: 'URL', size: '128px', sortable: true, resizable: true, editable: { type: 'text' } },
+					{ field: 'tags', text: 'Tags', size: '300px', render: (row, target) => renderTag(target.value) },
+				],
+				liveSearch: true,
+				multiSearch: true,
+				textSearch: 'contains',
+				searches: [
+					{ field: 'name', label: 'Name', type: 'text', operator: 'contains' },
+					{ field: 'tags', label: 'Tags', type: 'text', operator: 'contains' },
+				],
+			});
+			this.c_w2grid.render(this.e_contain);
 
-				// Call API
-				let response = await fetch('/file/read?' + params.toString(), {
-					method: 'GET',
-					headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
-				});
-
-				if (!response.ok) {
-					if (response.status == 404)
-						{ } // skip
-					else
-						throw { error: true, message: await response.text() };
-				}
-				return await response.text() || '';
+			// Load data
+			await this.load();
+			this.c_w2grid.records = this.d_list;
+			this.c_w2grid.refresh();
+		},
+		async open() {
+			
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
 			}
-			catch (ex) {
-				console.error('[mt.document.loadMarkdown] Exception', ex);
-				throw ex;
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		async load() {
+
+			this.d_list = await mt.file.loadJson(this.h_pathDB);
+
+			for (let i=0; i<this.d_list.length; i++) {
+				let contact = this.d_list[i];
+
+				contact.id = i+1;
 			}
 		},
 	},
@@ -931,18 +783,18 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-calendar';
+			this.e_contain.id = 'calendar-contain';
 			this.e_contain.style.height = '100%';
 			this.e_contain.style.padding = '4px';
 			mt.common.e_contain.appendChild(this.e_contain);
 
 			// Init Calendar
 			this.c_calendar = new FullCalendar.Calendar(this.e_contain, {
-				height: 'parent',
 				initialView: 'dayGridMonth',
 				// initialDate: '2024-12-08', // #DEBUG
 				locale: 'vi',
 				timeZone: 'Asia/Ho_Chi_Minh',
+				height: 'parent',
 				// Toolbar
 				headerToolbar: {
 					left: 'prev,next today',
@@ -950,10 +802,10 @@ var mt = {
 					right: 'addEvent dayGridMonth,timeGridWeek,timeGridDay,listWeek'
 				},
 				// UI Setting
-				firstDay: 1,
-				weekNumbers: true,
+				firstDay: 1, // Thứ 2 đầu tuần
+				weekNumbers: true, // Hiện số tuần của năm
 				businessHours: false, // Sẫm màu 2 ngày cuối tuần
-				showNonCurrentDates: false, // Sâm 4màu các ngày ko thuộc tháng
+				showNonCurrentDates: false, // Sẫm màu các ngày ko thuộc tháng
 				buttonText: { // Phiên dịch
 					today: 'Hôm nay',
 					month: 'Tháng',
@@ -969,7 +821,10 @@ var mt = {
 				events: [],
 				// Custom Button
 				customButtons: {
-					addEvent: { text: 'Thêm', click: () => this.openForm({ id: -1, name: '', date: mt.utils.convert_DateToStr(new Date()) }) },
+					addEvent: { text: 'Thêm', click: () => {
+						let curDate = new Date();
+						this.openForm({ id: -1, year: curDate.getFullYear(), name: '', date: mt.utils.convert_DateToStr(curDate) });
+					}},
 				},
 				// Register Event
 				datesSet: async (info) => { // khi đổi tháng, kiểu view, ngày, ...
@@ -980,8 +835,9 @@ var mt = {
 				dateClick: (info) => {
 					if (this.t_tmp.clickDate == info.dateStr) {
 						delete this.t_tmp.clickDate;
-						this.openForm({ id: -1, name: '', date: info.dateStr }); // Dupclick thì thêm sự kiện
-					} else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
+						this.openForm({ id: -1, year: info.view.currentStart.getFullYear(), name: '', date: info.dateStr }); // Dupclick thì thêm sự kiện
+					}
+					else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
 				},
 			});
 			this.c_calendar.render();
@@ -1003,15 +859,17 @@ var mt = {
 					return true;
 				},
 			});
-			this.c_modal.setContent('<div id="calenar-form" class="json-editor"></div>');
+
+			// Contain Form
+			const elementForm = document.createElement('div');
+			elementForm.style.width = '500px';
+			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
+			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
 
 			// Init form - JsonEditor
-			// JsonEditorEX.RateRegister();
-			// JsonEditorEX.TagBoxRegister();
-			const element = document.getElementById('calenar-form');
-			element.style.width = '500px';
-			element.parentElement.parentElement.style.width = 'unset'; // Bỏ width gốc
-			this.c_form = new JSONEditor(element, {
+			// mt.lib.jsonEditor.ex.RateRegister();
+			// mt.lib.jsonEditor.ex.TagBoxRegister();
+			this.c_form = new JSONEditor(elementForm, {
 				use_name_attributes: false,
 				theme: 'barebones',
 				iconlib: 'fontawesome5',
@@ -1024,10 +882,14 @@ var mt = {
 					required: ['name', 'date'],
 					properties: {
 						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
+						'year': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
 						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
 						'date': { title: 'Date', type: 'string', format: 'date', readonly: true, options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
-						'save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
-						'cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
+						'time': { title: 'Time', type: 'string', format: 'time', options: { flatpickr: { locale: 'vn', enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true }}},
+						'location': { title: 'Location', type: 'string', format: 'text', options: { autocomplete: 'off' } },
+						'btn_map': { title: 'Open Map', type: 'string', format: 'button', options: { button: { icon: 'location-dot', action: () => this.openMap() }}},
+						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
+						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
 					}
 				},
 			});
@@ -1051,7 +913,7 @@ var mt = {
 			let urlDB = '/' + this.h_pathDB + year + '.json';
 
 			// Call API
-			let listEvent = await mt.common.loadJson(urlDB);
+			let listEvent = await mt.file.loadJson(urlDB);
 
 			// Auto gen
 			if (listEvent.length == 0)
@@ -1060,7 +922,12 @@ var mt = {
 			// Process
 			for (let i=0; i<listEvent.length; i++) {
 				let event = listEvent[i];
-				event.id = i+1; // Bổ sung Id
+				
+				// Bổ sung Id
+				event.id = i+1;
+
+				// Bổ sung year
+				event.year = Number.parseInt(event.date.substring(0, 4));
 			}
 
 			// Bind Data
@@ -1072,8 +939,16 @@ var mt = {
 			// Log
 			mt.h_debug && console.log('[mt.calendar.load]', { year, listEvent });
 		},
-		async openForm(formData) {
+		async openForm(event) {
 
+			// Clone
+			let formData = JSON.parse(JSON.stringify(event));
+
+			// Bổ sung location để hiện field
+			formData.location = (formData.location == null) ? '' : (formData.location.lat + ', ' + formData.location.lng);
+			if (formData.time == null)
+				formData.time = '00:00';
+			
 			// Set form data
 			this.c_form.setValue(formData);
 			
@@ -1081,40 +956,58 @@ var mt = {
 			this.c_modal.open();
 
 			// Log
-			mt.h_debug && console.log('[mt.calendar.openForm]', { formData });
+			mt.h_debug && console.log('[mt.calendar.openForm]', { event, formData });
 		},
 		async saveForm() {
 			try {
 
 				// Lấy data form
 				let formData = this.c_form.getValue();
+				let year = formData.year;
+				let id = formData.id;
 
 				// Validate
 				// if (formData == null || formData.date == null)
 				// 	throw 'Chưa chọn ngày!'
 
-				// Get year
-				let year = Number.parseInt(formData.date.substring(0, 4));
-
+				// Process form data
+				let locationInput = formData.location;
+				delete formData.location;
+				if (locationInput != null && locationInput.length > 0) { // location từ 'lat, lng' thành { lat: ... , lng: ... }
+					let locPath = locationInput.split(', ');
+					if (locPath.length == 2) {
+						try {
+							let location = {
+								lat: Number.parseFloat(locPath[0]),
+								lng: Number.parseFloat(locPath[1])
+							};
+							formData.location = location;
+						}
+						catch (ex) {} // skip nếu lỗi
+					}
+				}
+				if (formData.time == '00:00')
+					delete formData.time;
+				
 				// Lưu và cập nhật UI
-				if (formData.id == -1) { // Add event
+				if (id == -1) { // Add event
 					let newid = this.d_events[year].length;
 					formData.id = newid;
 
 					this.d_events[year].push(formData);
 
 					this.c_calendar.addEvent({
-						id: formData.id,
+						id: id,
 						title: formData.name,
 						start: formData.date,
 						extendedProps: formData,
 					});
 				}
 				else { // Update event
-					// let oldData = this.d_events[year][formData.id-1];
-					this.d_events[year][formData.id-1] = formData;
+					// let oldData = this.d_events[year][id-1];
+					this.d_events[year][id-1] = formData;
 
-					let event = this.c_calendar.getEventById(formData.id);
+					let event = this.c_calendar.getEventById(id);
 					event.setProp('title', formData.name);
 					for (let prop in formData) {
 						if (prop == 'id' || prop == 'date')
@@ -1126,9 +1019,14 @@ var mt = {
 				// Save data
 				let urlDB = '/' + this.h_pathDB + year + '.json';
 				let cloneData = JSON.parse(JSON.stringify(this.d_events[year]));
-				for (let event of cloneData)
+				for (let event of cloneData) {
 					delete event.id;
-				await mt.common.saveJson(urlDB, cloneData);
+					delete event.year;
+				}
+				await mt.file.saveJson(urlDB, cloneData);
+
+				// Toast
+				mt.show.toast('success', 'Đã lưu lịch.');
 
 				// Close modal
 				this.c_modal.close();
@@ -1137,9 +1035,20 @@ var mt = {
 				mt.h_debug && console.log('[mt.calendar.saveForm]', { formData });
 			}
 			catch (ex) {
-				// Swal.showValidationMessage("Dữ liệu nhập chưa hợp lệ!");
+				mt.show.toast('error', 'Dữ liệu nhập chưa hợp lệ!');
 				console.error('[mt.calendar.saveForm] Exception:', ex);
 			}
+		},
+		openMap() {
+		
+			// Lấy data form
+			let formData = this.c_form.getValue();
+			let year = formData.year;
+			let id = formData.id;
+
+			let event = this.d_events[year][id-1];
+			let url = `/manager3/?tab=map&lat=${event.location.lat}&lng=${event.location.lng}`;
+			window.open(url);
 		},
 		async generate(year) { // Tạo data của năm
 
@@ -1147,7 +1056,7 @@ var mt = {
 			let urlDB = '/' + this.h_pathDB + 'gen.json';
 
 			// Call API load
-			let listGen = await mt.common.loadJson(urlDB);
+			let listGen = await mt.file.loadJson(urlDB);
 
 			// Gen
 			let listEvent = [];
@@ -1163,7 +1072,7 @@ var mt = {
 			}
 
 			// Lưu lại
-			mt.common.saveJson('/' + this.h_pathDB + year + '.json', listEvent);
+			mt.file.saveJson('/' + this.h_pathDB + year + '.json', listEvent);
 
 			// Thông báo
 			// w2alert(`Đã tạo dữ liệu năm ${year}.`);
@@ -1197,6 +1106,190 @@ var mt = {
 			return `${sonarDate.cYear}-${funcPad(sonarDate.cMonth)}-${funcPad(sonarDate.cDay)}`;
 		},
 	},
+	map: {
+
+		/**
+		 * Tải file map
+		 * https://download.geofabrik.de/asia/vietnam.html
+		 * 
+		 * Tải planetiler
+		 * https://github.com/onthegomap/planetiler/releases/tag/v0.9.3
+		 * 
+		 * Convert ".osm.pbf" -> ".mbtiles"
+		 * java -jar "planetiler.jar" --osm-path="vietnam.osm.pbf" --output="vietnam.mbtiles" --download
+		 * 
+		 * 
+		 * 
+		 * 
+		 * Tải tilemaker: https://github.com/systemed/tilemaker/releases/tag/v3.0.0
+		 * Convert ".osm.pbf" -> ".mbtiles": tilemaker --input data.osm.pbf --output data.mbtiles
+		 * "D:\Apps\tilemaker\build\RelWithDebInfo\tilemaker.exe" --input "vietnam-260201.osm.pbf" --output "C:\Users\Admin\Downloads\map\vietnam-260201.mbtiles"
+		 * 
+		 * Tải gdal: https://www.gisinternals.com/query.html?content=filelist&file=release-1944-x64-gdal-3-12-1-mapserver-8-6-0.zip
+		 * 
+		 * Convert ".osm.pbf" -> "": gdal-3-12-1\bin\gdal\apps\ogr2ogr -f "ESRI Shapefile" vietnam.shp vietnam-latest.osm.pbf
+		 * "D:\Apps\gdal-3-12-1\bin\gdal\apps\ogr2ogr.exe" -f "ESRI Shapefile" vietnam.shp vietnam-260201.osm.pbf
+		 * 
+		 * 
+		 */
+
+		// h_url_online: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+		h_url_online: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+		h_url_offline: '/map/tiles/?z={z}&x={x}&y={y}',
+		m_init: false,
+		e_contain: null,
+		c_map: null, // Leaflet
+		c_layer: null, // Leaflet
+
+		async init() {
+
+			// Import Library
+			await mt.lib.import(['leaflet']);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'map-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			// Init Map - leaflet
+			this.c_map = new L.Map('map-contain', {
+				contextmenu: true,
+				contextmenuWidth: 140,
+				contextmenuItems: [
+					{ text: 'Show coordinates', callback: () => console.log('showCoordinates') },
+					{ text: 'Center map here', callback: () => console.log('centerMap') },
+					'-',
+					{ text: 'Zoom in', icon: 'images/zoom-in.png', callback: () => console.log('zoomIn') },
+					{ text: 'Zoom out', icon: 'images/zoom-out.png', callback: () => console.log('zoomOut') },
+				],
+				attributionControl: false,
+			}).setView([10.7769, 106.7009], 12);
+			// this.c_map = new L.Map('map-contain').fitWorld();
+
+			// Add tile Layer
+			this.c_layer = L.tileLayer(this.h_url_online, { attribution: '' }).addTo(this.c_map);
+
+			// Add Button, Tạo custom control chứa input text
+			let inputControl = L.control({position: 'topright'}); // vị trí: topleft, topright, bottomleft, bottomright
+			inputControl.onAdd = (map) => {
+				let div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+				let input = L.DomUtil.create('input', '', div);
+				input.type = 'text';
+				input.placeholder = 'latiture, longtiture';
+				input.style.padding = '4px';
+				input.style.width = '120px';
+				L.DomEvent.disableClickPropagation(div); // Ngăn sự kiện chuột trên input ảnh hưởng đến map (ví dụ zoom, drag)
+				input.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault(); // ngăn submit form nếu có
+						let value = input.value.trim();
+						if (value) {
+							let part = value.split(', ');
+							if (part.length == 2) {
+								let lat = Number.parseFloat(part[0]);
+								let lng = Number.parseFloat(part[1]);
+								map.setView([lat, lng], 15); // Focus
+								let marker = L.marker([lat, lng]).addTo(this.c_map); // Add marker
+							}
+						}
+					}
+				});
+				return div;
+			};
+			inputControl.addTo(this.c_map); // Thêm control vào map
+
+			// Add Button current location
+			let locationControl = L.control({position: 'topleft'});
+			locationControl.onAdd = (map) => {
+				let div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+				let button = L.DomUtil.create('button', '', div);
+				button.innerHTML = '<i class="fa-solid fa-location-crosshairs" style="font-size:16px;"></i>';
+				button.style.width = '30px';
+				button.style.height = '30px';
+				button.style.padding = '0';
+				button.style.border = 'none';
+				button.style.cursor = 'pointer';
+				L.DomEvent.disableClickPropagation(div);
+				button.addEventListener("click", function() {
+					if (navigator.geolocation) {
+						navigator.geolocation.getCurrentPosition(function(pos) {
+							let lat = pos.coords.latitude;
+							let lng = pos.coords.longitude;
+							map.setView([lat, lng], 15);
+							L.marker([lat, lng]).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
+						}, function(err) {
+							alert("Không lấy được vị trí: " + err.message);
+						});
+					}
+					else {
+						alert("Trình duyệt không hỗ trợ Geolocation");
+					}
+				});
+				return div;
+			}
+			locationControl.addTo(this.c_map);
+
+			// Test route
+			// let startPoint = L.latLng(10.8231, 106.6297); // HCM
+			// let endPoint = L.latLng(10.762622, 106.660172); // Quận 1
+			// // Tạo route
+			// L.Routing.control({
+			// 	waypoints: [startPoint, endPoint],
+			// 	routeWhileDragging: true,
+			// 	lineOptions: {
+			// 		styles: [{color: 'blue', weight: 6}]
+			// 	},
+			// 	createMarker: function(i, waypoint, n) {
+			// 		return L.marker(waypoint.latLng, {
+			// 			icon: L.icon({
+			// 				iconUrl: i === 0 ? 'marker-start.png' : 'marker-end.png',
+			// 				iconSize: [32, 32]
+			// 			})
+			// 		});
+			// 	}
+			// }).addTo(this.c_map);
+
+			// Process Params
+			this.processParams();
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		processParams() {
+			let urlParams = new URLSearchParams(window.location.search);
+			let latStr = urlParams.get('lat');
+			let lngStr = urlParams.get('lng');
+			if (latStr != null && lngStr != null) {
+				let lat = Number.parseFloat(latStr);
+				let lng = Number.parseFloat(lngStr);
+
+				let marker = L.marker([lat, lng]).addTo(this.c_map);
+
+				this.c_map.setView([lat, lng], 16);
+			}
+		},
+		tile2bbox(x, y, z) {
+			const n = Math.pow(2, z);
+			const lng_left = x / n * 360.0 - 180.0;
+			const lng_right = (x + 1) / n * 360.0 - 180.0;
+			const lat_top = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI;
+			const lat_bottom = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))) * 180 / Math.PI;
+			return [lng_left, lat_bottom, lng_right, lat_top];
+		},
+		getTile(x, y, z) {
+			// const bbox = this.tile2bbox(parseInt(x), parseInt(y), parseInt(z));
+			// const inputFile = '/path/to/input.tif';
+			// const outFile = path.join(__dirname, `tile_${z}_${x}_${y}.png`);
+			// const cmd = `gdal_translate -projwin ${bbox[0]} ${bbox[3]} ${bbox[2]} ${bbox[1]} -of PNG ${inputFile} ${outFile}`
+		},
+	},
 	server: {
 		h_pathDB: '/res/DB/server.json',
 		h_pathNmap: 'D:/Apps/Nmap',
@@ -1210,7 +1303,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-server';
+			this.e_contain.id = 'server-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -1284,8 +1377,6 @@ var mt = {
 					{ field: 'tags', label: 'Tags', type: 'text', operator: 'contains' },
 				],
 			});
-
-			// Load
 			this.c_w2grid.render(this.e_contain);
 
 			// Load data
@@ -1310,7 +1401,7 @@ var mt = {
 		},
 		async load() {
 
-			this.d_list = await mt.common.loadJson(this.h_pathDB);
+			this.d_list = await mt.file.loadJson(this.h_pathDB);
 
 			let processNode = (server, id) => {
 
@@ -1318,9 +1409,15 @@ var mt = {
 				server.id = id;
 
 				// Lấy host và port
-				let pathUrl = server.url.split(':');
-				server.host = pathUrl[0];
-				server.port = +pathUrl[1];
+				if (server.url.includes(':')) {
+					let pathUrl = server.url.split(':');
+					server.host = pathUrl[0];
+					server.port = +pathUrl[1];
+				}
+				else {
+					server.host = server.url;
+					server.port = null;
+				}
 				
 				// Link reference
 				this.d_map[id] = server;
@@ -1349,7 +1446,12 @@ var mt = {
 			}
 		},
 		async check(host, port) {
-			let result = await mt.common.cmd(`nmap -p ${port} ${host}`, [this.h_pathNmap]);
+			let cmd = '';
+			if (port != null)
+				cmd = `nmap -p ${port} ${host}`;
+			else
+				cmd = `nmap ${host}`;
+			let result = await mt.cmd.exec(cmd, [this.h_pathNmap]);
 			let stdout = result?.stdout || '';
 			// let stderr = result?.stderr || '';
 			
@@ -1400,11 +1502,11 @@ var mt = {
 			// Tự động copy
 			if (window.isSecureContext) {
 				await navigator.clipboard.writeText(URL);
-				// mt.utils.toast('success', 'Đã copy link nhạc.');
+				// mt.show.toast('success', 'Đã copy link nhạc.');
 			}
 			else {
 				console.log(URL);
-				// mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+				// mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
 			}
 		},
 		btnLink(serverId) {
@@ -1434,7 +1536,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-markdown';
+			this.e_contain.id = 'markdown-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -1520,7 +1622,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-midi';
+			this.e_contain.id = 'midi-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -1678,6 +1780,59 @@ var mt = {
 			}
 		}
 	},
+	image: {
+		m_init: false,
+		e_contain: null,
+		c_canvas: null,
+
+		async init() {
+
+			// Import Library
+			await mt.lib.import(['fabricjs']);
+			
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'image-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			let canvasElm = document.createElement('canvas');
+			canvasElm.style.width = '100%';
+			canvasElm.style.height = '100%';
+			canvasElm.style.border = '1px solid #000';
+			this.e_contain.appendChild(canvasElm);
+
+			// Init Fabric
+			this.c_canvas = new fabric.Canvas(canvasElm);
+			const helloWorld = new fabric.FabricText('Hello world!', {
+				// cornerStyle: 'round',
+				// cornerStrokeColor: 'blue',
+				// cornerColor: 'lightblue',
+				cornerStyle: 'circle',
+				// padding: 10,
+				// transparentCorners: false,
+				// cornerDashArray: [2, 2],
+				borderColor: 'orange',
+				// borderDashArray: [3, 1, 3],
+				// borderScaleFactor: 2,
+			});
+			this.c_canvas.add(helloWorld);
+			this.c_canvas.centerObject(helloWorld);
+
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		getImage() {
+			return this.c_canvas.toDataURL();
+		}
+	},
 	diagram: {
 		m_init: false,
 		e_contain: null,
@@ -1690,7 +1845,7 @@ var mt = {
 
 			// Add container
 			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'contain-diagram';
+			this.e_contain.id = 'diagram-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
@@ -1741,15 +1896,419 @@ var mt = {
 			return this.m_editor.getValue();
 		},
 	},
+	pdf: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+			try {
+
+				// Import Library
+				await mt.lib.import(['pdfjs']);
+				// await mt.lib.import(['pdfjs-viewer']);
+
+				// Add container
+				this.e_contain = document.createElement('div');
+				this.e_contain.id = 'pdf-contain';
+				this.e_contain.style.height = '100%';
+				mt.common.e_contain.appendChild(this.e_contain);
+
+				// Import PDF Viewer
+				let path = '/lib/pdfjs-5.4.624/web/';
+				await mt.lib.loadCSS(path+'viewer.css');
+				let objectHtml = {};
+				await mtLib.loadHTML(path+'viewer.html', 'html', objectHtml),
+
+				this.e_contain.innerHTML = objectHtml.html;
+
+				// Đợi DOM khởi tạo
+				// await new Promise(resolve => {
+				// 	const obs = new MutationObserver(() => {
+				// 		obs.disconnect();
+				// 		resolve();
+				// 	});
+				// 	obs.observe(this.e_contain, { childList: true, subtree: true });
+				// });
+
+				await new Promise(resolve => requestAnimationFrame(resolve)); // Đợi DOM khởi tạo
+				// setTimeout(async () => {
+				await mtLib.loadJS(path+'viewer.mjs', 'es', 'PDFViewer');
+				// }, 2000);
+
+				// Chuyển locate về lib / pdfjs
+				// Chọn file từ blob hoặc base64
+
+				// demo: https://mozilla.github.io/pdf.js/web/viewer.html
+
+				// Dùng URL Param để load: http://localhost:958/manager3/?tab=pdf&file=1ZH92G830310976050.pdf
+
+				// Dùng JS
+				// PDFViewerApplication.open({url:'/res/pdf/1ZH92G830310976050.pdf'});
+				// PDFViewerApplication.open({data:'base64 string .....................'});
+
+				// PDFViewer.PDFViewerApplicationOptions.getAll();
+				PDFViewer.PDFViewerApplicationOptions.set('localeProperties', {lang: 'vi'});
+				PDFViewer.PDFViewerApplicationOptions.set('viewerCssTheme', 1); // 0: dark, 1: light
+				// PDFViewer.PDFViewerApplicationOptions.set('defaultUrl', '/res/pdf/1ZH92G830310976050.pdf');
+				PDFViewer.PDFViewerApplicationOptions.set('defaultUrl', '');
+				PDFViewer.webViewerLoad();
+
+				// this.e_contain.innerHTML = `
+				// 	<canvas id="pdf-canvas"></canvas>
+				// `.trim().split('\n').map(v=>v.trim()).join('\n');
+
+				// // Init PDF
+				// // const worker = new pdfjsWorker.PDFWorker();
+				// // pdfjsLib.GlobalWorkerOptions.workerPort = worker.port;
+
+				// // Load
+				// let pdfData = atob(
+				// 	'JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog' +
+				// 	'IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv' +
+				// 	'TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K' +
+				// 	'Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg' +
+				// 	'L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+' +
+				// 	'PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u' +
+				// 	'dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq' +
+				// 	'Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU' +
+				// 	'CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu' +
+				// 	'ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g' +
+				// 	'CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw' +
+				// 	'MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v' +
+				// 	'dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G');
+				// let loadingTask = pdfjsLib.getDocument({data: pdfData});
+				// let pdf = await new Promise((resolve, reject) => {
+				// 	loadingTask.promise.then((pdf) => resolve(pdf), (reason) => reject(reason));
+				// });
+
+				// // Fetch the first page
+				// let pageNumber = 1;
+				// let page = await pdf.getPage(pageNumber);
+
+				// let scale = 1.5;
+				// let viewport = page.getViewport({scale: scale});
+
+				// // Prepare canvas using PDF page dimensions
+				// let canvas = document.getElementById('pdf-canvas');
+				// let context = canvas.getContext('2d');
+				// canvas.height = viewport.height;
+				// canvas.width = viewport.width;
+
+				// // Render PDF page into canvas context
+				// let renderContext = {
+				// 	canvasContext: context,
+				// 	viewport: viewport
+				// };
+				
+				// let renderTask = page.render(renderContext);
+				// await new Promise((resolve, reject) => {
+				// 	renderTask.promise.then(() => resolve(), (reason) => reject(reason));
+				// });
+
+			// Process Params
+				await this.processParams();
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.pdf.init]', ex);
+			}
+		},
+		async processParams() {
+			let urlParams = new URLSearchParams(window.location.search);
+			let filepath = urlParams.get('filepath');
+			if (filepath != null) {
+				// filepath=C:/Users/Admin/Downloads/doc/6_phieu_trinh_to_trinh_du_kien_ket_qua_chi_tieu_nam_2024_cum_thi_dua_5_tp_signed.pdf
+
+				// Load file
+				let blob = await mt.file.readFile('blob', filepath);
+				let pdfData = await blob.arrayBuffer();
+				PDFViewer.PDFViewerApplication.open({data: pdfData});
+				
+			}
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+	},
+	gallery: {
+		h_pathWallpaper: '', // Link folder on Server
+		h_pathDB: '/res/DB/image.json', // Link Data Client
+		m_init: false,
+		d_wallpaper: [], // List Image
+		c_modal: null, // tingle
+		c_form: null, // jsoneditor
+		e_contain: null,
+		
+		async init() {
+
+			// Import Library
+			await mt.lib.import(['nanogallery2','tingle','jsonEditor']);
+			// <link href="/lib/sweetalert2-11.22.4/sweetalert2.css" rel="stylesheet" type="text/css">
+			// <script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js" type="text/javascript"></script>
+			// <script src="/lib/splitjs/split.min.js"></script>
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'gallery-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div id="gallery-nanogallery2"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+			// Read config
+			this.h_pathWallpaper = await mt.core.config('PATH_WALLPAPER');
+
+			// First load
+			this.d_wallpaper = await mt.file.loadJson(this.h_pathDB);
+			for (let i=0; i<this.d_wallpaper.length; i++) {
+				let img = this.d_wallpaper[i];
+				img.id = i+1; // Bổ sung Id
+			}
+
+			// Tạo list ảnh cho nanogallery2
+			let listItem = [];
+			for (let i=0; i<this.d_wallpaper.length; i++) {
+				let img = this.d_wallpaper[i];
+				listItem.push({
+					ID: i+1+'',
+					src: img.name,
+					srct: img.name,
+					title: img.name,
+					kind: 'image',
+					// tags: img.tags != null ? img.tags.join(',') : '',
+					customData: Object.assign({
+						name: '',
+						tags: [],
+						rate: 3,
+					}, img),
+				});
+			}
+
+			// Init Nano Gallery 2
+			$('#gallery-nanogallery2').nanogallery2({
+
+				// Data
+				itemsBaseURL: `/file/static?folder=${this.h_pathWallpaper}&file=`,
+				items: listItem,
+
+				// Gallery
+				galleryDisplayMode: 'fullContent',
+				gallerySorting: 'random',
+				galleryTheme : { 
+					thumbnail: { titleShadow : 'none', titleColor: '#fff', borderColor: '#fff' },
+					navigationBreadcrumb: { background : '#3C4B5B' },
+					navigationFilter: { background : '#003C3F', backgroundSelected: '#2E7C7F', color: '#fff' }
+				},
+
+				// Thumbnail
+				thumbnailWidth: 'auto',
+				thumbnailHeight: 150,
+				thumbnailDisplayTransition: 'scaleDown',
+				thumbnailHoverEffect2: 'scale120',
+				thumbnailToolbarImage: { topLeft:'', topRight: 'custom1', bottomLeft: '', bottomRight: ''},
+
+				// Filter
+				galleryFilterTags: true,
+				galleryFilterTagsMode: 'multiple',
+				// galleryFilterTagsMode: 'multi',
+
+				// Toolbar
+				viewerTools: {
+					topLeft: 'previousButton, pageCounter, nextButton, playPauseButton',
+					topRight: 'custom1, zoomButton, rotateLeft, rotateRight, fullscreenButton, closeButton',
+				},
+				viewerToolbar: {
+					display: true,
+					standard: 'minimizeButton, label',
+					minimized: 'minimizeButton, label, shareButton, shoppingcart, linkOriginalButton, downloadButton, infoButton, ',
+				},
+
+				// Icons
+				icons: {
+					thumbnailCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
+					viewerCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
+				},
+
+				// Event
+				fnThumbnailToolCustAction: (toolCode, item) => {
+					switch (toolCode) {
+						case 'custom1':
+							mt.gallery.openForm(item);
+							break;
+					}
+					mt.h_debug && console.log('[mt.gallery.init.fnThumbnailToolCustAction]', { toolCode, item });
+				},
+				fnImgToolbarCustClick: (toolCode, element, item) => {
+					switch (toolCode) {
+						case 'custom1':
+							mt.gallery.openForm(item);
+							break;
+					}
+					mt.h_debug && console.log('[mt.gallery.init.fnImgToolbarCustClick]', { toolCode, element, item });
+				},
+				// viewerToolbar: {
+				// 	standard:  'minimizeButton, previousButton, pageCounter, nextButton, playPauseButton, fullscreenButton, closeButton',
+				// 	// thêm custom button của bạn
+				// 	custom: '<a class="nGY2ViewerCustomBtn" title="Tải về"><i class="fa fa-download"></i></a>'
+				// },
+				// fnViewerToolbar: ($customElement, item, data) => {
+				// 	$customElement.filter('.nGY2ViewerCustomBtn').on('click', e => {
+				// 		e.preventDefault();
+				// 		alert('Bạn vừa click custom button cho: ' + item.title);
+				// 		// ở đây bạn có thể viết code download, share, like...
+				// 	});
+				// }
+			});
+			
+			// Init popup - tingle
+			this.c_modal = new tingle.modal({
+				footer: false,
+				stickyFooter: false,
+				closeMethods: ['button', 'escape'], // 'overlay'
+				closeLabel: 'Đóng',
+				onOpen: function() {
+					// console.log('modal opened');
+				},
+				onClose: function() {
+					// console.log('modal closed');
+				},
+				beforeClose: function() {
+					// Return true to close the modal, false to prevent closing
+					return true;
+				},
+			});
+
+			// Contain Form
+			const elementForm = document.createElement('div');
+			elementForm.style.width = '500px';
+			// this.c_modal.modal.style.zIndex = 1004; // Lên trước nanogallery2 - viewer là 1001
+			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
+			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
+
+			// Init form - JsonEditor
+			mt.lib.jsonEditor.ex.RateRegister();
+			mt.lib.jsonEditor.ex.TagBoxRegister();
+			this.c_form = new JSONEditor(elementForm, {
+				use_name_attributes: false,
+				theme: 'barebones',
+				iconlib: 'fontawesome5',
+				disable_edit_json: true,
+				disable_properties: true,
+				disable_collapse: true,
+				schema: {
+					title: 'Wallpaper',
+					type: 'object',
+					required: ['name', 'tags', 'rate'],
+					properties: {
+						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
+						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0 },
+						'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
+						'rate': { title: 'Rate', type: 'integer', format: 'rate', default: 3 },
+						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
+						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
+					}
+				},
+			});
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		async openForm(item) {
+
+			// Clone
+			let formData = JSON.parse(JSON.stringify(item.customData));
+
+			// Set form data
+			this.c_form.setValue(formData);
+			
+			// Open Modal
+			this.c_modal.open();
+
+			// Log
+			mt.h_debug && console.log('[mt.gallery.openForm]', { item, formData });
+		},
+		async saveForm() {
+			try {
+
+				// Lấy data form
+				let formData = this.c_form.getValue();
+				let id = formData.id;
+
+				// // Lưu và cập nhật UI
+				// if (id == -1) { // Add event
+				// 	let newid = this.d_events[year].length;
+				// 	formData.id = newid;
+
+				// 	this.d_events[year].push(formData);
+
+				// 	this.c_calendar.addEvent({
+				// 		id: id,
+				// 		title: formData.name,
+				// 		start: formData.date,
+				// 		extendedProps: formData,
+				// 	});
+				// }
+				// else { // Update event
+				// 	// let oldData = this.d_events[year][id-1];
+				// 	this.d_events[year][id-1] = formData;
+
+				// 	let event = this.c_calendar.getEventById(id);
+				// 	event.setProp('title', formData.name);
+				// 	for (let prop in formData) {
+				// 		if (prop == 'id' || prop == 'date')
+				// 			continue;
+				// 		event.setExtendedProp(prop, formData[prop]);
+				// 	}
+				// }
+
+				// // Save data
+				// let urlDB = '/' + this.h_pathDB + year + '.json';
+				// let cloneData = JSON.parse(JSON.stringify(this.d_events[year]));
+				// for (let event of cloneData) {
+				// 	delete event.id;
+				// 	delete event.year;
+				// }
+				// await mt.file.saveJson(urlDB, cloneData);
+
+				// Toast
+				mt.show.toast('success', 'Đã lưu lịch.');
+
+				// Close modal
+				this.c_modal.close();
+
+				// Log
+				mt.h_debug && console.log('[mt.saveForm.saveForm]', { formData });
+			}
+			catch (ex) {
+				mt.show.toast('error', 'Dữ liệu nhập chưa hợp lệ!');
+				console.error('[mt.gallery.saveForm] Exception:', ex);
+			}
+		},
+	},
 
 	// Method
 	async init() {
 
 		// Bind Global
-		window.mt = this;
+		globalThis.mt = this;
 
 		// Init
-		await this.p_authen.init();
+		await this.auth.init();
+		await this.show.initToast();
 
 		// Init
 		this.common.init();

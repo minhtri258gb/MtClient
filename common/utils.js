@@ -1,4 +1,4 @@
-var mtUtil = {
+var mtUtils = {
 
 	log: function(origin, level, object) {
 		console.groupCollapsed(origin);
@@ -44,4 +44,4 @@ var mtUtil = {
 		}
 	},
 };
-export default mtUtil;
+export default mtUtils;

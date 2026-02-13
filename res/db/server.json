@@ -10,7 +10,7 @@
   { "name": "Vinasoy Omisell","url": "192.168.1.222:8112", "actions": "", "tags": ["222", "DMS", "Vinasoy", "API", "Omisell"] },
   { "name": "Abbott Web","url": "192.168.1.222:8082", "actions": "link", "tags": ["222", "DMS", "Abbott", "Web"] },
   { "name": "Abbott Core","url": "192.168.1.222:8088", "actions": "", "tags": ["222", "DMS", "Abbott", "Core"] },
-  { "name": "Abbott Sync Sap","url": "192.168.1.222:8192", "actions": "", "tags": ["222", "DMS", "Abbott", "API", "SyncSap"] },
+  { "name": "Abbott Sync Sap","url": "192.168.1.222:8189", "actions": "", "tags": ["222", "DMS", "Abbott", "API", "SyncSap"] },
   { "name": "Abbott Nemo","url": "192.168.1.222:8191", "actions": "", "tags": ["222", "DMS", "Abbott", "API", "Nemo"] },
   { "name": "Abbott Zalo","url": "192.168.1.222:8190", "actions": "", "tags": ["222", "DMS", "Abbott", "API", "Zalo"] },
   { "name": "Abbott Web 2","url": "192.168.1.222:8190", "actions": "link", "tags": ["222", "DMS", "Abbott", "Web", "Public"] },
@@ -40,5 +40,9 @@
   { "name": "ActiveMQ","url": "192.168.1.222:61616", "actions": "", "tags": ["222", "DMS", "ActiveMQ"] },
   { "name": "Sonar","url": "192.168.1.222:9000", "actions": "link", "tags": ["222", "DMS", "Sonar"] },
   { "name": "Ollama","url": "192.168.1.220:11434", "actions": "link", "tags": ["220", "AI"] },
-  { "name": "BV 175 - Dev","url": "portal-dev.benhvien175.vn:80", "actions": "link", "tags": ["HIN", "BV175", "DEV"] }
+  { "name": "BV 175 - Dev","url": "portal-dev.benhvien175.vn:80", "actions": "link", "tags": ["HIN", "BV175", "DEV"] },
+  { "name": "LogAsia - FE","url": "eship.logasiascm.com:443", "actions": "link", "tags": ["HIN", "LogAsia", "FE"] },
+  { "name": "LogAsia - BE","url": "eship.logasiascm.com:82", "actions": "", "tags": ["HIN", "LogAsia", "BE"] },
+  { "name": "LogAsia - Api","url": "eship.logasiascm.com:88", "actions": "", "tags": ["HIN", "LogAsia", "API"] },
+  { "name": "Viettel - MSuilt","url": "vts-msuilte.viettel.vn", "actions": "", "tags": ["Viettel", "VPN"] }
 ]

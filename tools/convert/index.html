@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+	<title>Convert</title>
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Convert</title>
 
 	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
 
@@ -62,6 +63,13 @@
 		<input id="inputFixUnicode" type="text" />
 		<button onclick="mt.convert('FixUnicode')">Convert</button>
 		<span id="outputFixUnicode"></span>
+	</div>
+
+	<div id="base64ToFile">
+		<h2 id="labelBase64ToFile">Base64 -> File</h2>
+		<input id="inputBase64ToFile" type="text" />
+		<button onclick="mt.convert('Base64ToFile')">Convert</button>
+		<span id="outputBase64ToFile"></span>
 	</div>
 
 	<script type="module">
@@ -132,6 +140,10 @@
 						let valueFixUnicode = $('#inputFixUnicode').val();
 						let resFixUnicode = this.func.fixUnicode(valueFixUnicode);
 						$('#outputFixUnicode').html(resFixUnicode);
+						break;
+					case 'Base64ToFile':
+						let valueBase64ToFile = $('#inputFixUnicode').val();
+						// ...
 						break;
 					default:
 						console.error('type:', type);

@@ -12,7 +12,8 @@ mt.auth = {
 		// Insert HTML vào
 		if ($('#pu_login').length == 0) {
 			$('body').append(`
-				<div id="pu_login_div" style="display:none">
+				<div id="pu_login_div" 
+				style="display:none">
 					<div id="pu_login">
 						<input id="pu_login_password" type="text" style="width:300px">
 					</div>

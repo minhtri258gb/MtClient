@@ -5,7 +5,7 @@ import mtUtil from '/common/util.js';
 var mt = {
 	// h_endpoint: 'https://api.jikan.moe/v4/top/anime',
 	h_endpoint: '/database/tabulator',
-	p_authen: mtAuthen,
+	auth: mtAuthen,
 	c_table: null,
 	m_database: 'manager',
 	d_row: '', // Row đang lưu
@@ -18,7 +18,7 @@ var mt = {
 		window.mt = mt;
 
 		// Authen auto
-		await this.p_authen.login('-1393153393');
+		await this.auth.login('-1393153393');
 
 		// Init
 		this.initUI();
@@ -60,7 +60,7 @@ var mt = {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + this.p_authen.getToken(),
+					'Authorization': 'Bearer ' + this.auth.getToken(),
 				}
 			},
 			ajaxContentType: {
@@ -396,7 +396,7 @@ var mt = {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + this.p_authen.getToken(),
+				'Authorization': 'Bearer ' + this.auth.getToken(),
 			},
 			body: JSON.stringify({
 				database: this.m_database,

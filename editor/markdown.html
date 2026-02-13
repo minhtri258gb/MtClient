@@ -3,7 +3,6 @@
 <head>
 
 	<title>Markdown Editor</title>
-
 	<meta charset='utf-8' />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -46,16 +45,12 @@
 				// Bind Global
 				window.mt = this;
 
-
-
 				// Marmaid
 				mermaid.initialize({
 					startOnLoad: false,
 					theme: 'default'
 				});
 				// mermaid.run()
-
-
 
 				// Marked
 				const renderer = new marked.Renderer();
@@ -68,10 +63,8 @@
 				};
 				marked.setOptions({ renderer: renderer });
 
-
-
 				// SimpleMDE
-				var toggleState = false;
+				let toggleState = false;
 				this.m_editor = new SimpleMDE({
 					element: document.getElementById("markdownEditor"),
 					spellChecker: false,

@@ -3,7 +3,6 @@
 <head>
 
 	<title>Json Editor</title>
-
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -158,9 +157,13 @@
 								format: 'checkbox',
 							},
 							'propButton': {
-								title: 'Field Button',
+								title: 'ButtonEditor',
 								type: 'string',
 								format: 'button',
+								options: {
+									icon: 'save',
+									action: () => { console.log('Button onclick') },
+								},
 							},
 							'propReset': {
 								title: 'Field Reset',

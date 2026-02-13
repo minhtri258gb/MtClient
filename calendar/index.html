@@ -56,7 +56,7 @@
 		var mt = {
 			h_debug: true,
 			h_pathDB: 'res/DB/calendar/', // Link Data Client
-			p_authen: mtAuthen,
+			auth: mtAuthen,
 			d_event: {},
 
 			// Module
@@ -72,7 +72,7 @@
 							throw { error: true, message: 'Số năm không hợp lệ' };
 
 						// Authen
-						if (mt.p_authen.checkAuthn() == false)
+						if (mt.auth.checkAuthn() == false)
 							return;
 
 						// DB Path
@@ -113,7 +113,7 @@
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer '+mt.p_authen.getToken() },
+								headers: { 'Authorization': 'Bearer '+mt.auth.getToken() },
 							});
 							if (!response.ok)
 								throw { error: true, message: await response.text() };
@@ -132,7 +132,7 @@
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer '+mt.p_authen.getToken(),
+								'Authorization': 'Bearer '+mt.auth.getToken(),
 							},
 							body: JSON.stringify(this.d_event[year]),
 						});
@@ -474,7 +474,7 @@
 				window.mt = this;
 
 				// Init
-				await this.p_authen.init();
+				await this.auth.init();
 				this.form.init();
 				this.calendar.init();
 				this.utils.init();

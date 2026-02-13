@@ -73,8 +73,8 @@
 		import mtFile from '/common/file.js';
 
 		var mt = {
-			p_authen: mtAuthen,
-			p_file: mtFile,
+			auth: mtAuthen,
+			file: mtFile,
 
 			mgr: {
 				d_assets: {},
@@ -85,7 +85,7 @@
 					let baseFolder = '/2D';
 
 					// Load file assets
-					let contentAssets = await mt.p_file.read('text', baseFolder + '/assets.txt');
+					let contentAssets = await mt.file.read('text', baseFolder + '/assets.txt');
 					let splitAssets = contentAssets.split('\n'); // Chia thành từng dòng
 					// console.log('[mt.mgr.init]', { splitAssets }); // Log
 
@@ -100,7 +100,7 @@
 						let folderAsset = fileAsset.substring(0, posFolder);
 
 						// Đọc dữ liệu sprite
-						let packAsset = await mt.p_file.read('json', baseFolder + fileAsset);
+						let packAsset = await mt.file.read('json', baseFolder + fileAsset);
 						console.log('[mt.mgr.init]', { packAsset });
 
 						// Load image

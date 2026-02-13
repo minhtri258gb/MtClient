@@ -247,10 +247,13 @@
 
 	<script type="module">
 		import mtAuthen from '/common/authen.js';
-		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
+		import mtLib from '/common/lib.js';
+		import mtShow from '/common/show.js';
 
 		var mt = {
-			p_authen: mtAuthen,
+			auth: mtAuthen,
+			lib: mtLib,
+			show: mtShow,
 
 			// Module
 			mgr: {
@@ -322,14 +325,14 @@
 					try {
 
 						// Authen
-						if (mt.p_authen.checkAuthn() == false)
-							await mt.p_authen.init();
+						if (mt.auth.checkAuthn() == false)
+							await mt.auth.init();
 
 						// Kiểm tra và lấy client path
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
+								headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
 							});
 							if (!response.ok)
 								throw { error: true, message: await response.text() };
@@ -353,7 +356,7 @@
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+								'Authorization': 'Bearer ' + mt.auth.getToken(),
 							},
 							body: JSON.stringify(listData),
 						});
@@ -510,14 +513,16 @@
 							return true;
 						},
 					});
-					this.c_modal.setContent('<div id="music-form" class="json-editor"></div>');
+
+					// Contain Form
+					const elementForm = document.createElement('div');
+					elementForm.style.width = '500px';
+					this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
+					this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
 
 					// Init Form - jsoneditor
-					JsonEditorEX.RateRegister();
-					JsonEditorEX.TagBoxRegister();
-					const elementForm = document.getElementById('music-form');
-					elementForm.style.width = '500px';
-					elementForm.parentElement.parentElement.style.width = 'unset'; // Bỏ width gốc
+					mt.lib.jsonEditor.ex.RateRegister();
+					mt.lib.jsonEditor.ex.TagBoxRegister();
 					this.c_form = new JSONEditor(elementForm, {
 						use_name_attributes: false,
 						theme: 'barebones',
@@ -610,11 +615,10 @@
 						this.c_modal.close();
 
 						// Notify
-						mt.utils.toast('success', "Lưu dữ liệu ảnh thành công.");
+						mt.show.toast('success', "Lưu dữ liệu ảnh thành công.");
 					}
 					catch (ex) {
-						// Swal.showValidationMessage('Dữ liệu nhập chưa hợp lệ!');
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.error('[mt.form.saveForm] Exception:', ex);
 					}
 				},
@@ -638,7 +642,7 @@
 					await mt.mgr.saveToJson();
 
 					// Notify
-					mt.utils.toast('success', `Đã xóa dữ liệu bài ${music.name}`);
+					mt.show.toast('success', `Đã xóa dữ liệu bài ${music.name}`);
 
 					// Log
 					console.log('[mt.form.delete]', { music });
@@ -867,7 +871,7 @@
 
 					// nếu có lịch sử thì back về
 					if ( mt.mgr.d_history.length == 0) {
-						mt.utils.toast('warning', 'Chưa có lịch sử chơi nhạc!');
+						mt.show.toast('warning', 'Chưa có lịch sử chơi nhạc!');
 						return;
 					}
 
@@ -904,7 +908,7 @@
 
 					// Kiểm tra data có track ko
 					if (music.trackbegin == null || music.trackend == null) {
-						mt.utils.toast('warning', 'Chưa có track!'); // Thông báo
+						mt.show.toast('warning', 'Chưa có track!'); // Thông báo
 						return;
 					}
 
@@ -1028,7 +1032,7 @@
 							mt.tools.track.setTime(music);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.error('[mt.player.playMusic] Exception:', ex);
 					}
 				},
@@ -1242,15 +1246,15 @@
 					async open() {
 
 						// Authen
-						if (mt.p_authen.checkAuthn() == false)
-							await mt.p_authen.init();
+						if (mt.auth.checkAuthn() == false)
+							await mt.auth.init();
 
 						// Call API - Lấy danh sách file trong thư mục nhạc
 						let paramsURL = new URLSearchParams();
 						paramsURL.append('folder', mt.mgr.h_pathMusic);
 						let response = await fetch('/file/list?' + paramsURL.toString(), {
 							method: 'GET',
-							headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
+							headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
 						});
 						if (!response.ok)
 							throw { error: true, message: await response.text(), detail: response };
@@ -1362,7 +1366,7 @@
 						this.c_content.style.display = 'none';
 
 						// Notify
-						mt.utils.toast('success', `Đã thêm toàn bộ bài mới`);
+						mt.show.toast('success', `Đã thêm toàn bộ bài mới`);
 
 						// Log
 						console.log('[mt.tools.check.addAll]', {  });
@@ -1432,7 +1436,7 @@
 							// console.log('[mt.tools.track.play]', { timeBegin, timeEnd });
 						}
 						catch (ex) {
-							mt.utils.toast('error', ex.message);
+							mt.show.toast('error', ex.message);
 						}
 					},
 					save() {
@@ -1470,11 +1474,11 @@
 						// Tự động copy
 						if (window.isSecureContext) {
 							await navigator.clipboard.writeText(URL);
-							mt.utils.toast('success', 'Đã copy link nhạc.');
+							mt.show.toast('success', 'Đã copy link nhạc.');
 						}
 						else {
 							console.log(URL);
-							mt.utils.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+							mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
 						}
 					},
 				},
@@ -1506,7 +1510,7 @@
 							case 'share':
 								// Nếu chưa chọn bài thì bỏ qua
 								if (mt.player.m_currentMusic == null) {
-									mt.utils.toast('warning', 'Chưa chọn nhạc!');
+									mt.show.toast('warning', 'Chưa chọn nhạc!');
 									return;
 								}
 								await this.share.run();
@@ -1515,7 +1519,7 @@
 						this.m_open = tool;
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.tools.run]', ex);
 					}
 				},
@@ -1535,7 +1539,7 @@
 						mt.list.scrollToCurrent(mt.player.m_currentMusic.id);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.clickDynamicWave]', ex);
 					}
 				},
@@ -1557,7 +1561,7 @@
 						mt.player.seek(curTime);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.clickStaticWave]', ex);
 					}
 				},
@@ -1567,7 +1571,7 @@
 						mt.player.volumeChange();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.volumeChange]', ex);
 					}
 				},
@@ -1577,7 +1581,7 @@
 						mt.player.volumeToggle();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.volumeToggle]', ex);
 					}
 				},
@@ -1587,7 +1591,7 @@
 						mt.player.playBack();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.btnBack]', ex);
 					}
 				},
@@ -1597,7 +1601,7 @@
 						mt.player.pause();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.btnPause]', ex);
 					}
 				},
@@ -1607,7 +1611,7 @@
 						mt.player.playNext();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.btnNext]', ex);
 					}
 				},
@@ -1617,7 +1621,7 @@
 						mt.player.c_loop.stepUp(1);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.btnLoopIncrease]', ex);
 					}
 				},
@@ -1627,7 +1631,7 @@
 						mt.wave.changeWaveType();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.ckbWave]', ex);
 					}
 				},
@@ -1637,7 +1641,7 @@
 						mt.player.changeAutoNext();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.ckbNext]', ex);
 					}
 				},
@@ -1647,7 +1651,7 @@
 						mt.player.playForce(cell.getRow().getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.doubleClickList]', ex);
 					}
 				},
@@ -1657,7 +1661,7 @@
 						mt.player.addPlaylist(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuAddPlaylist]', ex);
 					}
 				},
@@ -1667,7 +1671,7 @@
 						mt.player.playForce(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuPlay]', ex);
 					}
 				},
@@ -1677,7 +1681,7 @@
 						mt.player.playTrack(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuPlayTrack]', ex);
 					}
 				},
@@ -1687,7 +1691,7 @@
 						mt.form.open(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuEdit]', ex);
 					}
 				},
@@ -1697,7 +1701,7 @@
 						mt.form.delete(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuDelete]', ex);
 					}
 				},
@@ -1707,7 +1711,7 @@
 						console.log(row.getData());
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.menuPrint]', ex);
 					}
 				},
@@ -1717,19 +1721,19 @@
 						mt.player.pause();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.pressSpace]', ex);
 					}
 				},
 				pressEnter() { // Nhấn enter
-					try {
-						this.m_action = 'pressEnter';
-						mt.player.playNext();
-					}
-					catch (ex) {
-						mt.utils.toast('error', ex.message);
-						console.log('[mt.event.pressEnter]', ex);
-					}
+					// try {
+					// 	this.m_action = 'pressEnter';
+					// 	mt.player.playNext();
+					// }
+					// catch (ex) {
+					// 	mt.show.toast('error', ex.message);
+					// 	console.log('[mt.event.pressEnter]', ex);
+					// }
 				},
 				pressMediaPlayPause() { // Nhấn phím media dừng / phát
 					try {
@@ -1737,7 +1741,7 @@
 						mt.player.pause();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.pressMediaPlayPause]', ex);
 					}
 				},
@@ -1747,7 +1751,7 @@
 						mt.player.pause(false);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.mediaPlay]', ex);
 					}
 				},
@@ -1757,7 +1761,7 @@
 						mt.player.pause(true);
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.mediaPause]', ex);
 					}
 				},
@@ -1767,7 +1771,7 @@
 						mt.player.playBack();
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.mediaBack]', ex);
 					}
 				},
@@ -1777,13 +1781,12 @@
 						mt.player.playNext()
 					}
 					catch (ex) {
-						mt.utils.toast('error', ex.message);
+						mt.show.toast('error', ex.message);
 						console.log('[mt.event.mediaNext]', ex);
 					}
 				},
 			},
 			utils: {
-				p_toast: null, // Sweetalert2 - Toast
 
 				init() {
 
@@ -1792,30 +1795,12 @@
 
 					// Register browser Media
 					this.registerMedia();
-
-					// Init Sweetlert2
-					this.p_toast = Swal.mixin({
-						toast: true,
-						position: 'bottom-end',
-						showConfirmButton: false,
-						timer: 3000,
-						timerProgressBar: true,
-						didOpen: (toast) => {
-							toast.onmouseenter = Swal.stopTimer;
-							toast.onmouseleave = Swal.resumeTimer;
-						},
-					});
 				},
 				registerMedia() {
 					navigator.mediaSession.setActionHandler('play', () => mt.event.mediaPlay());
 					navigator.mediaSession.setActionHandler('pause', () => mt.event.mediaPause());
 					navigator.mediaSession.setActionHandler('previoustrack', () => mt.event.mediaBack());
 					navigator.mediaSession.setActionHandler('nexttrack', () => mt.event.mediaNext());
-				},
-				toast(type, message) {
-
-					// Show Toast
-					this.p_toast.fire({ icon: type, title: message });
 				},
 				async confirmDanger(message, action) {
 					let result = await Swal.fire({
@@ -1871,10 +1856,16 @@
 			async init() {
 
 				// Bind Global
-				window.mt = this;
+				globalThis.mt = this;
+
+				// Import Library
+				await mt.lib.import(['tingle','jsonEditor']);
 
 				// Read Config
 				await this.mgr.loadConfig();
+
+				// Init module
+				await this.show.initToast();
 
 				// Init
 				this.list.init();

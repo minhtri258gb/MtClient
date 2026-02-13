@@ -22,7 +22,7 @@ var mt = {
 	mgr: {
 		h_pathWallpaper: '', // Link folder on Server
 		h_pathDB: 'res/DB/image.json', // Link Data Client
-		p_authen: mtAuthen,
+		auth: mtAuthen,
 		m_clientPath: '', // Đường dẫn client
 		d_wallpaper: [], // List Image
 
@@ -39,7 +39,7 @@ var mt = {
 		// 	try {
 
 		// 		// Authen
-		// 		if (this.p_authen.checkAuthn() == false)
+		// 		if (this.auth.checkAuthn() == false)
 		// 			return;
 
 		// 		// Call API
@@ -47,7 +47,7 @@ var mt = {
 		// 			method: 'POST',
 		// 			headers: {
 		// 				'Content-Type': 'application/json',
-		// 				'Authorization': 'Bearer '+this.p_authen.getToken(),
+		// 				'Authorization': 'Bearer '+this.auth.getToken(),
 		// 			},
 		// 			body: JSON.stringify({ 'folder': this.h_pathWallpaper })
 		// 		});
@@ -81,8 +81,8 @@ var mt = {
 			try {
 
 				// Authen
-				if (this.p_authen.checkAuthn() == false)
-					await this.p_authen.init();
+				if (this.auth.checkAuthn() == false)
+					await this.auth.init();
 
 				// Call API
 				let paramURL = new URLSearchParams();
@@ -90,7 +90,7 @@ var mt = {
 				let url = '/file/list?' + paramURL.toString();
 				let response = await fetch(url, {
 					method: 'GET',
-					headers: { 'Authorization': 'Bearer '+this.p_authen.getToken() },
+					headers: { 'Authorization': 'Bearer '+this.auth.getToken() },
 				});
 				if (!response.ok)
 					throw { error: true, msg: await response.text() };
@@ -117,14 +117,14 @@ var mt = {
 		async saveToJson() {
 
 			// Authen
-			if (this.p_authen.checkAuthn() == false)
-				await this.p_authen.init();
+			if (this.auth.checkAuthn() == false)
+				await this.auth.init();
 
 			// Kiểm tra và lấy client path
 			if (this.m_clientPath.length == 0) {
 				let response = await fetch('/file/getClientPath', {
 					method: 'GET',
-					headers: { 'Authorization': 'Bearer '+this.p_authen.getToken() },
+					headers: { 'Authorization': 'Bearer '+this.auth.getToken() },
 				});
 				if (!response.ok)
 					throw { error: true, msg: await response.text() };
@@ -140,7 +140,7 @@ var mt = {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain',
-					'Authorization': 'Bearer '+this.p_authen.getToken(),
+					'Authorization': 'Bearer '+this.auth.getToken(),
 				},
 				body: JSON.stringify(this.d_wallpaper),
 			});
@@ -348,10 +348,10 @@ var mt = {
 	async init() {
 
 		// Bind Global
-		window.mt = this;
+		globalThis.mt = this;
 
 		// Authen
-		// await this.mgr.p_authen.init();
+		// await this.mgr.auth.init();
 
 		// Read Config
 		await this.mgr.readConfig();
