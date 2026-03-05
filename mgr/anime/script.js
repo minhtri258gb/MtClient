@@ -1,10 +1,12 @@
 import mtAuthen from '/common/authen.js';
-import mtUtil from '/common/util.js';
+import mtUtils from '/common/utils.js';
 
 var mt = {
+	auth: mtAuthen,
+	utils: mtUtils,
+
 	// h_endpoint: 'https://api.jikan.moe/v4/top/anime',
 	h_endpoint: '/database/tabulator',
-	auth: mtAuthen,
 	c_table: null,
 	m_database: 'manager',
 	d_row: '', // Row đang lưu
@@ -122,7 +124,7 @@ var mt = {
 					let timestamp = cell.getValue();
 					if (timestamp == null)
 						return '';
-					return mtUtil.date.date_to_str(new Date(timestamp * 1000), 'dd/MM/yy');
+					return mt.utils.date.date_to_str(new Date(timestamp * 1000), 'dd/MM/yy');
 				} },
 			],
 			editorEmptyValue: null,

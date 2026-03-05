@@ -80,6 +80,10 @@ var mtLib = {
 			mtLib.loadJS(path+'addon/fold/markdown-fold.js'),
 		]);
 	}},
+	'd3': { init: false, async load() {
+		let path = '/lib/d3/';
+		await mtLib.loadJS(path+'d3.v7.min.js');
+	}},
 	'fabricjs': { init: false, async load() {
 		let path = '/lib/fabricjs-6.7.1/';
 		await mtLib.loadJS(path+'index.min.js');
@@ -94,6 +98,10 @@ var mtLib = {
 	}},
 	'FullCalendar': { init: false, async load() {
 		await mtLib.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js');
+	}},
+	'function-plot': { init: false, async load() {
+		let path = '/lib/function-plot-1.25.3/';
+		await mtLib.loadJS(path+'function-plot.js');
 	}},
 	'highlightjs': { init: false, async load() {
 		let path = '/lib/highlightjs/';
@@ -148,6 +156,15 @@ var mtLib = {
 			mtLib.loadJS(path+'markdownItTocDoneRight.umd.js'),
 		]);
 	}},
+	'mathjax': { init: false, async load() {
+		let path = '/lib/mathjax-4.1.1/';
+		// await mtLib.loadJS(path+'sre/speech-worker.js');
+		await mtLib.loadJS(path+'tex-mml-chtml.js');
+	}},	
+	'mathjs': { init: false, async load() {
+		let path = '/lib/mathjs-15.1.1/';
+		await mtLib.loadJS(path+'math.js');
+	}},
 	'mermaid': { init: false, async load() {
 		await mtLib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
 	}},
@@ -185,6 +202,13 @@ var mtLib = {
 	'solarLunar': { init: false, async load() {
 		await mtLib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
 	}},
+	'tabulator': { init: false, async load() {
+		let path = '/lib/tabulator-6.3/';
+		await Promise.all([
+			mtLib.loadCSS(path+'css/tabulator.min.css'),
+			mtLib.loadJS(path+'js/tabulator.min.js'),
+		]);
+	}},
 	'tingle': { init: false, async load() {
 		let path = '/lib/tingle/';
 		let pathex = '/lib/mt/tingle/';
@@ -201,6 +225,19 @@ var mtLib = {
 			mtLib.loadJS(path+'toastify.min.js'),
 		]);
 	}},
-
+	'visjs': { init: false, async load() {
+		let path = '/lib/vis-4.21.0/';
+		await Promise.all([
+			mtLib.loadCSS(path+'vis.min.css'),
+			mtLib.loadJS(path+'vis.min.js'),
+		]);
+	}},
+	'xspreadsheet': { init: false, async load() {
+		let path = '/lib/xspreadsheet/';
+		await Promise.all([
+			mtLib.loadCSS(path+'xspreadsheet.css'),
+			mtLib.loadJS(path+'xspreadsheet.js'),
+		]);
+	}},
 };
 export default mtLib;

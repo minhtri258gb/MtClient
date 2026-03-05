@@ -8,12 +8,12 @@
 
 	<!-- <link href="/lib/bootstrap-3.4.1/css/bootstrap.min.css" type="text/css" rel="stylesheet"> -->
 	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
-	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
-	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+	<!-- <link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet"> -->
+	<!-- <script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script> -->
 	<!-- <script src="/lib/vanilla-picker-2.0.1/vanilla-picker.min.js"></script> -->
-	<link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet">
-	<script src="/lib/flatpickr/flatpickr.min.js"></script>
-	<script src="/lib/flatpickr/l10n/vn.js"></script>
+	<!-- <link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet"> -->
+	<!-- <script src="/lib/flatpickr/flatpickr.min.js"></script> -->
+	<!-- <script src="/lib/flatpickr/l10n/vn.js"></script> -->
 	<!-- <link href="/lib/choicesjs-11.1.0/base.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <link href="/lib/choicesjs-11.1.0/choices.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <script src="/lib/choicesjs-11.1.0/choices.min.js"></script> -->
@@ -42,19 +42,24 @@
 	<div id="json-editor" class="json-editor"></div>
 
 	<script type="module">
-		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
+		import mtLib from '/common/lib.js';
 
 		var mt = {
+			lib: mtLib,
+
 			m_editor: null,
 
-			init() {
+			async init() {
 
 				// Bind Global
 				window.mt = this;
 
+				// Import Library
+				await mt.lib.import(['jsonEditor','flatpickr']);
+
 				// JsonEditor
-				JsonEditorEX.RateRegister();
-				JsonEditorEX.TagBoxRegister();
+				this.lib.jsonEditor.ex.RateRegister();
+				this.lib.jsonEditor.ex.TagBoxRegister();
 				const element = document.getElementById('json-editor');
 				this.m_editor = new JSONEditor(element, {
 					use_name_attributes: false,

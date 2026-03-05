@@ -9,19 +9,19 @@ import mtShow from '/common/show.js';
 /**
  * https://fontawesome.com/v6/search?ic=free-collection
  * https://w2ui.com/web/docs/2.0/w2layout.set
- * https://fullcalendar.io/
  * https://codemirror.net/
  * https://github.com/markdown-it/markdown-it
- * https://www.abcjs.net/
  * https://flatpickr.js.org/examples/#datetime
  */
 
 /** TODO
  * MATH
- * - https://www.mathjax.org/
+ * - https://d3js.org/getting-started
+ * - https://awesome-javascript.js.org/resources/misc.html
+ * - https://github.com/uhub/awesome-javascript
  */
 
-var mt = {
+let mt = {
 	h_debug: true,
 	auth: mtAuthen,
 	core: mtCore,
@@ -56,15 +56,25 @@ var mt = {
 						{ id: 'movie', text: 'Movie', icon: 'fa-solid fa-film' },
 						{ id: 'manga', text: 'Manga', icon: 'fa-solid fa-book-open' },
 					]},
+					{ id: 'social', text: 'Social', group: true, expanded: true, nodes: [
+						{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
+					]},
 					{ id: 'editor', text: 'Editor', group: true, expanded: true, nodes: [
 						{ id: 'markdown', text: 'Markdown', icon: 'fa-brands fa-markdown' },
 						{ id: 'midi', text: 'Midi', icon: 'fa-brands fa-medium' },
 						{ id: 'image', text: 'Image', icon: 'fa-solid fa-image' },
 						{ id: 'diagram', text: 'Diagram', icon: 'fa-solid fa-diagram-project' },
+						{ id: 'sheet', text: 'Sheet', icon: 'fa-solid fa-table' },
 					]},
 					{ id: 'viewer', text: 'Viewer', group: true, expanded: true, nodes: [
 						{ id: 'pdf', text: 'PDF', icon: 'fa-regular fa-file-pdf' },
 						{ id: 'gallery', text: 'Gallery', icon: 'fa-solid fa-images' },
+					]},
+					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
+						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
+					]},
+					{ id: 'games', text: 'Games', group: true, expanded: true, nodes: [
+						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
 					]},
 				],
 				onClick(event) {
@@ -683,18 +693,44 @@ var mt = {
 	},
 	contact: {
 		h_pathDB: '/res/DB/contact.json',
-		d_list: [],
+		d_list: [], // Danh sách liên lạc
+		d_map: [], // Chuyển thành map để truy cập nhanh
 		m_init: false,
 		e_content: null,
+		c_network: null, // Vis Network
+		c_nodes: null, // Vis - node
+		c_edges: null, // Vis - edge
 
 		async init() {
+
+			// Import Library
+			await mt.lib.import(['visjs']);
 
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'contact-contain';
 			this.e_contain.style.height = '100%';
-			this.e_contain.style.padding = '4px';
+			this.e_contain.style.display = 'flex';
 			mt.common.e_contain.appendChild(this.e_contain);
+
+			let containList = document.createElement('div');
+			containList.id = 'contact-list';
+			containList.style.width = '50%';
+			containList.style.height = '100%';
+			this.e_contain.appendChild(containList);
+
+			let containTree = document.createElement('div');
+			containTree.id = 'contact-tree';
+			containTree.style.width = '50%';
+			containTree.style.height = '100%';
+			this.e_contain.appendChild(containTree);
+
+			let renderAction = (row, actions) => {
+				let htmlBtn = '<div style="display:flex;gap:4px;">';
+				if (row.relationship)
+					htmlBtn += `<button onclick="mt.contact.btnShow(${row.id})"><i class="fa-solid fa-eye"></i></button>`;
+				return htmlBtn + '</div>';
+			}
 			
 			// Grid
 			this.c_w2grid = new w2grid({
@@ -725,10 +761,11 @@ var mt = {
 				},
 				columns: [
 					{ field: 'actions', text: 'Actions', size: '120px', render: (row, target) => renderAction(row, target.value) },
-					{ field: 'status', text: 'Status', size: '52px', attr: 'align=center', render: (row, target) => renderStatus(target.value)},
-					{ field: 'name', text: 'Name', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
-					{ field: 'url', text: 'URL', size: '128px', sortable: true, resizable: true, editable: { type: 'text' } },
-					{ field: 'tags', text: 'Tags', size: '300px', render: (row, target) => renderTag(target.value) },
+					// { field: 'status', text: 'Status', size: '52px', attr: 'align=center', render: (row, target) => renderStatus(target.value)},
+					{ field: 'ho', text: 'Họ', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'ten', text: 'Tên', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					// { field: 'url', text: 'URL', size: '128px', sortable: true, resizable: true, editable: { type: 'text' } },
+					// { field: 'tags', text: 'Tags', size: '300px', render: (row, target) => renderTag(target.value) },
 				],
 				liveSearch: true,
 				multiSearch: true,
@@ -738,7 +775,18 @@ var mt = {
 					{ field: 'tags', label: 'Tags', type: 'text', operator: 'contains' },
 				],
 			});
-			this.c_w2grid.render(this.e_contain);
+			this.c_w2grid.render(containList);
+
+			// Init Vis
+			this.c_nodes = new vis.DataSet([]);
+			this.c_edges = new vis.DataSet([]);
+			this.c_network = new vis.Network(containTree, { nodes: this.c_nodes, edges: this.c_edges }, {
+				// layout: {
+				// 	hierarchical: {
+				// 		direction: 'UD',
+				// 	},
+				// },
+			});
 
 			// Load data
 			await this.load();
@@ -759,14 +807,53 @@ var mt = {
 
 			this.d_list = await mt.file.loadJson(this.h_pathDB);
 
+			this.d_map = {};
 			for (let i=0; i<this.d_list.length; i++) {
 				let contact = this.d_list[i];
 
-				contact.id = i+1;
+				// Convert maping
+				this.d_map[contact.id] = contact;
+			}
+		},
+		async btnShow(rootContactId) {
+
+			const delayTime = 500; // ms
+
+			this.c_nodes.clear();
+			this.c_edges.clear();
+			
+			// Xây cây quan hệ
+			let stacks = [rootContactId]; // dùng để khử đệ quy, duyệt sâu
+			// let nodes = []; // Danh sách nút
+			// let edges = []; // Danh sách cạnh
+			while (stacks.length > 0) { // Loop duyệt khử đệ quy
+				let contactId = stacks.pop();
+				let contact = this.d_map[contactId];
+
+				// Bổ sung child
+				if (contact.relationship)
+					stacks = stacks.concat(contact.relationship);
+
+				// Thêm node
+				// nodes.add({ id: contact.id, label: contact.ten, level: contact.level });
+				this.c_nodes.add({ id: contact.id, label: contact.ten, level: contact.level });
+
+				// Thêm edge
+				if (contact.relationship)
+					for (let id of contact.relationship)
+						this.c_edges.add({ from: contact.id, to: id });
+						// edges.push({ from: contact.id, to: id });
+				
+				// Delay 300 ms
+				await new Promise((resolve) => setTimeout(() => resolve(null), delayTime));
 			}
 		},
 	},
 	calendar: {
+
+		/**
+		 * https://fullcalendar.io/
+		 */
 		h_pathDB: 'res/DB/calendar/',
 		m_init: false,
 		d_events: {}, // Map year -> list event
@@ -883,11 +970,12 @@ var mt = {
 					properties: {
 						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
 						'year': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
-						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
 						'date': { title: 'Date', type: 'string', format: 'date', readonly: true, options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
+						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
+						'type': { title: 'Type', type: 'string', enum: ['normal','event','birthday','holiday','memory'] },
 						'time': { title: 'Time', type: 'string', format: 'time', options: { flatpickr: { locale: 'vn', enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true }}},
 						'location': { title: 'Location', type: 'string', format: 'text', options: { autocomplete: 'off' } },
-						'btn_map': { title: 'Open Map', type: 'string', format: 'button', options: { button: { icon: 'location-dot', action: () => this.openMap() }}},
+						'btn_map': { title: 'Open Map', type: 'string', format: 'button', options: { button: { icon: 'location-dot', action: () => this.btnOpenMap() }}},
 						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
 						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
 					}
@@ -944,10 +1032,12 @@ var mt = {
 			// Clone
 			let formData = JSON.parse(JSON.stringify(event));
 
-			// Bổ sung location để hiện field
-			formData.location = (formData.location == null) ? '' : (formData.location.lat + ', ' + formData.location.lng);
+			// Bổ sung field để hiển thị
 			if (formData.time == null)
 				formData.time = '00:00';
+			if (formData.type == null)
+				formData.type = 'normal';
+			formData.location = (formData.location == null) ? '' : (formData.location.lat + ', ' + formData.location.lng);
 			
 			// Set form data
 			this.c_form.setValue(formData);
@@ -966,11 +1056,13 @@ var mt = {
 				let year = formData.year;
 				let id = formData.id;
 
-				// Validate
-				// if (formData == null || formData.date == null)
-				// 	throw 'Chưa chọn ngày!'
-
 				// Process form data
+				if (formData.time == '00:00')
+					delete formData.time;
+
+				if (formData.type == 'normal')
+					delete formData.type;
+
 				let locationInput = formData.location;
 				delete formData.location;
 				if (locationInput != null && locationInput.length > 0) { // location từ 'lat, lng' thành { lat: ... , lng: ... }
@@ -986,8 +1078,6 @@ var mt = {
 						catch (ex) {} // skip nếu lỗi
 					}
 				}
-				if (formData.time == '00:00')
-					delete formData.time;
 				
 				// Lưu và cập nhật UI
 				if (id == -1) { // Add event
@@ -1004,11 +1094,20 @@ var mt = {
 					});
 				}
 				else { // Update event
-					// let oldData = this.d_events[year][id-1];
+					let oldData = this.d_events[year][id-1];
 					this.d_events[year][id-1] = formData;
-
 					let event = this.c_calendar.getEventById(id);
-					event.setProp('title', formData.name);
+
+					if (formData.name != oldData.name)
+						event.setProp('title', formData.name);
+
+					if (formData.type != oldData.type) {
+						let style = this.getTypeColor(formData.type);
+						event.setProp('backgroundColor', style.bgColor);
+						event.setProp('textColor', style.color);
+						event.setProp('borderColor', style.bdColor);
+					}
+
 					for (let prop in formData) {
 						if (prop == 'id' || prop == 'date')
 							continue;
@@ -1039,7 +1138,7 @@ var mt = {
 				console.error('[mt.calendar.saveForm] Exception:', ex);
 			}
 		},
-		openMap() {
+		btnOpenMap() {
 		
 			// Lấy data form
 			let formData = this.c_form.getValue();
@@ -1047,6 +1146,12 @@ var mt = {
 			let id = formData.id;
 
 			let event = this.d_events[year][id-1];
+
+			if (!event.location) {
+				mt.show.toast('warning', 'Chưa nhập Location');
+				return;
+			}
+
 			let url = `/manager3/?tab=map&lat=${event.location.lat}&lng=${event.location.lng}`;
 			window.open(url);
 		},
@@ -1061,14 +1166,20 @@ var mt = {
 			// Gen
 			let listEvent = [];
 			for (let gen of listGen) {
-				switch (gen.type) {
+				let event = null;
+				switch (gen.gen) {
 					case 'yearly':
-						listEvent.push({ date: year + gen.date.slice(4), name: gen.name });
+						event = { date: year + gen.date.slice(4), name: gen.name };
 						break;
 					case 'yearly-lunar':
-						listEvent.push({ date: this.convert_Lunar2Solar(year + gen.date.slice(4)), name: gen.name });
+						event = { date: this.convert_Lunar2Solar(year + gen.date.slice(4)), name: gen.name };
 						break;
+					default:
+						continue;
 				}
+				if (gen.type) // Bổ sung type
+					event.type = gen.type;
+				listEvent.push(event); // Thêm vào danh sách
 			}
 
 			// Lưu lại
@@ -1088,14 +1199,28 @@ var mt = {
 			let lstData = [];
 			for (let i=0, sz=listEvent.length; i<sz; i++) {
 				let event = listEvent[i];
+				let style = this.getTypeColor(event.type);
 				lstData.push({
 					id: event.id,
 					title: event.name,
 					start: event.date,
+					backgroundColor: style.bgColor,
+					textColor: style.color,
+					borderColor: style.bdColor,
 					extendedProps: event,
 				});
 			}
 			this.c_calendar.addEventSource(lstData);
+		},
+		getTypeColor(type) {
+			let bgColor = '#ffffff', color = '#000000', bdColor = '#ffffff';
+			switch (type) {
+				case 'event': bgColor ='#a39dfc'; break;
+				case 'birthday': bgColor ='#fc9d9d'; break;
+				case 'holiday': bgColor ='#9dfca5'; break;
+				case 'memory': bgColor ='#9deefc'; break;
+			}
+			return { bgColor, color, bdColor };
 		},
 		convert_Lunar2Solar(lunarDateStr) {
 			let year = Number.parseInt(lunarDateStr.substring(0, 4));
@@ -1443,6 +1568,7 @@ var mt = {
 			let tag = urlParams.get('tag');
 			if (tag != null) {
 				this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
+				this.btnRefreshAll(); // Tự động check khi có sẵn tag
 			}
 		},
 		async check(host, port) {
@@ -1502,11 +1628,11 @@ var mt = {
 			// Tự động copy
 			if (window.isSecureContext) {
 				await navigator.clipboard.writeText(URL);
-				// mt.show.toast('success', 'Đã copy link nhạc.');
+				mt.show.toast('success', 'Đã copy link chia sẻ');
 			}
 			else {
 				console.log(URL);
-				// mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+				mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
 			}
 		},
 		btnLink(serverId) {
@@ -1612,6 +1738,11 @@ var mt = {
 		},
 	},
 	midi: {
+
+		/**
+		 * https://www.abcjs.net/
+		 */
+
 		m_init: false,
 		e_contain: null,
 
@@ -1894,6 +2025,134 @@ var mt = {
 		},
 		getCode() {
 			return this.m_editor.getValue();
+		},
+	},
+	sheet: {
+		m_init: false,
+		e_contain: null,
+		
+		async init() {
+
+			/**
+			 * https://github.com/myliang/x-spreadsheet
+			 * https://www.npmjs.com/package/x-data-spreadsheet
+			 */
+
+			// Import Library
+			await mt.lib.import(['xspreadsheet']);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'sheet-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div id="x-spreadsheet"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+			// Init Sheet
+			const rows10 = { len: 1000 };
+			for (let i = 0; i < 1000; i += 1) {
+				rows10[i] = {
+					cells: {
+						0: { text: 'A-' + i },
+						1: { text: 'B-' + i },
+						2: { text: 'C-' + i },
+						3: { text: 'D-' + i },
+						4: { text: 'E-' + i },
+						5: { text: 'F-' + i },
+					}
+				};
+			}
+			const rows = {
+				len: 80,
+				1: {
+					cells: {
+						0: { text: 'testingtesttestetst' },
+						2: { text: 'testing' },
+					},
+				},
+				2: {
+					cells: {
+						0: { text: 'render', style: 0 },
+						1: { text: 'Hello' },
+						2: { text: 'haha', merge: [1, 1] },
+					}
+				},
+				8: {
+					cells: {
+						8: { text: 'border test', style: 0 },
+					}
+				}
+			};
+			// x_spreadsheet.locale('zh-cn');
+			let saveIcon = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNTc3MTc3MDkyOTg4IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjI2NzgiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxkZWZzPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+PC9zdHlsZT48L2RlZnM+PHBhdGggZD0iTTIxMy4zMzMzMzMgMTI4aDU5Ny4zMzMzMzRhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMSA4NS4zMzMzMzMgODUuMzMzMzMzdjU5Ny4zMzMzMzRhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMS04NS4zMzMzMzMgODUuMzMzMzMzSDIxMy4zMzMzMzNhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMS04NS4zMzMzMzMtODUuMzMzMzMzVjIxMy4zMzMzMzNhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMSA4NS4zMzMzMzMtODUuMzMzMzMzeiBtMzY2LjkzMzMzNCAxMjhoMzQuMTMzMzMzYTI1LjYgMjUuNiAwIDAgMSAyNS42IDI1LjZ2MTE5LjQ2NjY2N2EyNS42IDI1LjYgMCAwIDEtMjUuNiAyNS42aC0zNC4xMzMzMzNhMjUuNiAyNS42IDAgMCAxLTI1LjYtMjUuNlYyODEuNmEyNS42IDI1LjYgMCAwIDEgMjUuNi0yNS42ek0yMTMuMzMzMzMzIDIxMy4zMzMzMzN2NTk3LjMzMzMzNGg1OTcuMzMzMzM0VjIxMy4zMzMzMzNIMjEzLjMzMzMzM3ogbTEyOCAwdjI1NmgzNDEuMzMzMzM0VjIxMy4zMzMzMzNoODUuMzMzMzMzdjI5OC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMS00Mi42NjY2NjcgNDIuNjY2NjY3SDI5OC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMS00Mi42NjY2NjctNDIuNjY2NjY3VjIxMy4zMzMzMzNoODUuMzMzMzMzek0yNTYgMjEzLjMzMzMzM2g4NS4zMzMzMzMtODUuMzMzMzMzeiBtNDI2LjY2NjY2NyAwaDg1LjMzMzMzMy04NS4zMzMzMzN6IG0wIDU5Ny4zMzMzMzR2LTEyOEgzNDEuMzMzMzMzdjEyOEgyNTZ2LTE3MC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMSA0Mi42NjY2NjctNDIuNjY2NjY3aDQyNi42NjY2NjZhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMSA0Mi42NjY2NjcgNDIuNjY2NjY3djE3MC42NjY2NjdoLTg1LjMzMzMzM3ogbTg1LjMzMzMzMyAwaC04NS4zMzMzMzMgODUuMzMzMzMzek0zNDEuMzMzMzMzIDgxMC42NjY2NjdIMjU2aDg1LjMzMzMzM3oiIHAtaWQ9IjI2NzkiIGZpbGw9IiMyYzJjMmMiPjwvcGF0aD48L3N2Zz4='
+			let previewEl = document.createElement('img')
+			previewEl.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNjIxMzI4NTkxMjQzIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjU2NjMiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+PGRlZnM+PHN0eWxlIHR5cGU9InRleHQvY3NzIj48L3N0eWxlPjwvZGVmcz48cGF0aCBkPSJNNTEyIDE4Ny45MDRhNDM1LjM5MiA0MzUuMzkyIDAgMCAwLTQxOC41NiAzMTUuNjQ4IDQzNS4zMjggNDM1LjMyOCAwIDAgMCA4MzcuMTIgMEE0MzUuNDU2IDQzNS40NTYgMCAwIDAgNTEyIDE4Ny45MDR6TTUxMiAzMjBhMTkyIDE5MiAwIDEgMSAwIDM4NCAxOTIgMTkyIDAgMCAxIDAtMzg0eiBtMCA3Ni44YTExNS4yIDExNS4yIDAgMSAwIDAgMjMwLjQgMTE1LjIgMTE1LjIgMCAwIDAgMC0yMzAuNHpNMTQuMDggNTAzLjQ4OEwxOC41NiA0ODUuNzZsNC44NjQtMTYuMzg0IDQuOTI4LTE0Ljg0OCA4LjA2NC0yMS41NjggNC4wMzItOS43OTIgNC43MzYtMTAuODggOS4zNDQtMTkuNDU2IDEwLjc1Mi0yMC4wOTYgMTIuNjA4LTIxLjMxMkE1MTEuNjE2IDUxMS42MTYgMCAwIDEgNTEyIDExMS4xMDRhNTExLjQ4OCA1MTEuNDg4IDAgMCAxIDQyNC41MTIgMjI1LjY2NGwxMC4yNCAxNS42OGMxMS45MDQgMTkuMiAyMi41OTIgMzkuMTA0IDMyIDU5Ljc3NmwxMC40OTYgMjQuOTYgNC44NjQgMTMuMTg0IDYuNCAxOC45NDQgNC40MTYgMTQuODQ4IDQuOTkyIDE5LjM5Mi0zLjIgMTIuODY0LTMuNTg0IDEyLjgtNi40IDIwLjA5Ni00LjQ4IDEyLjYwOC00Ljk5MiAxMi45MjhhNTExLjM2IDUxMS4zNiAwIDAgMS0xNy4yOCAzOC40bC0xMi4wMzIgMjIuNC0xMS45NjggMjAuMDk2QTUxMS41NTIgNTExLjU1MiAwIDAgMSA1MTIgODk2YTUxMS40ODggNTExLjQ4OCAwIDAgMS00MjQuNDQ4LTIyNS42bC0xMS4zMjgtMTcuNTM2YTUxMS4yMzIgNTExLjIzMiAwIDAgMS0xOS44NC0zNS4wMDhMNTMuMzc2IDYxMS44NGwtOC42NC0xOC4yNC0xMC4xMTItMjQuMTI4LTcuMTY4LTE5LjY0OC04LjMyLTI2LjYyNC0yLjYyNC05Ljc5Mi0yLjQ5Ni05LjkyeiIgcC1pZD0iNTY2NCI+PC9wYXRoPjwvc3ZnPg=='
+			previewEl.width = 16;
+			previewEl.height = 16;
+
+			let xs = x_spreadsheet('#x-spreadsheet', {
+				showToolbar: true,
+				showGrid: true,
+				showBottomBar: true,
+				extendToolbar: {
+					left: [
+						{ tip: 'Save', icon: saveIcon, onClick: (data, sheet) => { console.log('click save button: ', data, sheet) }}
+					],
+					right: [
+						{ tip: 'Preview', el: previewEl, onClick: (data, sheet) => { console.log('click preview button: ', data) }}
+					],
+				}
+			})
+			.loadData([{
+				freeze: 'B3',
+				styles: [
+					{
+						bgcolor: '#f4f5f8',
+						textwrap: true,
+						color: '#900b09',
+						border: {
+							top: ['thin', '#0366d6'],
+							bottom: ['thin', '#0366d6'],
+							right: ['thin', '#0366d6'],
+							left: ['thin', '#0366d6'],
+						},
+					},
+				],
+				merges: [
+					'C3:D4',
+				],
+				cols: {
+					len: 10,
+					2: { width: 200 },
+				},
+				rows,
+			}, { name: 'sheet-test', rows: rows10 }]).change((cdata) => {
+				// console.log(cdata);
+				console.log('>>>', xs.getData());
+			});
+
+			xs.on('cell-selected', (cell, ri, ci) => { console.log('cell:', cell, ', ri:', ri, ', ci:', ci); })
+				.on('cell-edited', (text, ri, ci) => { console.log('text:', text, ', ri: ', ri, ', ci:', ci); })
+				.on('pasted-clipboard', (data) => { console.log('>>>> data is ', data); });
+
+			setTimeout(() => {
+				// xs.loadData([{ rows }]);
+				xs.cellText(14, 3, 'cell-text').reRender();
+				console.log('cell(8, 8):', xs.cell(8, 8));
+				console.log('cellStyle(8, 8):', xs.cellStyle(8, 8));
+			}, 5000);
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
 		},
 	},
 	pdf: {
@@ -2297,6 +2556,392 @@ var mt = {
 				mt.show.toast('error', 'Dữ liệu nhập chưa hợp lệ!');
 				console.error('[mt.gallery.saveForm] Exception:', ex);
 			}
+		},
+	},
+	math: {
+
+		/**
+		 * https://www.mathjax.org/
+		 * https://mauriciopoppe.github.io/function-plot/
+		 */
+
+		m_init: false,
+		d_wallpaper: [], // List Image
+		c_modal: null, // tingle
+		c_form: null, // jsoneditor
+		e_contain: null,
+		
+		async init() {
+
+			// Config library
+			window.MathJax = {
+				options: {
+					enableMenu: false, // tắt menu context nếu muốn
+				},
+				loader: {
+					load: ['input/tex', 'output/chtml'], // chỉ load những gói cần thiết
+				},
+				a11y: {
+					speech: false // tắt speech extension để không load speech-worker.js
+				}
+			};
+
+			// Import Library
+			await mt.lib.import(['mathjs','mathjax','function-plot']);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'math-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div class="input-group">
+					<span class="input-group-text">With textarea</span>
+					<textarea class="form-control" aria-label="With textarea"></textarea>
+				</div>
+				
+				<span>Markdown biểu thức</span>
+				<br>
+				<p id="math-recipe"></p>
+
+				<input id="math-input" type="text" />
+				<button id="math-btn">Tính</button>
+				<div id="math-result"></div>
+
+				<br>
+				<br>
+				<br>
+				<div id="math-quadratic"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+
+			// Render biểu thức
+			let recipeCaculator = document.getElementById('math-recipe');
+			recipeCaculator.innerHTML = `
+				When \\(a \\ne 0\\), there are two solutions to \\(ax^2 + bx + c = 0\\) and they are
+				\\[x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}.\\]
+			`;
+
+			MathJax.typesetPromise([recipeCaculator]).then(() => {
+				console.log("Render hoàn tất!");
+			}).catch((err) => console.log(err.message));
+
+
+			// Tính toán
+			let ipCaculator = document.getElementById('math-input');
+			let btnCaculator = document.getElementById('math-btn');
+			let resCaculator = document.getElementById('math-result');
+
+			ipCaculator.value = '2 * (9 - 3)';
+
+			btnCaculator.addEventListener('click', () => {
+				let text = ipCaculator.value;
+				let result = math.evaluate(text);
+				resCaculator.innerHTML = result;
+			});
+
+
+			// Đồ thị hàm số
+			functionPlot({
+				target: '#math-quadratic',
+				tip: {
+					xLine: true, // dashed line parallel to y = 0
+					yLine: true, // dashed line parallel to x = 0
+					renderer: function (x, y, index) {
+						// the returning value will be shown in the tip
+					}
+				},
+				data: [
+					{ fn: 'x^2' },
+					{ fn: 'x', skipTip: true },
+				]
+			})
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+	},
+	minesweeper: {
+		enum: {
+			NONE: -1,
+			MINE: 9,
+			FLAG: 10
+		},
+		h_skin: "/res/game/minesweeper",
+		e_contain: null,
+		m_init: false,
+		m_width: 16,
+		m_height: 16,
+		m_mine: 50,
+		m_opened: 0,
+		m_help: 5,
+		m_map: [],
+
+		async init() {
+
+			// Import Library
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'minesweeper-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div id="minesweeper-tool">
+					<!-- #TODO -->
+				</div>
+				<div id="minesweeper-content-bound">
+					<div id="minesweeper-content" oncontextmenu="return false;" style="margin:auto"></div>
+					<div id="minesweeper-content2" style="margin:auto;"></div>
+				</div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+			// Generator
+			this.generator();
+
+			// Init Contain
+			let html = '<table class="board" style="border-collapse:collapse;border:0;padding:0;line-height:0;margin:auto;"><tbody>';
+			for (let h=0; h<this.m_height; h++) {
+				html += '<tr>';
+				for (let w=0; w<this.m_width; w++) {
+					let pos = h * this.m_height + w;
+					html += `<td class="cell" style="border:1px #000000 solid;padding:0;margin:0;width:30px;height:30px;background-color:#ffffff;">`;
+					html += `<img alt="" id="minesweeper-c${pos}" src="${this.h_skin}/cell.png"`;
+					html += ' onmousedown="return mt.minesweeper.cellClick(event)"';
+					html += '></td>';
+				}
+				html += '</tr>';
+			}
+			html += '</tbody></table>';
+
+			let contentElm = document.querySelector('#minesweeper-content');
+			contentElm.innerHTML = html;
+		},
+		async open() {
+			if (!this.m_init) {
+				this.m_init = true;
+				await this.init();
+			}
+			else {
+				this.e_contain.style.display = '';
+			}
+		},
+		generator() {
+
+			// Fill default data to map
+			this.m_map = new Array(this.m_height * this.m_width).fill().map( u => { return {
+				type: -1,
+				mine: false,
+				flag: false
+			}; });
+
+			// Fill mine
+			let mineNum = 0;
+			while (mineNum < this.m_mine) {
+				let pos = Math.floor(Math.random() * this.m_width * this.m_height);
+				if (!this.m_map[pos].mine) {
+					this.m_map[pos].mine = true;
+					mineNum++;
+				}
+			}
+		},
+		quickAction(pos) {
+			let nFlag = 0, nMine = 0, nNone = 0;
+			this.around(pos, (pos) => {
+				let cell = this.m_map[pos];
+				if (cell.flag) nFlag++;
+				if (cell.mine) nMine++;
+				if (cell.type == -1) nNone++;
+			});
+
+			if (nMine == nNone) {
+				this.around(pos, (pos) => {
+					let cell = this.m_map[pos];
+					if (cell.type == -1 && cell.flag == false) {
+						this.flag(pos);
+					}
+				});
+			}
+			else if (nFlag == nMine) {
+				this.around(pos, (pos) => {
+					let cell = this.m_map[pos];
+					if (cell.type == -1 && cell.flag == false) {
+						this.openCell(pos);
+						if (cell.type == 0) {
+							this.expendZone(pos);
+						}
+					}
+				});
+			}
+		},
+		expendZone(pos) {
+			let w = pos % this.m_width;
+			let h = Math.floor(pos / this.m_width);
+			let stack = [
+				{w:w-1, h:h-1},
+				{w:w-1, h:h  },
+				{w:w-1, h:h+1},
+				{w:w  , h:h-1},
+				{w:w  , h:h+1},
+				{w:w+1, h:h-1},
+				{w:w+1, h:h  },
+				{w:w+1, h:h+1}
+			];
+
+			while (stack.length > 0) {
+
+				let coord = stack.pop();
+				w = coord.w;
+				h = coord.h;
+
+				// Check bounding
+				if (w < 0 || w >= this.m_width || h < 0 || h >= this.m_height)
+					continue;
+
+				pos = h * this.m_width + w;
+				let cell = this.m_map[pos];
+
+				// Nếu chưa mở
+				if (cell.type == -1) {
+					this.openCell(pos);
+
+					// Nếu là khoảng an toàn thì check xung quanh
+					if (cell.type == 0) {
+						let lstAround = [
+							{w:w-1, h:h-1},
+							{w:w-1, h:h  },
+							{w:w-1, h:h+1},
+							{w:w  , h:h-1},
+							{w:w  , h:h+1},
+							{w:w+1, h:h-1},
+							{w:w+1, h:h  },
+							{w:w+1, h:h+1},
+						];
+						stack = stack.concat(lstAround);
+					}
+				}
+			}
+		},
+		checkWin() {
+			return (this.opened == mt.game.width * mt.game.height - mt.game.mine);
+		},
+		around(pos, callback) {
+			let w = pos % this.m_width;
+			let h = Math.floor(pos / this.m_width);
+			let lst = [{w:w-1,h:h-1},{w:w-1,h:h},{w:w-1,h:h+1},{w:w,h:h-1},{w:w,h:h+1},{w:w+1,h:h-1},{w:w+1,h:h},{w:w+1,h:h+1}];
+			for (let i=0; i<8; i++) {
+				w = lst[i].w;
+				h = lst[i].h;
+				if (w < 0 || h < 0 || w >= this.m_width || h >= this.m_height)
+					continue;
+				callback(h * this.m_width + w);
+			}
+		},
+		getCell(pos) {
+			if (this.m_map[pos].mine)
+				return this.enum.MINE;
+
+			let num = 0;
+			this.around(pos, (pos) => {
+				if (this.m_map[pos].mine)
+					num++;
+			});
+			return num;
+		},
+		openCell(pos) {
+			let cell = this.m_map[pos];
+			cell.type = this.getCell(pos);
+
+			if (this.help > 0) {
+				if (cell.type == 0)
+					this.help = 0;
+				else
+					this.help--;
+				if (cell.type == this.enum.MINE) {
+					cell.type = -1;
+					this.flag(pos);
+					return;
+				}
+			}
+
+			this.setImage(pos, cell.type);
+			this.opened++;
+			
+			if (cell.type == 9)
+				this.lost();
+		},
+		flag(pos) {
+			let cell = this.m_map[pos];
+			if (cell.flag) {
+				this.setImage(pos, this.enum.NONE);
+				cell.flag = false;
+			}
+			else {
+				this.setImage(pos, this.enum.FLAG);
+				cell.flag = true;
+			}
+		},
+		win() {
+			alert("Win");
+		},
+		lost() {
+			alert('Fail');
+		},
+		cellClick(event) {
+			let pos = parseInt(event.target.id.substring(13));
+			let cell = this.m_map[pos];
+
+			if (event.button == 0) {
+				if (cell.flag)
+					return;
+
+				if (cell.type != this.enum.NONE) {
+					if (cell.type > 0 && cell.type < 9)
+						this.quickAction(pos);
+				}
+				else {
+					this.openCell(pos);
+					if (cell.type == 0) {
+						this.expendZone(pos);
+					}
+				}
+				if (this.checkWin())
+					this.win();
+			}
+			else if (event.button == 2) {
+				if (cell.type == -1) {
+					this.flag(pos);
+				}
+			}
+			
+			// cancel event
+			// return mt.event.cancel(event);
+		},
+		setImage(pos, num) {
+			let path = this.h_skin + '/';
+			switch(num) {
+				case -1: path += "cell.png"; break;
+				case 0: path += "blank.png"; break;
+				case 1: path += "one.png"; break;
+				case 2: path += "two.png"; break;
+				case 3: path += "three.png"; break;
+				case 4: path += "four.png"; break;
+				case 5: path += "five.png"; break;
+				case 6: path += "six.png"; break;
+				case 7: path += "seven.png"; break;
+				case 8: path += "eight.png"; break;
+				case 9: path += "mine.png"; break;
+				case 10: path += "flag.png"; break;
+			}
+			$('#minesweeper-c'+pos).attr("src", path)
 		},
 	},
 

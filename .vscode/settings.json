@@ -1,8 +1,7 @@
 {
 	"editor.showFoldingControls": "always",
-    "editor.folding": true,
-    "editor.foldingStrategy": "indentation",
-	"editor.defaultFoldingRangeProvider": "zokugun.explicit-folding",
+	"editor.folding": true,
+	"editor.foldingStrategy": "auto",
 	"explicitFolding.rules": {
 		"*": {
 			"begin": "{{{",
@@ -22,21 +21,16 @@
 				"foldLastLine": true
 			},
 		],
-	},
-	"[javascriptreact]": {
-		"explicitFolding.rules": [
+		"markdown": [
 			{
-				"begin": "{/*",
-				"end": "*/}"
+				"begin": "^(#+)\\s.*",
+				"end": "^(?=#+\\s|$)"
 			},
 			{
-				"begin": "<",
-				"end": "/>"
-			}
+				"foldLastLine": true
+			},
 		]
 	},
-	"Codegeex.SidebarUI.LanguagePreference": "English",
-	"Codegeex.GenerationPreference": "automatic",
-	"Codegeex.Chat.LanguagePreference": "English",
-	"Codegeex.Comment.LanguagePreference": "English"
+	"markdown.validate.enabled": false,
+	"favorites.sortOrder": "DESC"
 }
