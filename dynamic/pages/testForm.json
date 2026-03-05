@@ -1,0 +1,20 @@
+{
+	"type": "form",
+	"title": "Thông tin nhạc",
+	"width": "500px",
+	"fields": [
+		{ "code": "id", "type": "hidden", "datatype": "int" },
+		{ "code": "name", "name": "Name", "format": "text" },
+		{ "code": "rate", "name": "Rate", "format": "rate", "default": 3 },
+		{ "code": "duration", "name": "Duration", "format": "num", "minimum": 0 },
+		{ "code": "tags", "name": "Tags", "format": "tags" },
+		{ "code": "decibel", "name": "Decibel", "format": "num", "minimum": 0, "maximum": 500 },
+		{ "code": "trackbegin", "name": "Track begin", "format": "num", "minimum": 0 },
+		{ "code": "trackend", "name": "Track end", "format": "num", "minimum": 0 },
+		{ "code": "miss", "name": "Miss", "format": "check" }
+	],
+	"buttons": [
+		{ "code": "save", "name": "Save", "icon": "save", "func": "saveForm" },
+		{ "code": "close", "name": "Close", "icon": "close", "func": "closeModal" }
+	]
+}

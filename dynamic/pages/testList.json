@@ -1,0 +1,25 @@
+{
+	"type": "list",
+	"data": {
+		"type": "json",
+		"value": "/res/DB/music.json"
+	},
+	"columns": [
+		{ "name": "STT", "type": "stt", "width": 40, "hAlign": "c", "vAlign": "m", "sort": false },
+		{ "name": "Name", "code": "name", "sort": false }
+	],
+	"buttons": {
+		"permisstion": "",
+		"top": [],
+		"row": [
+			{ "name": "Info", "icon": "fa-regular fa-eye", "color": "primary", "func": "openPageForm", "params": { "page": "testForm" }},
+			{ "name": "New", "icon": "fa-solid fa-circle-plus", "func": "newRow" },
+			{ "name": "Remove", "icon": "fa-regular fa-square-minus", "color": "danger", "func": "removeRow" },
+			{ "name": "Filter", "icon": "fa-solid fa-filter", "func": "toggleFilter", "params": { "column": "name" }},
+			{ "name": "Colunms", "icon": "fa-solid fa-table-columns", "menus": [
+				{ "name": "Name", "func": "toggleColumn", "params": { "column": "name" }},
+				{ "name": "Image", "func": "toggleColumn", "params": { "column": "img" }}
+			]}
+		]
+	}
+}
