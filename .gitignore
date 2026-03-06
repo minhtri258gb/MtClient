@@ -1,11 +1,12 @@
 lib
 !lib/mt
-res/instruments
 node_modules
-/res/maps
-/res/assets
-/res/midi
-/res/soundfont
 /.vscode/chrome-debug
+/res/assets
+/res/instruments
+/res/maps
+/res/midi
+/res/private
+/res/soundfont
 /package-lock.json
 /2D/res

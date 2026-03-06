@@ -1,4 +1,4 @@
-import { w2ui, w2layout, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
+import { w2ui, w2layout, w2toolbar, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
 import mtAuthen from '/common/authen.js';
 import mtCore from '/common/core.js';
 import mtLib from '/common/lib.js';
@@ -8,17 +8,15 @@ import mtShow from '/common/show.js';
 
 /**
  * https://fontawesome.com/v6/search?ic=free-collection
- * https://w2ui.com/web/docs/2.0/w2layout.set
  * https://codemirror.net/
  * https://github.com/markdown-it/markdown-it
  * https://flatpickr.js.org/examples/#datetime
  */
 
 /** TODO
- * MATH
- * - https://d3js.org/getting-started
- * - https://awesome-javascript.js.org/resources/misc.html
- * - https://github.com/uhub/awesome-javascript
+ * https://d3js.org/getting-started
+ * https://awesome-javascript.js.org/resources/misc.html
+ * https://github.com/uhub/awesome-javascript
  */
 
 let mt = {
@@ -32,17 +30,57 @@ let mt = {
 
 	// Module
 	common: {
+
+		/**
+		 * https://w2ui.com/web/docs/2.0/w2layout.set
+		 */
+
 		m_clientPath: '', // Đường dẫn client
 		c_w2layout: null,
 		e_contain: null,
 
 		async init() {
 
+			// Top Toolbar
+			let c_w2toolbar = new w2toolbar({
+				name: 'toolbar',
+				items: [
+					{ type: 'check', id: 'menu', text: 'Menu', icon: 'fa-solid fa-bars', checked: true },
+					{ type: 'break' },
+					{ type: 'button', id: 'file', text: 'File', icon: 'fa-regular fa-file' },
+					{ type: 'button', id: 'item1', text: 'Button', icon: 'w2ui-icon-colors' },
+					{ type: 'break' },
+					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
+					{ type: 'check', id: 'item3', text: 'Check 2', icon: 'w2ui-icon-check' },
+					{ type: 'break' },
+					{ type: 'radio', id: 'item4', group: '1', text: 'Radio 1', icon: 'w2ui-icon-info', checked: true },
+					{ type: 'radio', id: 'item5', group: '1', text: 'Radio 2', icon: 'w2ui-icon-paste' },
+					{ type: 'break' },
+					{ type: 'button', id: 'share', text: 'Share', icon: 'fa-regular fa-share-from-square' },
+					{ type: 'spacer' },
+					{ type: 'button', id: 'item6', text: 'Button', icon: 'w2ui-icon-cross' }
+				],
+				onClick: (event) => {
+					switch (event.target) {
+						case 'menu':
+							this.btnMenu(!event.object.checked);
+							break;
+					}
+				}
+			})
+
 			// Left Sidebar
 			let c_w2sidebar = new w2sidebar({
 				name: 'sidebar',
 				nodes: [
+					{ id: 'app', text: 'Apps', group: true, expanded: true, nodes: [
+						{ id: 'home', text: 'Home', icon: 'fa-solid fa-house-chimney' },
+						{ id: 'music', text: 'Music', icon: 'fa-solid fa-music' },
+						{ id: 'piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
+						{ id: 'dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
+					]},
 					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
+						{ id: 'explorer', text: 'Explorer', icon: 'fa-solid fa-folder-tree' },
 						{ id: 'document', text: 'Document', icon: 'fa-solid fa-book' },
 						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-address-book' },
 						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
@@ -77,40 +115,40 @@ let mt = {
 						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
 					]},
 				],
-				onClick(event) {
-					let tabs = w2ui.layout_main_tabs;
-					if (tabs.get(event.target)) {
-						tabs.click(event.target);
+				onClick: (event) => {
+					let moduleName = event.target;
+					let module = mt[moduleName];
+
+					if (module == null) {
+						mt.show.toast('warning', `App "${moduleName}" chưa có sẵn!`);
+						return;
 					}
-					else {
-						tabs.add({ id: event.target, text: event.object.text, closable: true });
-						tabs.refresh();
-						tabs.click(event.target);
+
+					this.resetLayout();
+
+					// Default open func
+					if (module.open == null) {
+						module.open = async function() {
+							if (!this.m_init) {
+								this.m_init = true;
+								await this.init();
+							}
+							else {
+								this.e_contain.style.display = '';
+							}
+						}
 					}
+					module.open();
 				},
 			});
-
-			// Center Tab
-			let tabs = {
-				active: 'manager',
-				tabs: [],
-				onClick: (event) => {
-					this.resetLayout();
-					let module = event.target;
-					mt[module].open();
-				},
-				onClose: () => {
-					this.resetLayout();
-				}
-			};
 
 			// Layout
 			this.c_w2layout = new w2layout({
 				box: '#layout',
 				name: 'layout',
 				panels: [
-					// { type: 'top', size: 60, html: 'top panel' },
-					{ type: 'main', style: 'background-color: #f5fff1', tabs, html: '<div id="contain"><div>' },
+					{ type: 'top', size: 38, html: c_w2toolbar },
+					{ type: 'main', style: 'background-color: #f5fff1', html: '<div id="contain"><div>' },
 					{ type: 'left', size: 150, resizable: true, html: c_w2sidebar },
 					{ type: 'right', size: '50%', resizable: true, hidden: true, html: '' },
 				]
@@ -118,6 +156,7 @@ let mt = {
 
 			this.e_contain = document.getElementById('contain');
 
+			// Process Params
 			this.processParams();
 		},
 		processParams() {
@@ -139,10 +178,7 @@ let mt = {
 				}
 
 				// Open tab
-				let tabs = w2ui.layout_main_tabs;
-				tabs.add({ id: tabCode, text: tab.text, closable: true });
-				tabs.refresh();
-				tabs.click(tabCode);
+				tab.sidebar.click(tab.id);
 			}
 		},
 		resetLayout() {
@@ -154,19 +190,75 @@ let mt = {
 			// Hide right panel
 			this.c_w2layout.hide('right');
 		},
+	
+		btnMenu(toogle) {
+			// let panel = this.c_w2layout.get('left');
+			// if (panel.hidden)
+			if (toogle)
+				this.c_w2layout.show('left');
+			else
+				this.c_w2layout.hide('left');
+		},
+		btnFile() {
+
+		},
 	},
 	utils: {
 		convert_DateToStr(date) {
 			let pad = (num) => date < 10 ? '0'+num : ''+num;
 			return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
 		},
+		confirmRedirect(title, message, link) {
+			w2popup.open({
+				title: title,
+				text: message,
+				actions: ['Ok', 'Cancel'],
+				width: 500,
+				height: 300,
+				modal: true,
+				showClose: false
+			})
+			.ok((evt) => {
+				w2popup.close();
+				window.open(link);
+			})
+			.cancel(() => w2popup.close());
+		}
+	},
+	home: {
+		open() {
+			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home');
+		}
+	},
+	music: {
+		open() {
+			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2');
+		}
+	},
+	piano: {
+		open() {
+			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano');
+		}
+	},
+	dynamic: {
+		e_contain: null,
+		c_w2grid: null,
+		m_init: false,
+		d_list: [],
+
+		async init() {
+
+		},
+		// open() {
+		// 	mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Dynamic - testList', '/dynamic?page=testList');
+		// }
 	},
 	anime: {
 		h_pathDB: '/res/DB/anime.json',
-		d_list: [],
+		e_contain: null,
 		c_w2grid: null,
 		m_init: false,
-		e_contain: null,
+		d_list: [],
 
 		async init() {
 
@@ -294,15 +386,6 @@ let mt = {
 			this.c_w2grid.render(this.e_contain);
 			// this.e_contain.innerHTML = 'AAAAAAAAAA';
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 	},
 	game: {
 		h_pathDB: '/res/DB/game.json',
@@ -425,24 +508,36 @@ let mt = {
 			this.c_w2grid.render(this.e_contain);
 			// this.e_contain.innerHTML = 'AAAAAAAAAA';
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
+	},
+	explorer: {
+		e_contain: null,
+		m_init: false,
+
+		async init() {
+
+			// Import library
+			await mt.lib.import(['jstree']);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'explorer-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div id="jstree"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
 		},
 	},
 	document: {
 		h_pathDB: '/res/DB/document.json',
+		e_contain: null,
 		c_w2grid: null,
-		d_list: [],
 		c_markdown: null,
 		m_init: false,
 		m_docId: null,
-		e_contain: null,
+		d_list: [],
 
 		async init() {
 
@@ -560,15 +655,6 @@ let mt = {
 				}
 			`.trim();
 			document.head.appendChild(style);
-		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
 		},
 		async load() {
 			
@@ -793,16 +879,6 @@ let mt = {
 			this.c_w2grid.records = this.d_list;
 			this.c_w2grid.refresh();
 		},
-		async open() {
-			
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		async load() {
 
 			this.d_list = await mt.file.loadJson(this.h_pathDB);
@@ -910,7 +986,7 @@ let mt = {
 				customButtons: {
 					addEvent: { text: 'Thêm', click: () => {
 						let curDate = new Date();
-						this.openForm({ id: -1, year: curDate.getFullYear(), name: '', date: mt.utils.convert_DateToStr(curDate) });
+						this.openForm({ id: -1, year: curDate.getFullYear(), name: '', date: mt.utils.convert_DateToStr(curDate), type: 'event' });
 					}},
 				},
 				// Register Event
@@ -922,7 +998,7 @@ let mt = {
 				dateClick: (info) => {
 					if (this.t_tmp.clickDate == info.dateStr) {
 						delete this.t_tmp.clickDate;
-						this.openForm({ id: -1, year: info.view.currentStart.getFullYear(), name: '', date: info.dateStr }); // Dupclick thì thêm sự kiện
+						this.openForm({ id: -1, year: info.view.currentStart.getFullYear(), name: '', date: info.dateStr, type: 'event' }); // Dupclick thì thêm sự kiện
 					}
 					else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
 				},
@@ -972,7 +1048,7 @@ let mt = {
 						'year': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
 						'date': { title: 'Date', type: 'string', format: 'date', readonly: true, options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
 						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
-						'type': { title: 'Type', type: 'string', enum: ['normal','event','birthday','holiday','memory'] },
+						'type': { title: 'Type', type: 'string', enum: ['normal','meet','birthday','holiday','note'] },
 						'time': { title: 'Time', type: 'string', format: 'time', options: { flatpickr: { locale: 'vn', enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true }}},
 						'location': { title: 'Location', type: 'string', format: 'text', options: { autocomplete: 'off' } },
 						'btn_map': { title: 'Open Map', type: 'string', format: 'button', options: { button: { icon: 'location-dot', action: () => this.btnOpenMap() }}},
@@ -981,16 +1057,6 @@ let mt = {
 					}
 				},
 			});
-		},
-		async open() {
-			
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
 		},
 		async load(year) {
 
@@ -1086,10 +1152,14 @@ let mt = {
 
 					this.d_events[year].push(formData);
 
+					let style = this.getTypeColor(formData.type);
 					this.c_calendar.addEvent({
 						id: id,
 						title: formData.name,
 						start: formData.date,
+						backgroundColor: style.bgColor,
+						textColor: style.color,
+						borderColor: style.bdColor,
 						extendedProps: formData,
 					});
 				}
@@ -1215,10 +1285,10 @@ let mt = {
 		getTypeColor(type) {
 			let bgColor = '#ffffff', color = '#000000', bdColor = '#ffffff';
 			switch (type) {
-				case 'event': bgColor ='#a39dfc'; break;
-				case 'birthday': bgColor ='#fc9d9d'; break;
-				case 'holiday': bgColor ='#9dfca5'; break;
-				case 'memory': bgColor ='#9deefc'; break;
+				case 'meet': bgColor ='#3788d8'; color = '#fff'; break;
+				case 'birthday': bgColor ='#9dfca5'; break;
+				case 'holiday': bgColor ='#f19dfc'; break;
+				case 'note': bgColor ='#fcfa9d'; break;
 			}
 			return { bgColor, color, bdColor };
 		},
@@ -1378,15 +1448,6 @@ let mt = {
 			// Process Params
 			this.processParams();
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		processParams() {
 			let urlParams = new URLSearchParams(window.location.search);
 			let latStr = urlParams.get('lat');
@@ -1515,15 +1576,6 @@ let mt = {
 			// Process Params
 			this.processParams();
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		async load() {
 
 			this.d_list = await mt.file.loadJson(this.h_pathDB);
@@ -1643,7 +1695,31 @@ let mt = {
 			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
 		},
 	},
+	chat: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+			
+			// Import Library
+			// await mt.lib.import(['SimpleMDE','marked','mermaid']);
+
+			// // Add container
+			// this.e_contain = document.createElement('div');
+			// this.e_contain.id = 'markdown-contain';
+			// this.e_contain.style.height = '100%';
+			// mt.common.e_contain.appendChild(this.e_contain);
+
+			// this.e_contain.innerHTML = `<textarea id="markdown-editor"></textarea>`;
+
+		},
+	},
 	markdown: {
+
+		/**
+		 * https://github.com/sparksuite/simplemde-markdown-editor
+		 */
+
 		m_init: false,
 		e_contain: null,
 
@@ -1726,15 +1802,6 @@ let mt = {
 				},
 			});
 
-		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
 		},
 	},
 	midi: {
@@ -1855,15 +1922,6 @@ let mt = {
 			`.trim().split('\n').map(v=>v.trim()).join('\n');
 			document.head.appendChild(style);
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		setCode(code) {
 			this.m_editor.setValue(code);
 		},
@@ -1951,15 +2009,6 @@ let mt = {
 			this.c_canvas.centerObject(helloWorld);
 
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		getImage() {
 			return this.c_canvas.toDataURL();
 		}
@@ -2011,15 +2060,6 @@ let mt = {
 				- [ ] TODO 2
 			`.trim().split('\n').map(v=>v.trim()).join('\n'));
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		setCode(code) {
 			this.m_editor.setValue(code);
 		},
@@ -2028,72 +2068,95 @@ let mt = {
 		},
 	},
 	sheet: {
+
+		/**
+		 * http://localhost:958/manager3/?tab=sheet&file=D:/Projects/MtClient/res/private/contacts.csv
+		 * https://github.com/myliang/x-spreadsheet
+		 * https://www.npmjs.com/package/x-data-spreadsheet
+		 */
+
 		m_init: false,
+		c_sheet: null, // x_spreadsheet
 		e_contain: null,
+		d_dataText: '',
+		d_dataParse: '',
+		d_dataObj: [],
 		
 		async init() {
 
-			/**
-			 * https://github.com/myliang/x-spreadsheet
-			 * https://www.npmjs.com/package/x-data-spreadsheet
-			 */
-
 			// Import Library
-			await mt.lib.import(['xspreadsheet']);
+			// xspreadsheet (x_spreadsheet): UI
+			// papaparse (Papa): CSV Format
+			await mt.lib.import(['xspreadsheet','papaparse']);
+
+			// Fix CSS
+			for (let sheet of document.styleSheets) {
+				if (sheet.href.includes('xspreadsheet')) {
+					
+					for (let rule of sheet.cssRules) {
+						if (rule.selectorText == '.x-spreadsheet-toolbar, .x-spreadsheet-bottombar') {
+							rule.style.padding = '';
+							break;
+						}
+					}
+
+					break;
+				}
+			}
 
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'sheet-contain';
 			this.e_contain.style.height = '100%';
+			this.e_contain.style.weight = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
-			this.e_contain.innerHTML = `
-				<div id="x-spreadsheet"></div>
-			`.trim().split('\n').map(v=>v.trim()).join('\n');
-
 			// Init Sheet
-			const rows10 = { len: 1000 };
-			for (let i = 0; i < 1000; i += 1) {
-				rows10[i] = {
-					cells: {
-						0: { text: 'A-' + i },
-						1: { text: 'B-' + i },
-						2: { text: 'C-' + i },
-						3: { text: 'D-' + i },
-						4: { text: 'E-' + i },
-						5: { text: 'F-' + i },
-					}
-				};
-			}
-			const rows = {
-				len: 80,
-				1: {
-					cells: {
-						0: { text: 'testingtesttestetst' },
-						2: { text: 'testing' },
-					},
-				},
-				2: {
-					cells: {
-						0: { text: 'render', style: 0 },
-						1: { text: 'Hello' },
-						2: { text: 'haha', merge: [1, 1] },
-					}
-				},
-				8: {
-					cells: {
-						8: { text: 'border test', style: 0 },
-					}
-				}
-			};
+			// const rows10 = { len: 1000 };
+			// for (let i = 0; i < 1000; i += 1) {
+			// 	rows10[i] = {
+			// 		cells: {
+			// 			0: { text: 'A-' + i },
+			// 			1: { text: 'B-' + i },
+			// 			2: { text: 'C-' + i },
+			// 			3: { text: 'D-' + i },
+			// 			4: { text: 'E-' + i },
+			// 			5: { text: 'F-' + i },
+			// 		}
+			// 	};
+			// }
+			// const rows = {
+			// 	len: 80,
+			// 	1: {
+			// 		cells: {
+			// 			0: { text: 'testingtesttestetst' },
+			// 			2: { text: 'testing' },
+			// 		},
+			// 	},
+			// 	2: {
+			// 		cells: {
+			// 			0: { text: 'render', style: 0 },
+			// 			1: { text: 'Hello' },
+			// 			2: { text: 'haha', merge: [1, 1] },
+			// 		}
+			// 	},
+			// 	8: {
+			// 		cells: {
+			// 			8: { text: 'border test', style: 0 },
+			// 		}
+			// 	}
+			// };
+			
 			// x_spreadsheet.locale('zh-cn');
+			
 			let saveIcon = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNTc3MTc3MDkyOTg4IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjI2NzgiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiPjxkZWZzPjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+PC9zdHlsZT48L2RlZnM+PHBhdGggZD0iTTIxMy4zMzMzMzMgMTI4aDU5Ny4zMzMzMzRhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMSA4NS4zMzMzMzMgODUuMzMzMzMzdjU5Ny4zMzMzMzRhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMS04NS4zMzMzMzMgODUuMzMzMzMzSDIxMy4zMzMzMzNhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMS04NS4zMzMzMzMtODUuMzMzMzMzVjIxMy4zMzMzMzNhODUuMzMzMzMzIDg1LjMzMzMzMyAwIDAgMSA4NS4zMzMzMzMtODUuMzMzMzMzeiBtMzY2LjkzMzMzNCAxMjhoMzQuMTMzMzMzYTI1LjYgMjUuNiAwIDAgMSAyNS42IDI1LjZ2MTE5LjQ2NjY2N2EyNS42IDI1LjYgMCAwIDEtMjUuNiAyNS42aC0zNC4xMzMzMzNhMjUuNiAyNS42IDAgMCAxLTI1LjYtMjUuNlYyODEuNmEyNS42IDI1LjYgMCAwIDEgMjUuNi0yNS42ek0yMTMuMzMzMzMzIDIxMy4zMzMzMzN2NTk3LjMzMzMzNGg1OTcuMzMzMzM0VjIxMy4zMzMzMzNIMjEzLjMzMzMzM3ogbTEyOCAwdjI1NmgzNDEuMzMzMzM0VjIxMy4zMzMzMzNoODUuMzMzMzMzdjI5OC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMS00Mi42NjY2NjcgNDIuNjY2NjY3SDI5OC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMS00Mi42NjY2NjctNDIuNjY2NjY3VjIxMy4zMzMzMzNoODUuMzMzMzMzek0yNTYgMjEzLjMzMzMzM2g4NS4zMzMzMzMtODUuMzMzMzMzeiBtNDI2LjY2NjY2NyAwaDg1LjMzMzMzMy04NS4zMzMzMzN6IG0wIDU5Ny4zMzMzMzR2LTEyOEgzNDEuMzMzMzMzdjEyOEgyNTZ2LTE3MC42NjY2NjdhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMSA0Mi42NjY2NjctNDIuNjY2NjY3aDQyNi42NjY2NjZhNDIuNjY2NjY3IDQyLjY2NjY2NyAwIDAgMSA0Mi42NjY2NjcgNDIuNjY2NjY3djE3MC42NjY2NjdoLTg1LjMzMzMzM3ogbTg1LjMzMzMzMyAwaC04NS4zMzMzMzMgODUuMzMzMzMzek0zNDEuMzMzMzMzIDgxMC42NjY2NjdIMjU2aDg1LjMzMzMzM3oiIHAtaWQ9IjI2NzkiIGZpbGw9IiMyYzJjMmMiPjwvcGF0aD48L3N2Zz4='
 			let previewEl = document.createElement('img')
 			previewEl.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNjIxMzI4NTkxMjQzIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjU2NjMiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+PGRlZnM+PHN0eWxlIHR5cGU9InRleHQvY3NzIj48L3N0eWxlPjwvZGVmcz48cGF0aCBkPSJNNTEyIDE4Ny45MDRhNDM1LjM5MiA0MzUuMzkyIDAgMCAwLTQxOC41NiAzMTUuNjQ4IDQzNS4zMjggNDM1LjMyOCAwIDAgMCA4MzcuMTIgMEE0MzUuNDU2IDQzNS40NTYgMCAwIDAgNTEyIDE4Ny45MDR6TTUxMiAzMjBhMTkyIDE5MiAwIDEgMSAwIDM4NCAxOTIgMTkyIDAgMCAxIDAtMzg0eiBtMCA3Ni44YTExNS4yIDExNS4yIDAgMSAwIDAgMjMwLjQgMTE1LjIgMTE1LjIgMCAwIDAgMC0yMzAuNHpNMTQuMDggNTAzLjQ4OEwxOC41NiA0ODUuNzZsNC44NjQtMTYuMzg0IDQuOTI4LTE0Ljg0OCA4LjA2NC0yMS41NjggNC4wMzItOS43OTIgNC43MzYtMTAuODggOS4zNDQtMTkuNDU2IDEwLjc1Mi0yMC4wOTYgMTIuNjA4LTIxLjMxMkE1MTEuNjE2IDUxMS42MTYgMCAwIDEgNTEyIDExMS4xMDRhNTExLjQ4OCA1MTEuNDg4IDAgMCAxIDQyNC41MTIgMjI1LjY2NGwxMC4yNCAxNS42OGMxMS45MDQgMTkuMiAyMi41OTIgMzkuMTA0IDMyIDU5Ljc3NmwxMC40OTYgMjQuOTYgNC44NjQgMTMuMTg0IDYuNCAxOC45NDQgNC40MTYgMTQuODQ4IDQuOTkyIDE5LjM5Mi0zLjIgMTIuODY0LTMuNTg0IDEyLjgtNi40IDIwLjA5Ni00LjQ4IDEyLjYwOC00Ljk5MiAxMi45MjhhNTExLjM2IDUxMS4zNiAwIDAgMS0xNy4yOCAzOC40bC0xMi4wMzIgMjIuNC0xMS45NjggMjAuMDk2QTUxMS41NTIgNTExLjU1MiAwIDAgMSA1MTIgODk2YTUxMS40ODggNTExLjQ4OCAwIDAgMS00MjQuNDQ4LTIyNS42bC0xMS4zMjgtMTcuNTM2YTUxMS4yMzIgNTExLjIzMiAwIDAgMS0xOS44NC0zNS4wMDhMNTMuMzc2IDYxMS44NGwtOC42NC0xOC4yNC0xMC4xMTItMjQuMTI4LTcuMTY4LTE5LjY0OC04LjMyLTI2LjYyNC0yLjYyNC05Ljc5Mi0yLjQ5Ni05LjkyeiIgcC1pZD0iNTY2NCI+PC9wYXRoPjwvc3ZnPg=='
 			previewEl.width = 16;
 			previewEl.height = 16;
 
-			let xs = x_spreadsheet('#x-spreadsheet', {
+			// Init x-spreadsheet
+			let xs = x_spreadsheet(this.e_contain, { // '#x-spreadsheet'
 				showToolbar: true,
 				showGrid: true,
 				showBottomBar: true,
@@ -2104,56 +2167,114 @@ let mt = {
 					right: [
 						{ tip: 'Preview', el: previewEl, onClick: (data, sheet) => { console.log('click preview button: ', data) }}
 					],
-				}
-			})
-			.loadData([{
-				freeze: 'B3',
-				styles: [
-					{
-						bgcolor: '#f4f5f8',
-						textwrap: true,
-						color: '#900b09',
-						border: {
-							top: ['thin', '#0366d6'],
-							bottom: ['thin', '#0366d6'],
-							right: ['thin', '#0366d6'],
-							left: ['thin', '#0366d6'],
-						},
-					},
-				],
-				merges: [
-					'C3:D4',
-				],
-				cols: {
-					len: 10,
-					2: { width: 200 },
 				},
-				rows,
-			}, { name: 'sheet-test', rows: rows10 }]).change((cdata) => {
-				// console.log(cdata);
-				console.log('>>>', xs.getData());
+				view: {
+					height: () => this.e_contain.clientHeight,
+					width: () => this.e_contain.clientWidth,// - 60,
+				},
+			});
+				// .loadData([
+				// 	{
+				// 		freeze: 'B3',
+				// 		styles: [
+				// 			{
+				// 				bgcolor: '#f4f5f8',
+				// 				textwrap: true,
+				// 				color: '#900b09',
+				// 				border: {
+				// 					top: ['thin', '#0366d6'],
+				// 					bottom: ['thin', '#0366d6'],
+				// 					right: ['thin', '#0366d6'],
+				// 					left: ['thin', '#0366d6'],
+				// 				},
+				// 			},
+				// 		],
+				// 		merges: [
+				// 			'C3:D4',
+				// 		],
+				// 		cols: {
+				// 			len: 10,
+				// 			2: { width: 200 },
+				// 		},
+				// 		rows,
+				// 	},
+				// 	{ name: 'sheet-test', rows: rows10 }
+				// ])
+				// .change((cdata) => {
+				// 	// console.log(cdata);
+				// 	console.log('>>>', xs.getData());
+				// });
+
+			// xs.on('cell-selected', (cell, ri, ci) => { console.log('cell:', cell, ', ri:', ri, ', ci:', ci); })
+			// 	.on('cell-edited', (text, ri, ci) => { console.log('text:', text, ', ri: ', ri, ', ci:', ci); })
+			// 	.on('pasted-clipboard', (data) => { console.log('>>>> data is ', data); });
+
+			this.c_sheet = xs;
+
+			// setTimeout(() => {
+			// 	// xs.loadData([{ rows }]);
+			// 	xs.cellText(14, 3, 'cell-text').reRender();
+			// 	console.log('cell(8, 8):', xs.cell(8, 8));
+			// 	console.log('cellStyle(8, 8):', xs.cellStyle(8, 8));
+			// }, 5000);
+			
+			// Process Params
+			await this.processParams();
+		},
+		async processParams() {
+			let urlParams = new URLSearchParams(window.location.search);
+			let filepath = urlParams.get('file');
+			if (filepath != null)
+				this.load(filepath);
+		},
+		async load(filepath) {
+
+			// Load file
+			this.d_dataText = await mt.file.readFile('text', filepath);
+
+			// Parse
+			this.d_dataParse = Papa.parse(this.d_dataText, {
+				header: true,          // dùng dòng đầu làm key
+				skipEmptyLines: true,  // bỏ qua dòng trống
+				dynamicTyping: true    // tự động convert số
 			});
 
-			xs.on('cell-selected', (cell, ri, ci) => { console.log('cell:', cell, ', ri:', ri, ', ci:', ci); })
-				.on('cell-edited', (text, ri, ci) => { console.log('text:', text, ', ri: ', ri, ', ci:', ci); })
-				.on('pasted-clipboard', (data) => { console.log('>>>> data is ', data); });
+			// Tạo col
+			let sRowHeader = { cells: {} };
+			let colIndex = 0;
+			for (let header of this.d_dataParse.meta.fields)
+				sRowHeader.cells[colIndex++] = { text: header };
 
-			setTimeout(() => {
-				// xs.loadData([{ rows }]);
-				xs.cellText(14, 3, 'cell-text').reRender();
-				console.log('cell(8, 8):', xs.cell(8, 8));
-				console.log('cellStyle(8, 8):', xs.cellStyle(8, 8));
-			}, 5000);
-		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
+			let sRows = { len: this.d_dataParse.data.length };
+				sRows[0] = sRowHeader;
+
+			let rowIndex = 1;
+			for (let pRow of this.d_dataParse.data) {
+				colIndex = 0;
+				let sRow = { cells: {} };
+
+				for (let pCol in pRow) {
+
+					let val = pRow[pCol];
+					if (val != null)
+						sRow.cells[colIndex] = { text: val };
+
+					colIndex++
+				}
+
+				sRows[rowIndex] = sRow;
+				rowIndex++;
 			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
+
+			// Load to sheet
+			this.c_sheet.loadData([{
+				cols: { len: this.d_dataParse.meta.fields.length },
+				rows: sRows,
+			}]);
+
+			// Log
+			mt.h_debug && console.log('[mt.sheet.load]', { filepath, csvText: this.d_dataText, results: this.d_dataParse });
+		}
 	},
 	pdf: {
 		m_init: false,
@@ -2283,15 +2404,6 @@ let mt = {
 				let pdfData = await blob.arrayBuffer();
 				PDFViewer.PDFViewerApplication.open({data: pdfData});
 				
-			}
-		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
 			}
 		},
 	},
@@ -2477,15 +2589,6 @@ let mt = {
 				},
 			});
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 		async openForm(item) {
 
 			// Clone
@@ -2658,15 +2761,6 @@ let mt = {
 				]
 			})
 		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
-		},
 	},
 	minesweeper: {
 		enum: {
@@ -2724,15 +2818,6 @@ let mt = {
 
 			let contentElm = document.querySelector('#minesweeper-content');
 			contentElm.innerHTML = html;
-		},
-		async open() {
-			if (!this.m_init) {
-				this.m_init = true;
-				await this.init();
-			}
-			else {
-				this.e_contain.style.display = '';
-			}
 		},
 		generator() {
 

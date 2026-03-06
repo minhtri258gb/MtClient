@@ -3,7 +3,7 @@
   {
     "date": "2026-01-22",
     "name": "Release game Arknight Endfield",
-    "type": "memory"
+    "type": "note"
   },
   { "date": "2026-02-02", "name": "Ngày Đưa Ông Táo Về Trời" },
   { "date": "2026-02-14", "name": "Valentine", "type": "holiday" },
@@ -51,30 +51,30 @@
     "date": "2026-02-15",
     "name": "Vé xe về quê tết",
     "time": "17:30",
-    "type": "event"
+    "type": "meet"
   },
   {
     "date": "2026-02-05",
     "name": "Hẹn nhóm Thắng tất niên tại cafe Chạng Vạng Rooftop",
     "time": "18:30",
-    "type": "event",
+    "type": "meet",
     "location": { "lat": 10.788046082597846, "lng": 106.72506842944462 }
   },
   {
     "date": "2026-02-06",
     "name": "End Year Partty công ty Hinnova 2025",
-    "type": "event"
+    "type": "meet"
   },
   {
     "date": "2026-02-07",
     "name": "Hẹn nhóm Trân nhậu tất niên",
-    "type": "event",
+    "type": "meet",
     "location": { "lat": 10.778418106442423, "lng": 106.66301580705219 }
   },
   {
     "date": "2026-02-05",
     "name": "Wuthering Wave update 3.1",
-    "type": "memory"
+    "type": "note"
   },
   {
     "date": "2026-02-27",
@@ -85,13 +85,21 @@
     "date": "2026-02-20",
     "name": "Vé xe vào Sài Gòn",
     "time": "17:30",
-    "type": "event"
+    "type": "meet"
   },
   {
     "date": "2026-02-28",
     "name": "Đi camping Maris - Vũng Tàu - cty Hinnova",
     "time": "05:30",
-    "type": "event",
+    "type": "meet",
     "location": { "lat": 10.3777982, "lng": 107.1281031 }
-  }
+  },
+  {
+    "date": "2026-03-07",
+    "name": "Hẹn Thắng tổ chức sinh nhật tại OM Nướng",
+    "type": "meet",
+    "time": "19:00",
+    "location": { "lat": 10.777361338557924, "lng": 106.66612807240364 }
+  },
+  { "date": "2026-04-29", "name": "Release game NTE", "type": "note" }
 ]

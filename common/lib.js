@@ -119,6 +119,13 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(pathex+'mt-script.js');
 	}},
+	'jstree': { init: false, async load() {
+		let path = '/lib/jstree-3.3.17/';
+		await Promise.all([
+			mtLib.loadCSS(path+'themes/default/style.min.css'),
+			mtLib.loadJS(path+'jstree.min.js'),
+		]);
+	}},
 	'leaflet': { init: false, async load() {
 		let path = '/lib/leaflet/';
 		let pathex = '/lib/leaflet-ex/';
@@ -174,6 +181,10 @@ var mtLib = {
 			mtLib.loadCSS(path+'css/nanogallery2.min.css'),
 			mtLib.loadJS(path+'jquery.nanogallery2.min.js'),
 		]);
+	}},
+	'papaparse': { init: false, async load() {
+		let path = '/lib/papaparse-5.5.3/';
+		await mtLib.loadJS(path+'papaparse.min.js');
 	}},
 	'pdfjs': { init: false, async load() {
 		let path = '/lib/pdfjs-5.4.624/build/';
