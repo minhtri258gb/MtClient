@@ -205,7 +205,7 @@ let mt = {
 	},
 	utils: {
 		convert_DateToStr(date) {
-			let pad = (num) => date < 10 ? '0'+num : ''+num;
+			let pad = (num) => num < 10 ? '0'+num : ''+num;
 			return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
 		},
 		confirmRedirect(title, message, link) {
@@ -403,8 +403,18 @@ let mt = {
 			mt.common.e_contain.appendChild(this.e_contain);
 
 			// Column score
+			let imgProp = {
+				size: '51px',
+				attr: 'align=center',
+				render: (row, target) => {
+					if (target.value)
+						return `<img src="/res/images/game/${target.value}" />`;
+					return '';
+				},
+				editable: { type: 'text' },
+			};
 			let ratingProp = {
-				size: '60px',
+				size: '70px',
 				sortable: true,
 				attr: 'align=center',
 				editable: { type: 'int', min: 1, max: 5 },
@@ -423,8 +433,8 @@ let mt = {
 					toolbar: true,
 					footer: true,
 					lineNumbers: true,
-					selectColumn: true,
-					expandColumn: true,
+					selectColumn: false,
+					expandColumn: false,
 					toolbarAdd: true,
 					toolbarSave: true,
 				},
@@ -444,19 +454,17 @@ let mt = {
 				// 	}
 				// },
 				columns: [
-					{ field: 'img', text: 'Image', size: '120px', resizable: true, editable: { type: 'text' } },
+					{ field: 'img', text: 'Image', ...imgProp },
 					{ field: 'name', text: 'Name', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'graphic', text: 'Graphic', ...ratingProp },
+					{ field: 'audio', text: 'Audio', ...ratingProp },
+					{ field: 'gameplay', text: 'Gameplay', ...ratingProp },
 					{ field: 'story', text: 'Story', ...ratingProp },
-					{ field: 'art', text: 'Art', ...ratingProp },
-					{ field: 'sound', text: 'Sound', ...ratingProp },
-					{ field: 'fantasy', text: 'Fantasy', ...ratingProp },
-					{ field: 'sad', text: 'Sad', ...ratingProp },
-					{ field: 'joke', text: 'Joke', ...ratingProp },
-					{ field: 'brand', text: 'Brand', ...ratingProp },
 					{ field: 'review', text: 'Review', ...ratingProp },
-					{ field: 'end', text: 'End', size: '120px', sortable: true, editable: { type: 'text' } },
-					{ field: 'character', text: 'Character', size: '120px', sortable: true, editable: { type: 'text' } },
-					{ field: 'time', text: 'Time', size: '120px', sortable: true },
+					{ field: 'status', text: 'Status', size: '180px', editable: { type: 'text' } },
+					{ field: 'tags', text: 'Tags', size: '320px', searchable: { operator: 'contains' }, editable: { type: 'text' } },
+					{ field: 'date', text: 'Date', size: '74px', sortable: true },
+					{ field: 'size', text: 'Size', size: '46px', sortable: true, editable: { type: 'text' } },
 				],
 				liveSearch: true,
 				multiSearch: false,
@@ -464,22 +472,25 @@ let mt = {
 				searches: [
 					{ field: 'name', label: 'Name', type: 'text' },
 				],
-				onAdd: function (event) {
-					let id = this.records.length + 1;
-					let time = Math.floor(Date.now() / 1000);
-					this.add({ id, time });
-					this.scrollIntoView(1); // Scroll top
+				onAdd: (event) => {
+					let id = this.c_w2grid.records.length + 1;
+					// let time = Math.floor(Date.now() / 1000);
+					let date = mt.utils.convert_DateToStr(new Date());
+					this.c_w2grid.add({ id, date });
+					this.c_w2grid.scrollIntoView(1); // Scroll top
 				},
-				onEdit: function (event) {
+				onEdit: (event) => {
 					w2alert('edit');
 				},
-				onSave: async function (event) {
+				onSave: async (event) => {
+					let sizeListPre = this.d_list.length;
+					let dataChange = this.c_w2grid.getChanges();
 					let confirm = await new Promise((resolve, reject) => {
 						w2popup.open({
 							title: 'Records Changes',
 							with: 600,
 							height: 550,
-							body: `<pre>${JSON.stringify(this.getChanges(), null, 4)}</pre>`,
+							body: `<pre>${JSON.stringify(dataChange, null, 4)}</pre>`,
 							actions: {
 								Ok: () => resolve(true),
 								Cancel: () => resolve(false),
@@ -489,14 +500,16 @@ let mt = {
 					if (!confirm)
 						event.preventDefault();
 					w2popup.close();
+
+					this.saveRow(dataChange, sizeListPre);
 				},
 			});
 
 			// Load data
 			this.d_list = await mt.file.loadJson(this.h_pathDB);
 			for (let i=0, sz=this.d_list.length; i<sz; i++) {
-				let anime = this.d_list[i];
-				anime.id = i+1; // Thêm ID
+				let game = this.d_list[i];
+				game.id = i+1; // Thêm ID
 			}
 
 			// this.c_w2grid.total = this.d_list.length + 100;
@@ -507,6 +520,29 @@ let mt = {
 			// this.c_w2grid.box = this.e_contain;
 			this.c_w2grid.render(this.e_contain);
 			// this.e_contain.innerHTML = 'AAAAAAAAAA';
+		},
+		async saveRow(listChange, sizeListPre) {
+			try {
+
+				// Save data
+				let urlDB = '/' + this.h_pathDB;
+				let cloneData = JSON.parse(JSON.stringify(this.d_list));
+				for (let game of cloneData) {
+					delete game.id;
+					delete game.recid;
+					delete game.w2ui;
+				}
+				await mt.file.saveJson(urlDB, cloneData);
+
+				// Toast
+				mt.show.toast('success', 'Đã lưu lại.');
+
+				// Log
+				mt.h_debug && console.log('[mt.game.saveRow]', { listChange, data: this.d_list });
+			}
+			catch (ex) {
+				console.error('[mt.game.saveRow]', ex);
+			}
 		},
 	},
 	explorer: {
