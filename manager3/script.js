@@ -483,9 +483,8 @@ let mt = {
 					w2alert('edit');
 				},
 				onSave: async (event) => {
-					let sizeListPre = this.d_list.length;
 					let dataChange = this.c_w2grid.getChanges();
-					let confirm = await new Promise((resolve, reject) => {
+					let confirm = await new Promise((resolve) => {
 						w2popup.open({
 							title: 'Records Changes',
 							with: 600,
@@ -501,7 +500,7 @@ let mt = {
 						event.preventDefault();
 					w2popup.close();
 
-					this.saveRow(dataChange, sizeListPre);
+					this.saveRow(dataChange);
 				},
 			});
 
@@ -514,14 +513,14 @@ let mt = {
 
 			// this.c_w2grid.total = this.d_list.length + 100;
 			this.c_w2grid.records = this.d_list;
-			this.c_w2grid.sort('time', 'desc');
+			this.c_w2grid.sort('date', 'desc');
 			// this.c_w2grid.refresh();
 
 			// this.c_w2grid.box = this.e_contain;
 			this.c_w2grid.render(this.e_contain);
 			// this.e_contain.innerHTML = 'AAAAAAAAAA';
 		},
-		async saveRow(listChange, sizeListPre) {
+		async saveRow(listChange) {
 			try {
 
 				// Save data
