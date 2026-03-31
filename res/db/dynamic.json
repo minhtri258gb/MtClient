@@ -1,0 +1,5 @@
+[
+  { "type": "list", "code": "main", "name": "Main" },
+  { "type": "list", "code": "testList", "name": "Test List" },
+  { "type": "form", "code": "testForm", "name": "Test Form" }
+]

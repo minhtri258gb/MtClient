@@ -55,9 +55,7 @@ let mt = {
 	processParams() {
 		let urlParams = new URLSearchParams(window.location.search);
 
-		this.m_page = urlParams.get('page') || '';
-		if (this.m_page == null || this.m_page.length == 0)
-			throw new Error('Page không hợp lệ!');
+		this.m_page = urlParams.get('page') || 'main';
 	},
 	async loadPage(page) {
 
