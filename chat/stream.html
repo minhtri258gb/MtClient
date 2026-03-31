@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<title>ZeroClaw Socket Chat</title>
+	<style>
+		body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eceff1; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+		#status { padding: 5px 20px; font-size: 12px; background: #cfd8dc; color: #546e7a; }
+		#chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+		.message { max-width: 85%; padding: 12px; border-radius: 15px; line-height: 1.5; word-wrap: break-word; position: relative; }
+		.user { align-self: flex-end; background: #0084ff; color: white; border-bottom-right-radius: 2px; }
+		.ai { align-self: flex-start; background: white; color: #333; border-bottom-left-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+		#input-area { padding: 20px; background: white; display: flex; gap: 10px; border-top: 1px solid #dee2e6; }
+		input { flex: 1; padding: 12px; border: 1px solid #ced4da; border-radius: 25px; outline: none; padding-left: 20px; }
+		button { padding: 10px 25px; background: #0084ff; color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; }
+		button:hover { background: #0073e6; }
+	</style>
+</head>
+<body>
+
+<div id="status">Đang kết nối...</div>
+<div id="chat-container"></div>
+
+<div id="input-area">
+	<input type="text" id="user-input" placeholder="Nhắn gì đó cho ZeroClaw..." autocomplete="off">
+	<button id="send-btn">Gửi</button>
+</div>
+
+<script>
+	const chatContainer = document.getElementById('chat-container');
+	const userInput = document.getElementById('user-input');
+	const sendBtn = document.getElementById('send-btn');
+	const statusLabel = document.getElementById('status');
+
+	// Địa chỉ WebSocket của ZeroClaw (Thường là ws:// thay vì http://)
+	const SOCKET_URL = "http://localhost:42617/ws/chat";
+	let socket;
+
+	function connect() {
+		socket = new WebSocket(SOCKET_URL);
+
+		socket.onopen = () => {
+			statusLabel.innerText = "● Đã kết nối Socket (Sẵn sàng)";
+			statusLabel.style.color = "#2e7d32";
+		};
+
+		socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			
+			// Xử lý dữ liệu trả về (tùy cấu trúc ZeroClaw, thường là data.text hoặc data.content)
+			if (data.type === "message" || data.content) {
+				const text = data.content || data.text;
+				addOrUpdateMessage(text, false);
+			}
+		};
+
+		socket.onclose = () => {
+			statusLabel.innerText = "○ Mất kết nối. Đang thử lại...";
+			statusLabel.style.color = "#d32f2f";
+			setTimeout(connect, 3000); // Thử kết nối lại sau 3 giây
+		};
+	}
+
+	function addOrUpdateMessage(text, isUser) {
+		let lastMsg = chatContainer.lastElementChild;
+		
+		// Nếu là AI và đang stream, ta cập nhật nội dung tin nhắn cuối thay vì tạo mới
+		if (!isUser && lastMsg && lastMsg.classList.contains('ai')) {
+			lastMsg.innerText += text;
+		} else {
+			const div = document.createElement('div');
+			div.className = `message ${isUser ? 'user' : 'ai'}`;
+			div.innerText = text;
+			chatContainer.appendChild(div);
+		}
+		chatContainer.scrollTop = chatContainer.scrollHeight;
+	}
+
+	function sendMessage() {
+		const text = userInput.value.trim();
+		if (!text || socket.readyState !== WebSocket.OPEN) return;
+
+		addOrUpdateMessage(text, true);
+		
+		// Gửi payload theo định dạng JSON mà ZeroClaw yêu cầu
+		const payload = JSON.stringify({
+			action: "chat",
+			model: "qwen3.5:4b",
+			message: text
+		});
+		
+		socket.send(payload);
+		userInput.value = '';
+	}
+
+	sendBtn.addEventListener('click', sendMessage);
+	userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+	connect(); // Khởi chạy kết nối
+</script>
+
+</body>
+</html>

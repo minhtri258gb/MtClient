@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Masonry + Infinite Scroll + Lazy Load</title>
+  <style>
+    body { font-family: sans-serif; }
+    .grid { width: 90%; margin: auto; }
+    .grid-item { width: 200px; margin-bottom: 10px; background: #eee; border-radius: 8px; overflow: hidden; }
+    .grid-item img { display: block; width: 100%; height: auto; }
+    #sentinel { height: 30px; }
+  </style>
+  <!-- Masonry CDN -->
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+</head>
+<body>
+  <h2>Masonry Infinite Scroll Demo</h2>
+  <div class="grid"></div>
+  <div id="sentinel"></div>
+
+  <script>
+    // Giả lập data ảnh (có thể thay bằng fetch từ API)
+    const imagesData = Array.from({ length: 100 }, (_, i) =>
+      `https://picsum.photos/200/300?random=${i}`
+    );
+
+    const grid = document.querySelector('.grid');
+    let msnry = new Masonry(grid, {
+      itemSelector: '.grid-item',
+      columnWidth: 200,
+      gutter: 10,
+      fitWidth: true
+    });
+
+    let itemsPerLoad = 20;
+    let loaded = 0;
+
+    function loadMore() {
+      const fragment = document.createDocumentFragment();
+      for (let i = loaded; i < loaded + itemsPerLoad && i < imagesData.length; i++) {
+        const div = document.createElement('div');
+        div.className = 'grid-item';
+        
+        const img = document.createElement('img');
+        img.dataset.src = imagesData[i]; // lazy load
+        img.alt = `Image ${i}`;
+        img.loading = "lazy"; // hỗ trợ browser natively
+        
+        div.appendChild(img);
+        fragment.appendChild(div);
+      }
+      grid.appendChild(fragment);
+
+      // cập nhật masonry
+      imagesLoaded(grid, () => {
+        msnry.appended([...grid.querySelectorAll('.grid-item')].slice(loaded));
+        msnry.layout();
+      });
+
+      loaded += itemsPerLoad;
+      if (loaded >= imagesData.length) {
+        observer.unobserve(sentinel);
+      }
+    }
+
+    // Lazy load ảnh thủ công bằng IntersectionObserver
+    const imgObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          observer.unobserve(img);
+        }
+      });
+    }, { rootMargin: "100px" });
+
+    // Quan sát tất cả ảnh sau khi thêm
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+        grid.querySelectorAll('img[data-src]').forEach(img => imgObserver.observe(img));
+      }
+    });
+
+    const sentinel = document.querySelector('#sentinel');
+    observer.observe(sentinel);
+
+    // imagesLoaded cần để Masonry re-layout sau khi ảnh load
+    function imagesLoaded(parentNode, callback) {
+      const imgElements = parentNode.querySelectorAll('img');
+      const total = imgElements.length;
+      let count = 0;
+      if (total === 0) {
+        callback();
+        return;
+      }
+      imgElements.forEach(img => {
+        if (img.complete) {
+          increment();
+        } else {
+          img.addEventListener('load', increment);
+          img.addEventListener('error', increment);
+        }
+      });
+      function increment() {
+        count++;
+        if (count === total) callback();
+      }
+    }
+  </script>
+</body>
+</html>

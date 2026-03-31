@@ -7,13 +7,28 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 	<!-- <link href="/lib/bootstrap-3.4.1/css/bootstrap.min.css" type="text/css" rel="stylesheet"> -->
+
 	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
+<<<<<<< Updated upstream
 	<!-- <link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet"> -->
 	<!-- <script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script> -->
 	<!-- <script src="/lib/vanilla-picker-2.0.1/vanilla-picker.min.js"></script> -->
 	<!-- <link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <script src="/lib/flatpickr/flatpickr.min.js"></script> -->
 	<!-- <script src="/lib/flatpickr/l10n/vn.js"></script> -->
+=======
+
+	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<!-- <script src="/lib/vanilla-picker-2.0.1/vanilla-picker.min.js"></script> -->
+
+	<link href="/lib/flatpickr/flatpickr.min.css" type="text/css" rel="stylesheet">
+	<script src="/lib/flatpickr/flatpickr.min.js"></script>
+
+	<script src="/lib/flatpickr/l10n/vn.js"></script>
+
+>>>>>>> Stashed changes
 	<!-- <link href="/lib/choicesjs-11.1.0/base.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <link href="/lib/choicesjs-11.1.0/choices.min.css" type="text/css" rel="stylesheet"> -->
 	<!-- <script src="/lib/choicesjs-11.1.0/choices.min.js"></script> -->
@@ -84,6 +99,7 @@
 							'propHidden': {
 								type: 'string',
 								format: 'hidden',
+								readonly: true,
 								options: {
 									titleHidden: true
 								},
@@ -158,7 +174,7 @@
 							},
 							'propCheckbox': {
 								title: 'Field Checkbox',
-								type: 'string',
+								type: 'boolean',
 								format: 'checkbox',
 							},
 							'propButton': {

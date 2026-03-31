@@ -1,2 +1,3 @@
 
+;/res/RetroCharacter.json
 /res/Cute_Fantasy_Free/Cute_Fantasy_Free.json

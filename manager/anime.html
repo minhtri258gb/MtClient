@@ -1,9 +1,614 @@
-<div id="toolbarAnime">
-	<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="anime.toolbar.add()">Add</a>
-	<a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="anime.toolbar.edit()">Edit</a>
-	<input class="easyui-textbox" data-options="iconCls:'icon-search',onChange:function(text){anime.toolbar.search(text)}" style="width:256px">
-</div>
-<table id="datagridAnime"></table>
-<script>
-	$.getScript("/manager/anime.js", function(data, textStatus, jqxhr) { anime.init(); });
-</script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Anime</title>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link href="/mgr/anime/favicon.ico" rel="shortcut icon" type="image/png">
+
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet">
+
+	<script src="/lib/masonry/masonry.pkgd.min.js"></script>
+
+	<link href="/lib/mt/json-editor/mt-style.css" type="text/css" rel="stylesheet">
+	<script src="/lib/json-editor-2.15.2/jsoneditor.min.js"></script>
+
+	<link href="/lib/tingle/tingle.min.css" type="text/css" rel="stylesheet">
+	<link href="/lib/mt/tingle/mt-style.css" type="text/css" rel="stylesheet">
+	<script src='/lib/tingle/tingle.min.js'></script>
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 20px;
+			background-color: #f5f5f5;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		.masonry-grid {
+			display: block;
+			margin-left: -15px;
+			width: auto;
+		}
+
+		.masonry-grid-sizer,
+		.masonry-item {
+			width: calc(20% - 15px);
+			margin-left: 15px;
+			margin-bottom: 15px;
+		}
+
+		@media (max-width: 768px) {
+			.masonry-grid-sizer,
+			.masonry-item {
+				width: calc(50% - 15px);
+			}
+		}
+
+		@media (max-width: 480px) {
+			.masonry-grid-sizer,
+			.masonry-item {
+				width: calc(100% - 15px);
+			}
+		}
+
+		.masonry-item {
+			background: white;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			transition: transform 0.3s ease;
+			opacity: 0;
+			transform: translateY(20px);
+		}
+
+		.masonry-item.loaded {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		.masonry-item:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+		}
+
+		.masonry-item img.info-img {
+			width: 100%;
+			height: auto;
+			display: block;
+		}
+
+		.masonry-item .content {
+			padding: 8px;
+		}
+
+		.masonry-item h3 {
+			margin: 0 0 8px 0;
+			font-size: 16px;
+			color: #333;
+			text-align: center;
+		}
+
+		.masonry-item span {
+			margin: 0;
+			color: #666;
+			font-size: 12px;
+		}
+
+		.stats {
+			background: white;
+			padding: 15px;
+			border-radius: 8px;
+			margin-bottom: 20px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		}
+
+		/* Infinity Scroll */
+		#sentinel { height: 30px; }
+
+		/* Info Rate */
+		.info-eps {
+			position: absolute;
+			top: 10px;
+			left: 10px;
+			background: #ffffffd1;
+			border-radius: 4px;
+			padding: 0 2px;
+			font-size: small;
+			font-weight: bold;
+		}
+		.info-rate-wrap {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			background-color: #ffffff;
+			border-radius: 50%;
+			width: 24px;
+			height: 24px;
+
+			.info-rate {
+				width: 24px;
+				height: 24px;
+			}
+		}
+		.info-rate-wrap2 {
+			transform: translateY(-20px);
+			background-color: #ffffff;
+			border-radius: 7px;
+			width: fit-content;
+			height: 16px;
+			margin: auto;
+
+			.info-rate2 {
+				width: 16px;
+				height: 16px;
+			}
+		}
+
+		/* Form */
+		.form-button {
+			margin-top: 16px;
+			text-align: center;
+		}
+	</style>
+
+</head>
+<body>
+
+	<!-- https://fontawesome.com/v6/search?ic=free&o=r -->
+
+	<div class="container">
+		<div class="stats">
+			<h2>Anime manager</h2>
+			<p>Hiển thị: <span id="displayedCount">0</span> / <span id="totalCount">0</span> ảnh</p>
+			<p>Scroll xuống để tự động tải thêm ảnh...</p>
+		</div>
+
+		<div class="masonry-grid">
+			<div class="masonry-grid-sizer"></div>
+		</div>
+	</div>
+	<div id="sentinel"></div>
+
+	<script type="module">
+		import mtAuthen from '/common/authen.js';
+		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
+
+		var mt = {
+			h_pathDB: '/res/DB/anime2.json',
+			p_authen: mtAuthen,
+			d_animes: [],
+
+			// Module
+			mgr: {
+				m_clientPath: '',
+
+				async loadFromJson() {
+					try {
+
+						// Call API
+						let response = await fetch(mt.h_pathDB, { method: 'GET' });
+						if (!response.ok) {
+							if (response.status == 404) { } // skip
+							else
+								throw { error: true, message: await response.text() };
+						}
+						else
+							mt.d_animes = await response.json();
+
+						// Process Id
+						let id = 1;
+						for (let anime of mt.d_animes) {
+							anime.id = id;
+							id++;
+						}
+
+						// #TODO Sort khi lưu ko phải khi load
+						// mt.d_animes.sort((a, b) => (b.time||0) - (a.time||0));
+
+						// Tạo dữ liệu mẫu
+						// for (let i = 1; i <= 200; i++) {
+						// 	mt.d_animes.push({
+						// 		id: i,
+						// 		title: `Ảnh số ${i}`,
+						// 		description: `Đây là mô tả cho ảnh số ${i}. Lorem ipsum dolor sit amet, consectetur adipiscing elit.`,
+						// 		image: `https://picsum.photos/300/${Math.floor(Math.random() * 200) + 200}?random=${i}`,
+						// 		height: Math.floor(Math.random() * 200) + 200
+						// 	});
+						// }
+
+						// Log
+						console.log('[mt.mgr.loadFromJson]', { animes: mt.d_animes });
+					}
+					catch (ex) {
+						console.error('[mt.mgr.loadFromJson] Exception', ex);
+						throw ex;
+					}
+				},
+				async saveToJson() {
+					try {
+
+						// Authen
+						if (mt.p_authen.checkAuthn() == false)
+							await mt.p_authen.init();
+
+						// Kiểm tra và lấy client path
+						if (this.m_clientPath.length == 0) {
+							let response = await fetch('/file/getClientPath', {
+								method: 'GET',
+								headers: { 'Authorization': 'Bearer ' + mt.p_authen.getToken() },
+							});
+							if (!response.ok)
+								throw { error: true, message: await response.text() };
+
+							this.m_clientPath = await response.text();
+						}
+
+						// Bỏ id
+						let listData = [];
+						for (let music of this.d_musics) {
+							let clone = Object.assign({}, music);
+							delete clone.id;	
+							listData.push(clone);
+						}
+
+						// Call API - Lưu dữ liệu
+						let paramURL = new URLSearchParams();
+						paramURL.set('file', this.m_clientPath + mt.h_pathDB);
+						paramURL.set('force', true);
+						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'text/plain',
+								'Authorization': 'Bearer ' + mt.p_authen.getToken(),
+							},
+							body: JSON.stringify(listData),
+						});
+						if (!responseSave.ok) {
+							let errorMessage = await responseSave.text();
+							mt.utils.toast('error', errorMessage);
+							console.error(errorMessage);
+							return;
+						}
+					}
+					catch (ex) {
+						console.error('[mt.mgr.saveToJson] Exception', ex);
+						throw ex;
+					}
+				},
+			},
+			grid: {
+				c_grid: null,
+				p_masonry: null, // Masonry
+				m_isloading: false, // Flag loading
+				d_items: [],
+
+				async init() {
+
+					// Bind Element
+					this.c_grid = document.querySelector('.masonry-grid');
+
+					this.displayedCountEl = document.getElementById('displayedCount');
+					this.totalCountEl = document.getElementById('totalCount');
+
+					this.currentIndex = 0;
+					this.itemsPerLoad = 20; // Số ảnh load mỗi lần
+					this.m_isloading = false;
+					this.threshold = 200; // Khoảng cách từ bottom để trigger load
+
+					// Khởi tạo Masonry
+					this.p_masonry = new Masonry(this.c_grid, {
+						itemSelector: '.masonry-item',
+						columnWidth: '.masonry-grid-sizer',
+						percentPosition: true,
+						transitionDuration: '0.3s'
+					});
+
+					// Cập nhật total count
+					this.totalCountEl.textContent = mt.d_animes.length;
+
+					// Load ảnh đầu tiên
+					await this.loadMore();
+
+					// Infinity Load
+					const observer = new IntersectionObserver(entries => {
+						if (entries[0].isIntersecting)
+							this.loadMore();
+					});
+					const sentinel = document.querySelector('#sentinel');
+					observer.observe(sentinel);
+				},
+				async loadMore() {
+					if (this.m_isloading || this.currentIndex >= mt.d_animes.length)
+						return;
+
+					this.m_isloading = true;
+
+					const itemsToLoad = mt.d_animes.slice(
+						this.currentIndex, 
+						this.currentIndex + this.itemsPerLoad
+					);
+
+					const newItems = [];
+
+					for (const item of itemsToLoad) {
+						const element = await this.createImageElement(item);
+						newItems.push(element);
+						this.c_grid.appendChild(element);
+					}
+
+					// Thêm items vào masonry
+					this.p_masonry.appended(newItems);
+
+					// Animate items
+					setTimeout(() => {
+						newItems.forEach(item => {
+							item.classList.add('loaded');
+						});
+					}, 50);
+
+					this.currentIndex += itemsToLoad.length;
+					this.updateDisplayedCount();
+
+					// Log
+					// console.log('[mt.grid.loadMore]');
+
+					this.m_isloading = false;
+				},
+				createImageElement(anime) {
+					return new Promise((resolve) => {
+						const item = document.createElement('div');
+						item.className = 'masonry-item';
+
+						function onload(success) {
+
+							// Set Image
+							let htmlImg = '';
+							if (success) {
+								htmlImg = `<img src="${anime.img}" alt="${anime.name}" loading="lazy" class="info-img">`;
+							}
+							else {
+								htmlImg = `
+									<div style="height:200px;background:#ddd;display:flex;align-items:center;justify-content:center;color:#666;">
+										Ảnh không tải được
+									</div>
+								`;
+							}
+
+							// Set Tag
+							let tagHtml = '';
+							if (anime.tags && anime.tags.length > 0) {
+								tagHtml += '<span>Tag: ';
+								for (let tag of anime.tags)
+									tagHtml += `<a href="#">${tag}</a>`;
+								tagHtml += '</span><br>';
+							}
+
+							// Set Note
+							let noteHtml = '';
+							if (anime.note && anime.note.length > 0)
+								noteHtml += `<span>Note: ${anime.note}</span><br>`;
+
+							// Set Character
+							let charHtml = '';
+							if (anime.character && anime.character.length > 0)
+								charHtml += `<span>Character: ${anime.character}</span><br>`;
+
+							// Set HTML
+							item.innerHTML = `
+								<div>
+									${htmlImg}
+									<span class="info-eps">${anime.end}</span>
+									<span class="info-rate-wrap">
+										<img src="/res/icons/rating${anime.review}.png" title="Review" class="info-rate" />
+									</span>
+									<div class="info-rate-wrap2">
+										<img src="/res/icons/rating${anime.story}.png" title="Story" title="" class="info-rate2" />
+										<img src="/res/icons/rating${anime.art}.png" title="Art" class="info-rate2" />
+										<img src="/res/icons/rating${anime.sound}.png" title="Sound" class="info-rate2" />
+										<img src="/res/icons/rating${anime.fantasy}.png" title="Fantasy" class="info-rate2" />
+										<img src="/res/icons/rating${anime.sad}.png" title="Sad" class="info-rate2" />
+										<img src="/res/icons/rating${anime.joke}.png" title="Joke" class="info-rate2" />
+										<img src="/res/icons/rating${anime.brand}.png" title="Brand" class="info-rate2" />
+									</div>
+								</div>
+								<div class="content">
+									<h3>${anime.name}</h3>
+									<span>Ngày: ${mt.utils.cv_formatDatetime(anime.time)}</span><br>
+									${tagHtml}${noteHtml}${charHtml}
+								</div>
+							`;
+							item.addEventListener('click', () => mt.form.open(anime))
+							resolve(item);
+						}
+
+						const img = new Image();
+						img.onload = () => onload(true);
+						img.onerror = () => onload(false);
+						img.src = anime.img;
+					});
+				},
+				updateDisplayedCount() {
+					this.displayedCountEl.textContent = this.currentIndex;
+				},
+			},
+			form: {
+				m_modal: null, // Tingle
+				m_editor: null, // JsonEditor
+
+				init() {
+
+					// Init Modal
+					this.m_modal = new tingle.modal({
+						footer: false,
+						stickyFooter: false,
+						closeMethods: ['button', 'escape'], // 'overlay'
+						closeLabel: "Đóng",
+						onOpen:() => { },
+						onClose: () => { },
+						beforeClose: () => {
+							return true;
+						},
+					});
+					this.m_modal.setContent(`
+						<div id="json-editor" class="json-editor"></div>
+						<div class="form-button">
+							<button onclick="mt.form.save()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+							<button onclick="mt.form.m_modal.close()"><i class="fa-regular fa-circle-xmark"></i> Đóng</button>
+						</div>
+					`);
+
+					// Init Form
+					JsonEditorEX.RateRegister();
+					JsonEditorEX.TagBoxRegister();
+					const element = document.getElementById('json-editor');
+					this.m_editor = new JSONEditor(element, {
+						use_name_attributes: false,
+						theme: 'barebones',
+						iconlib: 'fontawesome5',
+						disable_edit_json: true,
+						disable_properties: true,
+						disable_collapse: true,
+						schema: {
+							title: 'Anime',
+							type: 'object',
+							required: ['id','name','story','art','sound','fantasy','sad','joke','brand','review','time','end'],
+							properties: {
+								'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
+								'name': { title: 'Name', type: 'string', format: 'text' },
+								'img': { title: 'Image', type: 'string', format: 'url' },
+								'story': { title: 'Story', type: 'integer', format: 'rate' },
+								'art': { title: 'Art', type: 'integer', format: 'rate' },
+								'sound': { title: 'Sound', type: 'integer', format: 'rate' },
+								'fantasy': { title: 'Fantasy', type: 'integer', format: 'rate' },
+								'sad': { title: 'Sad', type: 'integer', format: 'rate' },
+								'joke': { title: 'Joke', type: 'integer', format: 'rate' },
+								'brand': { title: 'Brand', type: 'integer', format: 'rate' },
+								'review': { title: 'Review', type: 'integer', format: 'rate' },
+								'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
+								'note': { title: 'Note', type: 'string', format: 'textarea', options: { input_height : '52px' } },
+								'isUpdateTime': { title: 'Update Time', type: 'boolean', format: 'checkbox' },
+								'time': { title: 'Time', type: 'string', format: 'text', readonly: true },
+								'end': { title: 'End', type: 'string', format: 'text' },
+								'character': { title: 'Character', type: 'string', format: 'text' },
+							}
+						},
+					});
+				},
+				open(amine) {
+					this.m_editor.setValue(this.cv_inForm(amine));
+					this.m_modal.open();
+				},
+				save() {
+
+					// Get data
+					let anime = this.cv_outForm(this.m_editor.getValue());
+
+					if (anime.id == 0) {
+
+						// Lưu vào RAM
+						mt.d_animes.unshift(anime);
+
+						// Save data
+						mt.mgr.
+
+						// Reload
+						location.reload();
+					}
+					else {
+						let oldData = mt.d_animes[anime.id-1];
+
+						// Lưu vào RAM
+						mt.d_animes[anime.id-1] = anime;
+
+						// Log
+						console.log('[mt.form.save]', { anime, oldData });
+					}
+
+					// Close modal
+					this.m_modal.close();
+				},
+				cv_inForm(data) {
+					return {
+						id: data?.id || 0,
+						name: data?.name || '',
+						img: data?.img || '',
+						story: data?.story || 3,
+						art: data?.art || 3,
+						sound: data?.sound || 3,
+						fantasy: data?.fantasy || 3,
+						sad: data?.sad || 3,
+						joke: data?.joke || 3,
+						brand: data?.brand || 3,
+						review: data?.review || 3,
+						tags: data?.tags || [],
+						note: data?.note || '',
+						time: data?.time || '',
+						end: data?.end || '',
+						character: data?.character || '',
+						isUpdateTime: (data?.id || 0) == 0, // Checkbox update time
+					};
+				},
+				cv_outForm(data) {
+					let res = {
+						id: Number.parseInt(data.id), // Convert Int
+						name: data.name,
+						story: data.story,
+						art: data.art,
+						sound: data.sound,
+						fantasy: data.fantasy,
+						sad: data.sad,
+						joke: data.joke,
+						brand: data.brand,
+						review: data.review,
+						end: data.end,
+						time: Number.parseInt(data.time),
+					};
+					if (data.img.length > 0) res.img = data.img;
+					if (data.tags.length > 0) res.tags = data.tags;
+					if (data.note.length > 0) res.note = data.note;
+					if (data.character.length > 0) res.character = data.character;
+					if (data.isUpdateTime === true)
+						res.time = Math.floor(Date.now() / 1000);
+					return res;
+				},
+			},
+			utils: {
+				cv_formatDatetime(second) {
+					let date = new Date(second * 1000);
+					let year = date.getFullYear();
+					let month = String(date.getMonth() + 1).padStart(2, '0');
+					let day = String(date.getDate()).padStart(2, '0');
+					// let hour = String(date.getHours()).padStart(2, '0');
+					// let minute = String(date.getMinutes()).padStart(2, '0');
+					// return `${day}.${month}.${year} ${hour}:${minute}`;
+					return `${day}.${month}.${year}`;
+				},
+			},
+
+			// Method
+			async init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// First Load
+				await this.mgr.loadFromJson();
+
+				// Init
+				await this.grid.init();
+				await this.form.init();
+			},
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
+	</script>
+</body>
+</html>

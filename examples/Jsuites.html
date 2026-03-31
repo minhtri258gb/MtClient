@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Example</title>
+
+	<meta charset="UTF-8" />
+
+	<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" type="text/css" rel="stylesheet" />
+	<script src="/node_modules/jsuites/dist/jsuites.js"></script>
+	<script src="/node_modules/jsuites/dist/jsuites.webcomponents.js"></script>
+	<link href="/node_modules/jsuites/dist/jsuites.css" type="text/css" rel="stylesheet" />
+
+	<style>
+
+		/* #TODO */
+
+	</style>
+</head>
+<body>
+
+	<!-- #TODO -->
+
+	<script type="module">
+		import mtAuthen from '/common/authen.js';
+		var mt = {
+			p_authen: mtAuthen,
+
+			init() {
+
+				// Bind Global
+				window.mt = this;
+
+				// #TODO
+			},
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
+	</script>
+</body>
+</html>

@@ -3,435 +3,326 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>2D</title>
+	<title>2D Tilemap với Three.js</title>
 	<style>
 		body {
 			margin: 0;
-			padding: 20px;
-			font-family: Arial, sans-serif;
-			background-color: #f0f0f0;
-		}
-
-		.container {
-			max-width: 1200px;
-			margin: 0 auto;
-			background: white;
-			border-radius: 10px;
-			box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 			overflow: hidden;
+			font-family: Arial, sans-serif;
 		}
-
-		.header {
-			padding: 20px;
-			text-align: center;
-		}
-
-		.controls {
-			padding: 20px;
-			border-bottom: 1px solid #eee;
-		}
-
-		.control-group {
-			margin-bottom: 15px;
-		}
-
-		.control-group label {
-			display: block;
-			margin-bottom: 5px;
-			font-weight: bold;
-			color: #333;
-		}
-
-		.control-group input, .control-group select {
-			width: 100%;
-			padding: 8px;
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			font-size: 14px;
-		}
-
-		.control-row {
-			display: flex;
-			gap: 15px;
-		}
-
-		.control-row .control-group {
-			flex: 1;
-		}
-
-		.btn {
-			background: #667eea;
+		#info {
+			position: absolute;
+			top: 10px;
+			left: 10px;
 			color: white;
-			border: none;
-			padding: 10px 20px;
-			border-radius: 4px;
-			cursor: pointer;
-			font-size: 14px;
-			transition: background 0.3s;
-		}
-
-		.btn:hover {
-			background: #5a6fd8;
-		}
-
-		.btn:disabled {
-			background: #ccc;
-			cursor: not-allowed;
-		}
-
-		.canvas-container {
-			padding: 20px;
-			text-align: center;
-			background: #f8f9fa;
-		}
-
-		#canvas {
-			border: 2px solid #ddd;
+			background: rgba(0, 0, 0, 0.7);
+			padding: 15px;
 			border-radius: 8px;
-			background: white;
-			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-		}
-
-		.info {
-			margin-top: 15px;
-			padding: 10px;
-			background: #e3f2fd;
-			border-radius: 4px;
 			font-size: 14px;
-			color: #1976d2;
+			z-index: 100;
 		}
-
-		.error {
-			margin-top: 15px;
-			padding: 10px;
-			background: #ffebee;
-			border-radius: 4px;
-			font-size: 14px;
-			color: #d32f2f;
-			display: none;
+		#info h3 {
+			margin: 0 0 10px 0;
+		}
+		#info p {
+			margin: 5px 0;
 		}
 	</style>
 </head>
 <body>
-	<div class="container">
-		<div class="header">
-			<h1>🎬 Spritesheet Animation với Three.js</h1>
-			<p>Tải lên spritesheet và tạo animation 2D</p>
-		</div>
-
-		<div class="controls">
-			<div class="control-group">
-				<label for="imageInput">Chọn file spritesheet:</label>
-				<input type="file" id="imageInput" accept="image/*">
-			</div>
-
-			<div class="control-row">
-				<div class="control-group">
-					<label for="columns">Số cột:</label>
-					<input type="number" id="columns" value="4" min="1" max="20">
-				</div>
-				<div class="control-group">
-					<label for="rows">Số hàng:</label>
-					<input type="number" id="rows" value="4" min="1" max="20">
-				</div>
-				<div class="control-group">
-					<label for="frameRate">Tốc độ frame (fps):</label>
-					<input type="number" id="frameRate" value="10" min="1" max="60">
-				</div>
-			</div>
-
-			<div class="control-group">
-				<button id="loadBtn" class="btn" disabled>Tải Animation</button>
-				<button id="playBtn" class="btn" disabled>Phát</button>
-				<button id="pauseBtn" class="btn" disabled>Tạm dừng</button>
-				<button id="resetBtn" class="btn" disabled>Reset</button>
-			</div>
-
-			<div class="error" id="errorMsg"></div>
-		</div>
-
-		<div class="canvas-container">
-			<canvas id="canvas" width="400" height="300"></canvas>
-			<div class="info" id="info">
-				Vui lòng chọn file spritesheet để bắt đầu
-			</div>
-		</div>
+	<div id="info">
+		<h3>🗺️ 2D Tilemap</h3>
+		<p>🖱️ Kéo chuột để di chuyển</p>
+		<p>🔍 Cuộn chuột để zoom</p>
+		<p>⌨️ Phím mũi tên để di chuyển</p>
 	</div>
-
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 	<script type="module">
-		import mtImport from '/common/import.js';
-		class SpritesheetAnimation {
-			constructor() {
-				this.scene = null;
-				this.camera = null;
-				this.renderer = null;
-				this.sprite = null;
-				this.texture = null;
-				this.frameWidth = 0;
-				this.frameHeight = 0;
-				this.totalFrames = 0;
-				this.currentFrame = 0;
-				this.frameRate = 10;
-				this.lastTime = 0;
-				this.isPlaying = false;
-				this.animationId = null;
+		var mt = {
 
-				this.initThreeJS();
-				this.setupEventListeners();
-			}
-			initThreeJS() {
-				const canvas = document.getElementById('canvas');
+			// Module
+			render: {
+				m_scene: null,
+				m_camera: null,
+				m_renderer: null,
+				m_tilemap: null,
+				m_tileSize: 32,
+				m_mapWidth: 20,
+				m_mapHeight: 20,
+				m_keys: {},
+				m_cameraZoom: 1,
+				// Camera controls
+				m_isDragging: false,
+				m_prevMouse: { x: 0, y: 0 },
 
-				// Tạo scene
-				this.scene = new THREE.Scene();
-				this.scene.background = new THREE.Color(0xf0f0f0);
+				// Method
+				init() {
 
-				// Tạo camera orthographic cho 2D
-				const aspect = canvas.width / canvas.height;
-				this.camera = new THREE.OrthographicCamera(
-					-aspect, aspect, 1, -1, 0.1, 1000
-				);
-				this.camera.position.z = 1;
+					this.m_scene = new THREE.Scene();
+					this.m_scene.background = new THREE.Color(0x1a1a2e);
 
-				// Tạo renderer
-				this.renderer = new THREE.WebGLRenderer({
-					canvas: canvas,
-					antialias: true
-				});
-				this.renderer.setSize(canvas.width, canvas.height);
-				this.renderer.setPixelRatio(window.devicePixelRatio);
-			}
-			setupEventListeners() {
-				const imageInput = document.getElementById('imageInput');
-				const loadBtn = document.getElementById('loadBtn');
-				const playBtn = document.getElementById('playBtn');
-				const pauseBtn = document.getElementById('pauseBtn');
-				const resetBtn = document.getElementById('resetBtn');
+					// Orthographic Camera cho 2D view
+					const aspect = window.innerWidth / window.innerHeight;
+					const frustumSize = 400;
+					this.m_camera = new THREE.OrthographicCamera(
+						frustumSize * aspect / -2,
+						frustumSize * aspect / 2,
+						frustumSize / 2,
+						frustumSize / -2,
+						1,
+						1000
+					);
+					this.m_camera.position.set(
+						(this.m_mapWidth * this.m_tileSize) / 2,
+						(this.m_mapHeight * this.m_tileSize) / 2,
+						500
+					);
+					this.m_camera.lookAt((this.m_mapWidth * this.m_tileSize) / 2, (this.m_mapHeight * this.m_tileSize) / 2, 0);
 
-				imageInput.addEventListener('change', (e) => {
-					if (e.target.files.length > 0) {
-						loadBtn.disabled = false;
-					}
-				});
+					// Renderer
+					this.m_renderer = new THREE.WebGLRenderer({ antialias: true });
+					this.m_renderer.setSize(window.innerWidth, window.innerHeight);
+					document.body.appendChild(this.m_renderer.domElement);
 
-				loadBtn.addEventListener('click', () => this.loadSpritesheet());
-				playBtn.addEventListener('click', () => this.play());
-				pauseBtn.addEventListener('click', () => this.pause());
-				resetBtn.addEventListener('click', () => this.reset());
-			}
-			loadSpritesheet() {
-				const fileInput = document.getElementById('imageInput');
-				const columns = parseInt(document.getElementById('columns').value);
-				const rows = parseInt(document.getElementById('rows').value);
-				const frameRate = parseInt(document.getElementById('frameRate').value);
+					// Tạo tilemap
+					this.createTilemap();
 
-				if (!fileInput.files[0]) {
-					this.showError('Vui lòng chọn file ảnh');
-					return;
-				}
+					// Event listeners
+					window.addEventListener('resize', (e) => this.onResize(e));
+					window.addEventListener('mousedown', (e) => this.onMouseDown(e));
+					window.addEventListener('mousemove', (e) => this.onMouseMove(e));
+					window.addEventListener('mouseup', (e) => this.onMouseUp(e));
+					window.addEventListener('wheel', (e) => this.onWheel(e));
+					window.addEventListener('keydown', e => this.m_keys[e.key] = true);
+					window.addEventListener('keyup', e => this.m_keys[e.key] = false);
+				},
+				createSpritesheet() { // Tạo spritesheet texture bằng canvas
+					const canvas = document.createElement('canvas');
+					const tilePixelSize = 64;
+					const tilesPerRow = 4;
+					canvas.width = tilePixelSize * tilesPerRow;
+					canvas.height = tilePixelSize * tilesPerRow;
+					const ctx = canvas.getContext('2d');
 
-				const file = fileInput.files[0];
-				const reader = new FileReader();
+					// Định nghĩa các tile khác nhau
+					const tiles = [
+						{ color: '#2d5016', name: 'Grass' },
+						{ color: '#8b4513', name: 'Dirt' },
+						{ color: '#4a90e2', name: 'Water' },
+						{ color: '#7f8c8d', name: 'Stone' },
+						{ color: '#27ae60', name: 'Forest' },
+						{ color: '#f39c12', name: 'Sand' },
+						{ color: '#95a5a6', name: 'Rock' },
+						{ color: '#e74c3c', name: 'Lava' },
+						{ color: '#16a085', name: 'Deep Water' },
+						{ color: '#d35400', name: 'Clay' },
+						{ color: '#8e44ad', name: 'Crystal' },
+						{ color: '#34495e', name: 'Gravel' },
+						{ color: '#1abc9c', name: 'Shallow Water' },
+						{ color: '#c0392b', name: 'Red Rock' },
+						{ color: '#f1c40f', name: 'Gold' },
+						{ color: '#ecf0f1', name: 'Snow' }
+					];
 
-				reader.onload = (e) => {
-					const img = new Image();
-					img.onload = () => {
-						this.setupSpritesheet(img, columns, rows, frameRate);
-					};
-					img.src = e.target.result;
-				};
+					// Vẽ từng tile
+					tiles.forEach((tile, index) => {
+						const x = (index % tilesPerRow) * tilePixelSize;
+						const y = Math.floor(index / tilesPerRow) * tilePixelSize;
 
-				reader.readAsDataURL(file);
-			}
-			setupSpritesheet(img, columns, rows, frameRate) {
-				try {
-
-					// Xóa sprite cũ nếu có
-					if (this.sprite) {
-						this.scene.remove(this.sprite);
-						this.sprite.material.dispose();
-						this.texture.dispose();
-					}
-
-					// Tạo texture từ ảnh
-					this.texture = new THREE.Texture(img);
-					this.texture.needsUpdate = true;
-
-					// Tính toán kích thước frame
-					this.frameWidth = 1 / columns;
-					this.frameHeight = 1 / rows;
-					this.totalFrames = columns * rows;
-					this.frameRate = frameRate;
-					this.currentFrame = 0;
-
-					// Tạo material với texture
-					const material = new THREE.MeshBasicMaterial({
-						map: this.texture,
-						transparent: true,
-						alphaTest: 0.1
+						// Vẽ màu nền
+						ctx.fillStyle = tile.color;
+						ctx.fillRect(x, y, tilePixelSize, tilePixelSize);
+						
+						// Thêm texture pattern
+						ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+						for (let i = 0; i < 8; i++) {
+							for (let j = 0; j < 8; j++) {
+								if (Math.random() > 0.7) {
+									ctx.fillRect(
+										x + i * 8 + Math.random() * 4,
+										y + j * 8 + Math.random() * 4,
+										2, 2
+									);
+								}
+							}
+						}
+						
+						// Vẽ viền
+						ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+						ctx.lineWidth = 2;
+						ctx.strokeRect(x + 1, y + 1, tilePixelSize - 2, tilePixelSize - 2);
+						
+						// Thêm highlight
+						ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+						ctx.fillRect(x + 4, y + 4, tilePixelSize / 3, tilePixelSize / 3);
 					});
 
-					// Tạo geometry cho sprite
-					const geometry = new THREE.PlaneGeometry(1, 1);
-
-					// Tạo mesh
-					this.sprite = new THREE.Mesh(geometry, material);
-					this.scene.add(this.sprite);
-
-					// Tạo mesh 2
-					// const geometry1 = new THREE.PlaneGeometry(0.5, 0.5);
-					// const material1 = new THREE.MeshBasicMaterial({
-					// 	color: 0xff0000,
-					// 	side: THREE.DoubleSide
-					// });
-					// this.sprite2 = new THREE.Mesh(geometry1, material1);
-					// this.sprite2.position.set(0, 1, 0); // Vị trí bên trái
-					// this.scene.add(this.sprite2);
-
-					// Thiết lập UV mapping cho frame đầu tiên
-					this.updateFrame();
-
-					// Cập nhật UI
-					this.updateUI();
-					this.hideError();
-
-					// Render frame đầu tiên
-					this.render();
-				}
-				catch (error) {
-					this.showError('Lỗi khi tải spritesheet: ' + error.message);
-				}
-			}
-			updateFrame() {
-
-				if (!this.sprite)
-					return;
-
-				const columns = parseInt(document.getElementById('columns').value);
-				const frameX = this.currentFrame % columns;
-				const frameY = Math.floor(this.currentFrame / columns);
-
-				// Cập nhật UV coordinates
-				const geometry = this.sprite.geometry;
-				const uvAttribute = geometry.attributes.uv;
-
-				const u = frameX * this.frameWidth;
-				const v = 1 - (frameY + 1) * this.frameHeight;
-				// const v = frameY * this.frameHeight;
-
-				uvAttribute.array[0] = u; // left
-				uvAttribute.array[1] = v + this.frameHeight; // top
-				uvAttribute.array[2] = u + this.frameWidth; // right
-				uvAttribute.array[3] = v + this.frameHeight; // top
-				uvAttribute.array[4] = u; // left
-				uvAttribute.array[5] = v; // bottom
-				uvAttribute.array[6] = u + this.frameWidth; // right
-				uvAttribute.array[7] = v; // bottom
-
-				uvAttribute.needsUpdate = true;
-			}
-			animate(currentTime) {
-
-				if (!this.isPlaying || !this.sprite)
-					return;
-
-				const deltaTime = currentTime - this.lastTime;
-				const frameInterval = 1000 / this.frameRate;
-
-				if (deltaTime >= frameInterval) {
-					this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
-					this.updateFrame();
-					this.render();
-					this.lastTime = currentTime;
-				}
-
-				this.animationId = requestAnimationFrame((time) => this.animate(time));
-			}
-			play() {
-
-				if (!this.sprite)
-					return;
-
-				this.isPlaying = true;
-				this.lastTime = performance.now();
-				this.animate(this.lastTime);
-
-				document.getElementById('playBtn').disabled = true;
-				document.getElementById('pauseBtn').disabled = false;
-			}
-			pause() {
-				this.isPlaying = false;
-				if (this.animationId) {
-					cancelAnimationFrame(this.animationId);
-					this.animationId = null;
-				}
-
-				document.getElementById('playBtn').disabled = false;
-				document.getElementById('pauseBtn').disabled = true;
-			}
-			reset() {
-				this.pause();
-				this.currentFrame = 0;
-				this.updateFrame();
-				this.render();
-
-				document.getElementById('playBtn').disabled = false;
-				document.getElementById('pauseBtn').disabled = true;
-			}
-			render() {
-				if (this.renderer && this.scene && this.camera) {
-					this.renderer.render(this.scene, this.camera);
-				}
-			}
-			updateUI() {
-				const info = document.getElementById('info');
-				const columns = parseInt(document.getElementById('columns').value);
-				const rows = parseInt(document.getElementById('rows').value);
-				const totalFrames = columns * rows;
-
-				info.innerHTML = `
-					<strong>Thông tin Animation:</strong><br>
-					Tổng số frame: ${totalFrames}<br>
-					Kích thước frame: ${Math.round(this.frameWidth * 100)}% x ${Math.round(this.frameHeight * 100)}%<br>
-					Tốc độ: ${this.frameRate} fps<br>
-					Frame hiện tại: ${this.currentFrame + 1}/${totalFrames}
-				`;
-
-				// Kích hoạt các nút điều khiển
-				document.getElementById('playBtn').disabled = false;
-				document.getElementById('pauseBtn').disabled = true;
-				document.getElementById('resetBtn').disabled = false;
-			}
-			showError(message) {
-				const errorDiv = document.getElementById('errorMsg');
-				errorDiv.textContent = message;
-				errorDiv.style.display = 'block';
-			}
-			hideError() {
-				const errorDiv = document.getElementById('errorMsg');
-				errorDiv.style.display = 'none';
-			}
-		}
-		var mt = {
-			mgr: {
-				load() {
-
-					// Load file
+					const texture = new THREE.CanvasTexture(canvas);
+					texture.magFilter = THREE.NearestFilter;
+					texture.minFilter = THREE.NearestFilter;
+					return texture;
 				},
-			},
-			async init() {
+				generateMap() { // Tạo bản đồ ngẫu nhiên
+					const map = [];
+					for (let y = 0; y < this.m_mapHeight; y++) {
+						const row = [];
+						for (let x = 0; x < this.m_mapWidth; x++) {
+							let tileIndex;
+							const centerDist = Math.sqrt(
+								Math.pow(x - this.m_mapWidth/2, 2) + 
+								Math.pow(y - this.m_mapHeight/2, 2)
+							);
+							
+							if (centerDist < 2.5) {
+								tileIndex = 2; // Water ở giữa
+							} else if (centerDist < 4) {
+								tileIndex = 5; // Sand xung quanh water
+							} else if (Math.random() > 0.85) {
+								tileIndex = 4; // Forest ngẫu nhiên
+							} else if (Math.random() > 0.92) {
+								tileIndex = 3; // Stone ngẫu nhiên
+							} else if (Math.random() > 0.95) {
+								tileIndex = 6; // Rock
+							} else {
+								tileIndex = 0; // Grass
+							}
+							row.push(tileIndex);
+						}
+						map.push(row);
+					}
+					return map;
+				},
+				createTilemap() {
+					const spritesheet = this.createSpritesheet();
+					const map = this.generateMap();
+					const tilesPerRow = 4;
 
-				// Load library
-				await mtImport.script('../lib/threejs/three.min.js', 'THREE');
+					this.m_tilemap = new THREE.Group();
+
+					for (let y = 0; y < this.m_mapHeight; y++) {
+						for (let x = 0; x < this.m_mapWidth; x++) {
+							const tileIndex = map[y][x];
+							const tileX = tileIndex % tilesPerRow;
+							const tileY = Math.floor(tileIndex / tilesPerRow);
+
+							// Tính toán UV coordinates
+							const uvSize = 1 / tilesPerRow;
+							const geometry = new THREE.PlaneGeometry(this.m_tileSize, this.m_tileSize);
+
+							// Set UV coordinates cho tile cụ thể
+							const uvs = geometry.attributes.uv;
+							const u = tileX * uvSize;
+							const v = 1 - (tileY + 1) * uvSize;
+
+							uvs.setXY(0, u, v + uvSize);
+							uvs.setXY(1, u + uvSize, v + uvSize);
+							uvs.setXY(2, u, v);
+							uvs.setXY(3, u + uvSize, v);
+
+							const material = new THREE.MeshBasicMaterial({
+								map: spritesheet,
+								transparent: false
+							});
+
+							const tile = new THREE.Mesh(geometry, material);
+							tile.position.set(
+								x * this.m_tileSize + this.m_tileSize / 2,
+								y * this.m_tileSize + this.m_tileSize / 2,
+								0
+							);
+							this.m_tilemap.add(tile);
+						}
+					}
+
+					this.m_scene.add(this.m_tilemap);
+				},
+				onMouseDown(e) {
+					this.m_isDragging = true;
+					this.m_prevMouse = { x: e.clientX, y: e.clientY };
+				},
+				onMouseMove(e) {
+					if (!this.m_isDragging) return;
+
+					const deltaX = e.clientX - this.m_prevMouse.x;
+					const deltaY = e.clientY - this.m_prevMouse.y;
+
+					const moveSpeed = 0.5 / this.m_cameraZoom;
+					
+					this.m_camera.position.x -= deltaX * moveSpeed;
+					this.m_camera.position.y += deltaY * moveSpeed;
+
+					this.m_prevMouse = { x: e.clientX, y: e.clientY };
+				},
+				onMouseUp() {
+					this.m_isDragging = false;
+				},
+				onWheel(e) {
+					// e.preventDefault();
+					const zoomSpeed = 0.1;
+					
+					if (e.deltaY > 0) {
+						this.m_cameraZoom = Math.max(0.3, this.m_cameraZoom - zoomSpeed);
+					} else {
+						this.m_cameraZoom = Math.min(3, this.m_cameraZoom + zoomSpeed);
+					}
+					
+					this.updateCameraZoom();
+				},
+				updateCameraZoom() {
+					const aspect = window.innerWidth / window.innerHeight;
+					const frustumSize = 400 / this.m_cameraZoom;
+					
+					this.m_camera.left = frustumSize * aspect / -2;
+					this.m_camera.right = frustumSize * aspect / 2;
+					this.m_camera.top = frustumSize / 2;
+					this.m_camera.bottom = frustumSize / -2;
+					this.m_camera.updateProjectionMatrix();
+				},
+				onResize() {
+					const aspect = window.innerWidth / window.innerHeight;
+					const frustumSize = 400 / this.m_cameraZoom;
+
+					this.m_camera.left = frustumSize * aspect / -2;
+					this.m_camera.right = frustumSize * aspect / 2;
+					this.m_camera.top = frustumSize / 2;
+					this.m_camera.bottom = frustumSize / -2;
+					this.m_camera.updateProjectionMatrix();
+					
+					this.m_renderer.setSize(window.innerWidth, window.innerHeight);
+				},
+				handleKeyboard() {
+					const moveSpeed = 5;
+					
+					if (this.m_keys['ArrowUp'] || this.m_keys['w'] || this.m_keys['W']) {
+						this.m_camera.position.y += moveSpeed;
+					}
+					if (this.m_keys['ArrowDown'] || this.m_keys['s'] || this.m_keys['S']) {
+						this.m_camera.position.y -= moveSpeed;
+					}
+					if (this.m_keys['ArrowLeft'] || this.m_keys['a'] || this.m_keys['A']) {
+						this.m_camera.position.x -= moveSpeed;
+					}
+					if (this.m_keys['ArrowRight'] || this.m_keys['d'] || this.m_keys['D']) {
+						this.m_camera.position.x += moveSpeed;
+					}
+				},
+				animate() {
+					let self = mt.render;
+					requestAnimationFrame(self.animate);
+					self.handleKeyboard();
+					self.m_renderer.render(self.m_scene, self.m_camera);
+				}
+			},
+
+			// Method
+			init() {
 
 				// Bind Global
-				window.mt = mt;
+				window.mt = this;
 
-				// First Load
-				this.mgr.load();
-
-				// Init example
-				new SpritesheetAnimation();
+				// Init
+				this.render.init();
+				this.render.animate();
 			},
 		};
 		document.addEventListener('DOMContentLoaded', () => mt.init());

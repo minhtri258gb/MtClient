@@ -49,11 +49,15 @@
 		<div style="flex:1;background-color:#ebfcf6;">
 
 			<div>
-				Assets
+				<h2 id="assetName">Chọn Asset</h2>
+				<canvas id="canvasAsset" width="100" height="100"></canvas>
+
+				<h3>Animation</h3>
+				<div id="animationList"></div>
 			</div>
 
 			<div>
-				<canvas id="render" style="width:100px;height:100px"></canvas>
+				<canvas id="canvasResult" style="width:100px;height:100px"></canvas>
 			</div>
 
 		</div>
@@ -150,16 +154,19 @@
 
 						listAsset.push({
 							id: assetId,
-							// content: `<div style="width:64px;height:64px;background-repeat:no-repeat;background-image:url("${asset.file}");background-position:0px 0px;"></div>`,
 							content: `
 								<div class="grid-stack-item-image" style="background:url('${asset.file}') no-repeat center / contain;"></div>
 								<span class="grid-stack-item-title">${assetId}</span>
 							`,
 						});
 					}
+					this.p_grid.load(listAsset);
 					console.log('[mt.assets.load]', { listAsset });
 
-					this.p_grid.load(listAsset);
+					// Register Event
+					const elWidgets = this.p_grid.getGridItems();
+					for (let elWidget of elWidgets)
+						elWidget.addEventListener('click', () => this.onWidgetClick(elWidget));
 				},
 				add() {
 
@@ -184,30 +191,45 @@
 					// Mở hộp thoại chọn file
 					input.click();
 				},
+				async onWidgetClick(elWidget) {
+
+					// Lấy Id widget
+					let assetId = elWidget.getAttribute('gs-id');
+
+					if (assetId == null || assetId.length == 0) {
+						console.warn('[mt.assets.onWidgetClick] widget không có id', { assetId, elWidget });
+						return; // Bỏ qua các widget ko có id
+					}
+
+					// Widget
+					// let lstWidget = this.p_grid.getGridItems();
+					// let widget = lstWidget.find(item => item.gridstackNode.id === assetId);
+					// let asset = widget.gridstackNode.customData;
+
+					// Select
+					mt.render.selectAsset(assetId);
+
+					// Log
+					// console.log('[mt.assets.onWidgetClick]', { assetId });
+				},
 			},
 			render: {
-				c_render: null,
-				p_ctx: null,
-				p_image: null,
+				c_assetName: null,
+				c_canvasAsset: null,
+				c_canvasResult: null,
+				c_animationList: null,
+				p_ctxAsset: null,
+				p_ctxResult: null,
 				m_lastTime: 0,
 				m_fps: 60,
 
 				init() {
-					this.c_canvas = document.getElementById('render');
-					this.p_ctx = this.c_canvas.getContext('2d');
-					this.p_image = new Image();
-					this.p_image.src = '/2D/res/Cute_Fantasy_Free/Enemies/Skeleton.png';
-
-					function drawFrame(frameX, frameY) {
-						let self = mt.render;
-						self.p_ctx.clearRect(0, 0, self.c_canvas.width, self.c_canvas.height);
-						self.p_ctx.drawImage(self.p_image,
-							frameX * frameWidth, frameY * frameHeight,
-							frameWidth, frameHeight,
-							x, y, frameWidth, frameHeight
-						);
-					}
-
+					this.c_assetName = document.getElementById('assetName');
+					this.c_canvasAsset = document.getElementById('canvasAsset');
+					this.c_canvasResult = document.getElementById('canvasResult');
+					this.c_animationList = document.getElementById('animationList');
+					this.p_ctxAsset = this.c_canvasAsset.getContext('2d');
+					this.p_ctxResult = this.c_canvasResult.getContext('2d');
 				},
 				animate(currentTime) {
 					let self = mt.render;
@@ -231,12 +253,89 @@
 
 					window.requestAnimationFrame((time) => this.animate(time));
 				},
-				run() {
-					// ctx.drawImage(
-					// 	spriteSheet,
-					// 	sx, sy, frameWidth, frameHeight,
-					// 	dx, dy, destWidth, destHeight
-					// );
+				selectAsset(assetId) {
+
+					// Short
+					let asset = mt.mgr.d_assets[assetId];
+					let canvas = this.c_canvasAsset;
+					let ctx = this.p_ctxAsset;
+					let image = asset.image;
+					let width = image.naturalWidth;
+					let height = image.naturalHeight
+					let colWidth = width / asset.column;
+					let rowHeight = height / asset.row;
+
+					// UI Change
+					this.c_assetName.innerHTML = assetId;
+					canvas.width = width;
+					canvas.height = height;
+
+
+					// Render - Image
+					// ctx.clearRect(0, 0, width, height);
+					ctx.drawImage(image, 0, 0);
+
+					// Render - Grid
+					ctx.strokeStyle = 'orange';
+					ctx.lineWidth = 1;
+					ctx.beginPath();
+					for (let i = 1; i < asset.column; i++) {
+						const x = i * colWidth;
+						ctx.moveTo(x, 0);
+						ctx.lineTo(x, canvas.height);
+					}
+					for (let j = 1; j < asset.row; j++) {
+						const y = j * rowHeight;
+						ctx.moveTo(0, y);
+						ctx.lineTo(canvas.width, y);
+					}
+					ctx.stroke();
+
+					// Render - Number
+					ctx.font = 'bold 12px Arial';
+					ctx.fillStyle = '#fff';
+					ctx.textAlign = 'center';
+					ctx.textBaseline = 'middle';
+					ctx.shadowColor = '#000';
+					ctx.shadowBlur = 2;
+					ctx.shadowOffsetX = 1;
+					ctx.shadowOffsetY = 1;
+					let index = 1;
+					for (let row = 0; row < asset.row; row++) {
+						for (let col = 0; col < asset.column; col++) {
+							const x = col * colWidth + colWidth / 2;
+							const y = row * rowHeight + rowHeight / 2;
+							ctx.fillText(index, x, y);
+							index++;
+						}
+					}
+
+
+					// Animation
+					this.c_animationList.innerHTML = '';
+					if (asset.anim != null) {
+						for (let animId in asset.anim) {
+							let anim = asset.anim[animId];
+
+							const elmAnim = document.createElement('div');
+							elmAnim.textContent = `
+								${animId}
+							`;
+							elmAnim.style.background = 'lightblue';
+							elmAnim.style.padding = '4px';
+							// elmAnim.classList.add('item');
+
+							this.c_animationList.appendChild(elmAnim);
+						}
+					}
+
+
+					// Log
+					console.log('[mt.render.selectAsset]', {
+						asset,
+						imageSize: width+'x'+height,
+						spriteSize: asset.column+'x'+asset.row,
+					});
 				},
 			},
 			utils: {
@@ -257,6 +356,7 @@
 
 				// Init
 				this.assets.init();
+				this.render.init();
 
 				// Load
 				await this.mgr.load();
