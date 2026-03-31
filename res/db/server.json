@@ -44,5 +44,6 @@
   { "name": "LogAsia - FE","url": "eship.logasiascm.com:443", "actions": "link", "tags": ["HIN", "LogAsia", "FE"] },
   { "name": "LogAsia - BE","url": "eship.logasiascm.com:82", "actions": "", "tags": ["HIN", "LogAsia", "BE"] },
   { "name": "LogAsia - Api","url": "eship.logasiascm.com:88", "actions": "", "tags": ["HIN", "LogAsia", "API"] },
-  { "name": "Viettel - MSuilt","url": "vts-msuilte.viettel.vn", "actions": "", "tags": ["Viettel", "VPN"] }
+  { "name": "Viettel - MSuilt","url": "vts-msuilte.viettel.vn", "actions": "", "tags": ["Viettel", "VPN"] },
+  { "name": "222 Test","url": "http://192.168.1.222:5201", "actions": "", "tags": ["222", "Test"] }
 ]

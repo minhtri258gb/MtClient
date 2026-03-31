@@ -71,11 +71,7 @@
     "type": "meet",
     "location": { "lat": 10.778418106442423, "lng": 106.66301580705219 }
   },
-  {
-    "date": "2026-02-05",
-    "name": "Wuthering Wave update 3.1",
-    "type": "note"
-  },
+  { "date": "2026-02-05", "name": "Wuthering Wave update 3.1", "type": "note" },
   {
     "date": "2026-02-27",
     "name": "Sinh nhật Nguyên Minh Đức",
@@ -101,5 +97,12 @@
     "time": "19:00",
     "location": { "lat": 10.777361338557924, "lng": 106.66612807240364 }
   },
-  { "date": "2026-04-29", "name": "Release game NTE", "type": "note" }
+  { "date": "2026-04-29", "name": "Release game NTE", "type": "note" },
+  {
+    "date": "2026-03-27",
+    "name": "Team Building DMS (posidon)",
+    "type": "meet",
+    "time": "18:00",
+    "location": { "lat": 10.775754473811272, "lng": 106.68061494827272 }
+  }
 ]

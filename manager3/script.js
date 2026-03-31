@@ -545,8 +545,35 @@ let mt = {
 		},
 	},
 	explorer: {
+		h_config: {
+			lstSkip: [
+				'.git', '.gitignore', '.vscode', 'package.json', 'package-lock.json', 'node_modules',
+				'lib', 'res'
+			],
+			lstExt: [
+				'html',
+			],
+			lstExtImage: [
+				'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'ico', 'svg',
+			],
+			lstExtAudio: [
+				'wav', 'mp3', 'ogg', 'aac', 'mid', 'midi',
+			],
+			lstExtVideo: [
+				'mp4', 'm4v', 'avi', 'mov', 'flv', '3gp',
+			],
+			type: {
+				'folder': { },
+				'file': { icon: '/res/icons/file16.png' },
+				'image': { icon: '/res/icons/image16.png' },
+				'audio': { icon: '/res/icons/audio16.png' },
+				'video': { icon: '/res/icons/video16.png' },
+				'html': { icon: '/res/icons/web16.png' },
+			},
+		},
 		e_contain: null,
 		m_init: false,
+		m_clientPath: '',
 
 		async init() {
 
@@ -560,9 +587,148 @@ let mt = {
 			mt.common.e_contain.appendChild(this.e_contain);
 
 			this.e_contain.innerHTML = `
-				<div id="jstree"></div>
+
+				<!-- Input Search -->
+				<div class="ui icon input" style="margin:16px 16px;">
+					<input id="explorer-search" type="text" placeholder="Search...">
+					<i class="search icon"></i>
+				</div>
+
+				<!-- JSTree -->
+				<div id="explorer-jstree"></div>
 			`.trim().split('\n').map(v=>v.trim()).join('\n');
 
+			// Call API
+			let resClientPath = await fetch('/file/getClientPath', {
+				method: 'GET',
+				headers: {
+					'Authorization': 'Bearer ' + mt.auth.getToken(),
+				},
+			});
+			this.m_clientPath = await resClientPath.text();
+
+			// JSTree Init
+			$('#explorer-jstree').jstree({
+				core: {
+					data: {
+						url: '/file/jstree',
+						headers: {
+							'Authorization': 'Bearer ' + mt.auth.getToken(),
+						},
+						dataType: 'json',
+						data: (node) => {
+							let folder = node.original?.path || this.m_clientPath; // Lấy path
+							return { folder };
+						},
+						success: (data) => this.processNode(data),
+					},
+				},
+				plugins: ['types', 'contextmenu', 'search'],
+				types: this.h_config.type,
+				contextmenu: {
+					items: (node) => this.contextmenu(node)
+				},
+			});
+
+			// Đăng ký sự kiện Double click
+			$('#explorer-jstree').on('dblclick', '.jstree-anchor', function(e) {
+				e.preventDefault();
+				let instance = $.jstree.reference(this);
+				let node = instance.get_node(this);
+				mt.doubleClick(node);
+			});
+
+
+			// Search
+			// $('#fieldSearch').on('keypress', (event) => {
+			// 	if (event.which === 13)
+			// 		$('#jstree').jstree('search', $('#fieldSearch').val());
+			// });
+		},
+		processNode(data) { // Khi load node con
+			for (let i = data.length - 1; i >= 0; i--) {
+				let item = data[i];
+
+				// Danh sách ẩn
+				if (this.h_config.lstSkip.includes(item.text)){
+					data.splice(i, 1);
+					continue;
+				}
+
+				// Phân loại
+				if (item.isFolder) { // Folder
+					item.children = true; // Hiển thị action expand
+					item.type = 'folder';
+				}
+				else { // File
+					item.type = this.getType(item.text);
+					item.a_attr = { class: 'custom-node' };
+				}
+			}
+			return data;
+		},
+		contextmenu(node) { // Click phải
+			// doc: https://www.jstree.com/api/#/?q=$.jstree.defaults.contextmenu&f=$.jstree.defaults.contextmenu.items
+
+			let options = {};
+
+			if (node.type == 'folder')
+				return options;
+
+			if (node.type == 'html') {
+				options.open = {
+					label: "Open",
+					icon: '/res/icons/play.png',
+					action: (obj) => {
+						let path = node.original.path;
+						path = path.replaceAll(mt.mgr.m_clientPath, '');
+						window.open(path, '_blank');
+					}
+				};
+			}
+
+			return options;
+
+			// return {
+			// 	renameItem: {
+			// 		label: "Rename",
+			// 		icon: "fa fa-edit",
+			// 		action: function (obj) {
+			// 			$('#jstree').jstree(true).edit(node);
+			// 		}
+			// 	},
+			// 	deleteItem: {
+			// 		label: "Delete",
+			// 		icon: "fa fa-trash",
+			// 		action: function (obj) {
+			// 			$('#jstree').jstree(true).delete_node(node);
+			// 		}
+			// 	},
+			// 	customItem: {
+			// 		label: "Say Hello",
+			// 		action: function () {
+			// 			alert("Hello from node: " + node.text);
+			// 		}
+			// 	}
+			// };
+		},
+		doubleClick(node) { // Nhấn đúp
+			if (node.type == 'html') {
+				let path = node.original.path;
+				path = path.replaceAll(mt.mgr.m_clientPath, '');
+				window.open(path, '_blank');
+			}
+		},
+		getType(filename) { // Lấy type tương ứng trên JsTree
+			let pos = filename.indexOf('.');
+			let ext = filename.substring(pos+1);
+			if (this.h_config.lstExt.includes(ext))
+				return ext;
+			else if (this.h_config.lstExtImage.includes(ext))
+				return 'image';
+			else if (this.h_config.lstExtAudio.includes(ext))
+				return 'audio';
+			return 'file';
 		},
 	},
 	document: {
@@ -1387,8 +1553,8 @@ let mt = {
 				contextmenu: true,
 				contextmenuWidth: 140,
 				contextmenuItems: [
-					{ text: 'Show coordinates', callback: () => console.log('showCoordinates') },
-					{ text: 'Center map here', callback: () => console.log('centerMap') },
+					{ text: 'Copy position', callback: (e) => this.copyPosition(e) },
+					{ text: 'Mark', callback: (e) => this.addMark(e) },
 					'-',
 					{ text: 'Zoom in', icon: 'images/zoom-in.png', callback: () => console.log('zoomIn') },
 					{ text: 'Zoom out', icon: 'images/zoom-out.png', callback: () => console.log('zoomOut') },
@@ -1509,6 +1675,22 @@ let mt = {
 			// const inputFile = '/path/to/input.tif';
 			// const outFile = path.join(__dirname, `tile_${z}_${x}_${y}.png`);
 			// const cmd = `gdal_translate -projwin ${bbox[0]} ${bbox[3]} ${bbox[2]} ${bbox[1]} -of PNG ${inputFile} ${outFile}`
+		},
+		async copyPosition(event) {
+			let pos = event.latlng.lat + ', ' + event.latlng.lng;
+			if (window.isSecureContext) {
+				await navigator.clipboard.writeText(pos); // Copy clipboard
+				mt.show.toast('success', 'Đã copy vị trí: '+pos);
+			}
+			else {
+				console.log(pos); // Log
+				mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
+			}
+		},
+		addMark(event) {
+			let lat = event.latlng.lat;
+			let lng = event.latlng.lng;
+			L.marker([lat, lng]).addTo(this.c_map);
 		},
 	},
 	server: {

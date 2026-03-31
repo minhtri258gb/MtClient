@@ -871,7 +871,7 @@
 
 					// nếu có lịch sử thì back về
 					if ( mt.mgr.d_history.length == 0) {
-						mt.show.toast('warning', 'Chưa có lịch sử chơi nhạc!');
+						mt.show.toast('warning', 'Lịch sử chơi nhạc trống!');
 						return;
 					}
 
@@ -1849,6 +1849,16 @@
 					let minute = +value.substring(0, pos);
 					let second = +value.substring(pos+1);
 					return minute * 60  + second;
+				},
+			},
+			debug: {
+				history() {
+					let lst = [];
+					for (let id of mt.mgr.d_history) {
+						let music = mt.mgr.d_musics[id-1];
+						lst.push(music.name);
+					}
+					console.log('[mt.debug.history]', lst);
 				},
 			},
 
