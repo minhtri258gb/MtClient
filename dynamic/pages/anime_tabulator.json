@@ -1,0 +1,37 @@
+{
+	"type": "list",
+	"data": {
+		"type": "json",
+		"value": "/res/DB/anime.json"
+	},
+	"columns": [
+		{ "name": "STT", "type": "stt", "width": 40, "hAlign": "c", "vAlign": "m", "sort": false },
+		{ "name": "Image", "code": "img", "sort": false, "editor": "text" },
+		{ "name": "Name", "code": "name", "sort": true, "editor": "text" },
+		{ "name": "Story", "code": "story", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Art", "code": "art", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Sound", "code": "sound", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Fantasy", "code": "fantasy", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Sad", "code": "sad", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Joke", "code": "joke", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Brand", "code": "brand", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "Review", "code": "review", "width": 80, "hAlign": "c", "vAlign": "m", "sort": false, "render": "rate", "editor": "rate" },
+		{ "name": "End", "code": "end", "width": 120, "sort": false, "editor": "text" },
+		{ "name": "Character", "code": "character", "width": 240, "sort": false, "editor": "text" },
+		{ "name": "Time", "code": "time", "width": 120, "sort": true }
+	],
+	"buttons": {
+		"permisstion": "",
+		"top": [],
+		"row": [
+			{ "name": "Info", "icon": "fa-regular fa-eye", "color": "primary", "func": "openModalForm", "params": { "page": "anime_jsoneditor" }},
+			{ "name": "New", "icon": "fa-solid fa-circle-plus", "func": "newRow" },
+			{ "name": "Remove", "icon": "fa-regular fa-square-minus", "color": "danger", "func": "removeRow" },
+			{ "name": "Filter", "icon": "fa-solid fa-filter", "func": "toggleFilter", "params": { "column": "name" }},
+			{ "name": "Colunms", "icon": "fa-solid fa-table-columns", "menus": [
+				{ "name": "Name", "func": "toggleColumn", "params": { "column": "name" }},
+				{ "name": "Image", "func": "toggleColumn", "params": { "column": "img" }}
+			]}
+		]
+	}
+}

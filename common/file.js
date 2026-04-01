@@ -2,6 +2,37 @@ var mtFile = {
 	m_clientPath: '', // Đường dẫn của Folder Client
 
 	// Method
+	async listFile(folderpath) {
+		try {
+
+			// Check auth
+			if (!mt.auth.checkAuthn())
+				await mt.auth.init();
+
+			// ParamsURL
+			let params = new URLSearchParams();
+			params.set('folder', folderpath);
+
+			// Call API
+			let response = await fetch('/file/list?' + params.toString(), {
+				method: 'GET',
+				headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+			});
+
+			if (!response.ok) {
+				if (response.status == 404)
+					return null;
+				else
+					throw { error: true, message: await response.text() };
+			}
+
+			return await response.json();
+		}
+		catch (ex) {
+			console.error('[mt.file.listFile] Exception', ex);
+			throw ex;
+		}
+	},
 	async readStatic(type, url) {
 
 		// Call API

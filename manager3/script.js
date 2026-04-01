@@ -107,6 +107,7 @@ let mt = {
 					{ id: 'viewer', text: 'Viewer', group: true, expanded: true, nodes: [
 						{ id: 'pdf', text: 'PDF', icon: 'fa-regular fa-file-pdf' },
 						{ id: 'gallery', text: 'Gallery', icon: 'fa-solid fa-images' },
+						{ id: 'pivot', text: 'Pivot', icon: 'fa-solid fa-table' },
 					]},
 					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
@@ -1921,13 +1922,13 @@ let mt = {
 			// Import Library
 			// await mt.lib.import(['SimpleMDE','marked','mermaid']);
 
-			// // Add container
-			// this.e_contain = document.createElement('div');
-			// this.e_contain.id = 'markdown-contain';
-			// this.e_contain.style.height = '100%';
-			// mt.common.e_contain.appendChild(this.e_contain);
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'chat-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
 
-			// this.e_contain.innerHTML = `<textarea id="markdown-editor"></textarea>`;
+			this.e_contain.innerHTML = `<textarea id="chat-editor"></textarea>`;
 
 		},
 	},
@@ -2042,17 +2043,24 @@ let mt = {
 			mt.common.e_contain.appendChild(this.e_contain);
 
 			this.e_contain.innerHTML = `
-				<textarea id="midi-input" rows="10" cols="60"></textarea>
-				<br>
-				<button onclick="mt.midi.renderABC()">Render</button>
-				<br>
-				<div id="midi-audio"></div>
-				<br>
-				<div id="midi-notation"></div>
+				<div style="display:flex;">
+					<div>
+						123
+					</div>
+					<div>
+						<textarea id="midi-input" rows="10" cols="60"></textarea>
+						<br>
+						<button onclick="mt.midi.renderABC()">Render</button>
+						<br>
+						<div id="midi-audio"></div>
+						<br>
+						<div id="midi-notation"></div>
+					</div>
+				</div>
 			`.trim().split('\n').map(v=>v.trim()).join('\n');
 
 			// Init Editor
-			CodeMirror.defineMode('abc', function(config) {
+			CodeMirror.defineMode('abc', (config) => {
 				return {
 					token: function(stream) {
 						if (stream.match(/[A-Ga-g]/)) return 'abc-note';
@@ -2082,7 +2090,7 @@ let mt = {
 				L: 1/8
 				Q: 1/4=144
 				K: Emin
-				%%MIDI program 12
+				%%MIDI program 32
 				G/2F/2E G/2F/2E|G E B d|d3/2B3/2 e2 z2
 				e/2f/2 g/2f/2e g/2f/2e|g a/2 b d'|d'3/2b3/2 e'2 z2
 			`.trim().split('\n').map(v=>v.trim()).join('\n'));
@@ -2876,6 +2884,36 @@ let mt = {
 				mt.show.toast('error', 'Dữ liệu nhập chưa hợp lệ!');
 				console.error('[mt.gallery.saveForm] Exception:', ex);
 			}
+		},
+	},
+	pivot: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Import library
+			await mt.lib.import(['jquery-ui', 'd3', 'c3']);
+			await mt.lib.import(['pivottable']);
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'pivot-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				<div id="pivot-table"></div>
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
+			// Init Pivot Table
+			$('#pivot-table').pivotUI([
+				{color: 'blue', shape: 'circle'},
+				{color: 'red', shape: 'triangle'}
+			], {
+				rows: ['color'],
+				cols: ['shape']
+			});
 		},
 	},
 	math: {

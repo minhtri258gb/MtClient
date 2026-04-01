@@ -7,7 +7,9 @@ class MtList extends HTMLElement {
 	h_debug = true;
 	m_name = ''; // Tên trang
 	m_struct = null; // Cấu trúc
+	m_haveEditor = false; // Dánh dấu có editor ko
 	d_list = []; // Danh sách dữ liệu
+	d_func = {}; // Danh sách chức năng
 
 	// Forward
 	constructor(name, struct) {
@@ -54,6 +56,10 @@ class MtList extends HTMLElement {
 			},
 		});
 
+		// Register Event
+		if (this.m_haveEditor) // Có khai báo editor mới bật
+			this.c_table.on('cellDblClick', (event, cell) => cell.edit(true)); // Dup click để edit
+
 		// Log
 		this.h_debug && console.log(`[MtList.initUI] ${this.m_name}`, { columns });
 	}
@@ -62,7 +68,7 @@ class MtList extends HTMLElement {
 		// Reset
 		this.d_list = [];
 
-		// Load
+		// Load data
 		switch (this.m_struct.data.type) {
 			case 'json':
 				this.d_list = await mt.file.loadJson(this.m_struct.data.value);
@@ -78,6 +84,20 @@ class MtList extends HTMLElement {
 				// handle error loading data
 			});
 
+		// Load function
+		if (this.m_struct.functions && this.m_struct.functions.length > 0) {
+			for (let file of this.m_struct.functions) {
+				try {
+					let module = await import(`/dynamic/functions/${file}.js`);
+					for (let func in module)
+						this.d_func[func] = module[func];
+				}
+				catch (ex) {
+					console.warn('[MtList.load] Load function faild:', func);
+				}
+			}
+		}
+
 		// Log
 		this.h_debug && console.log('[MtList.load]', { list: this.d_list });
 	}
@@ -91,7 +111,7 @@ class MtList extends HTMLElement {
 		return divContainer;
 	}
 	buildColumns() {
-		
+
 		let mapHAlign = { 'l': 'left', 'c': 'center', 'r': 'right' };
 		let mapVAlign = { 't': 'top', 'm': 'middle', 'b': 'bottom' };
 
@@ -121,6 +141,37 @@ class MtList extends HTMLElement {
 			// Special Prop
 			if (config.type == 'stt') column.formatter = 'rownum';
 
+			// Render
+			if (config.render) {
+				if (config.render == 'rate') {
+					column.formatter = (cell) => this.renderRate(cell);
+				}
+			}
+
+			// Editor
+			if (config.editor) {
+
+				this.m_haveEditor = true;
+
+				let type = '';
+				let opts = null;
+				if (typeof config.editor == 'string')
+					type = config.editor;
+				else {
+					type = config.editor.type;
+					opts = config.editor;
+				}
+
+				if (type == 'text') {
+					column.editor = 'input';
+					column.editable = false;
+				}
+				else if (type == 'rate') {
+					column.editor = 'star';
+					column.editable = false;
+				}
+			}
+
 			// Thêm vào danh sách
 			columns.push(column);
 		}
@@ -135,18 +186,22 @@ class MtList extends HTMLElement {
 
 			let buildMenu = (config) => {
 				let menu = { label: config.name }; // Label
-				
+
 				if (config.icon != null) { // Icon
 					menu.label = `<i class="${config.icon}"></i> ${config.name}`;
 				}
 
 				if (config.func != null) { // Action
 					switch (config.func) {
-						case 'openPageForm': menu.action = (event, row) => this.funcOpenPageForm(config.params?.page, row); break;
+						case 'openModalForm': menu.action = (event, row) => this.funcOpenModalForm(config.params?.page, row); break;
 						case 'newRow': menu.action = (event, row) => this.funcNewRow(); break;
 						case 'removeRow': menu.action = (event, row) => this.funcRemoveRow(row); break;
 						case 'toggleColumn': menu.action = (event, row) => this.funcToggleColumn(config.params?.column); break;
 						case 'toggleFilter': menu.action = (event, row) => this.funcToggleFilter(config.params?.column); break;
+						default:
+							let foo = this.d_func[config.func]; // Lấy từ ext function
+							if (foo)
+								menu.action = (event, row) => foo({ event, row, config });
 					}
 				}
 				return menu;
@@ -172,9 +227,18 @@ class MtList extends HTMLElement {
 
 		return actions;
 	}
-	
-	// Handler
-	async funcOpenPageForm(page, row) {
+
+	// Format Render
+	renderRate(cell) {
+		let value = cell.getValue(); // Lấy giá trị của ô (1-5)
+		if (value >= 1 && value <= 5)
+			return `<img src="/res/icons/rating${value}.png" />`;
+		else
+			return 'N/A';
+	}
+
+	// Handler Button
+	async funcOpenModalForm(page, row) {
 
 		let rowData = row.getData();
 

@@ -9,10 +9,10 @@ var mtLib = {
 				continue;
 			lib.init = true;
 
-			let p = lib.load();
+			let p = lib.load(); // Lấy promise
 			promise.push(p);
 		}
-		await Promise.all(promise); // Đơi load toàn bộ
+		await Promise.all(promise); // Đợi load toàn bộ
 	},
 	async loadJS(url, format, lib) {
 		let module = null;
@@ -61,6 +61,13 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(path+'abcjs-plugin-min.js');
 	}},
+	'c3': { init: false, async load() {
+		let path = '/lib/c3-0.7.20/';
+		await Promise.all([
+			mtLib.loadCSS(path+'c3.min.css'),
+			mtLib.loadJS(path+'c3.min.js'),
+		]);
+	}},
 	'CodeMirror': { init: false, async load() {
 		let path = '/lib/codemirror5-5.65.18/';
 		await Promise.all([
@@ -108,6 +115,15 @@ var mtLib = {
 		await Promise.all([
 			mtLib.loadCSS(path+'default.min.css'),
 			mtLib.loadJS(path+'highlight.min.js'),
+		]);
+	}},
+	'jquery-ui': { init: false, async load() {
+		let path = '/lib/jquery-ui-1.14.0/';
+		await Promise.all([
+			mtLib.loadCSS(path+'jquery-ui.min.css'),
+			mtLib.loadCSS(path+'jquery-ui.structure.min.css'),
+			mtLib.loadCSS(path+'jquery-ui.theme.min.css'),
+			mtLib.loadJS(path+'jquery-ui.min.js'),
 		]);
 	}},
 	'jsonEditor': { init: false, async load() {
@@ -201,6 +217,23 @@ var mtLib = {
 			mtLib.loadCSS(path+'viewer.css'),
 			mtLib.loadJS(path+'viewer.mjs'),
 			mtLib.loadHTML(pathex+'mt-viewer.html', 'html', this),
+		]);
+	}},
+	'pivottable': { init: false, async load() {
+		let path = '/lib/pivottable-2.23.0/';
+		await Promise.all([
+			mtLib.loadCSS(path+'pivot.min.css'),
+			mtLib.loadJS(path+'pivot.min.js'),
+		]);
+		await Promise.all([
+			mtLib.loadJS(path+'pivot.sq.min.js'),
+			// mtLib.loadJS(path+'pivot_spec.min.js'),
+			mtLib.loadJS(path+'c3_renderers.min.js'),
+			mtLib.loadJS(path+'d3_renderers.min.js'),
+			// mtLib.loadJS(path+'export_renderers.min.js'),
+			// mtLib.loadJS(path+'gchart_renderers.min.js'),
+			// mtLib.loadJS(path+'plotly_renderers.min.js'),
+			mtLib.loadJS(path+'tips_data.min.js'),
 		]);
 	}},
 	'SimpleMDE': { init: false, async load() {

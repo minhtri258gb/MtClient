@@ -1,5 +1,7 @@
 [
-  { "type": "list", "code": "main", "name": "Main" },
-  { "type": "list", "code": "testList", "name": "Test List" },
-  { "type": "form", "code": "testForm", "name": "Test Form" }
+  { "id": 1, "type": "list", "code": "main", "name": "Main" },
+  { "id": 2, "type": "list", "code": "anime_tabulator", "name": "List Anime" },
+  { "id": 3, "type": "form", "code": "anime_jsoneditor", "name": "Form Anime" },
+  { "id": 4, "type": "list", "code": "testList", "name": "Test List" },
+  { "id": 5, "type": "form", "code": "testForm", "name": "Test Form" }
 ]

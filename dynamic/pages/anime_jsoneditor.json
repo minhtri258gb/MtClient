@@ -1,0 +1,25 @@
+{
+	"type": "form",
+	"title": "Thông tin Anime",
+	"width": "500px",
+	"fields": [
+		{ "code": "id", "type": "hidden", "datatype": "int" },
+		{ "code": "name", "name": "Name", "format": "text" },
+		{ "code": "img", "name": "Image", "format": "text" },
+		{ "code": "story", "name": "Story", "format": "rate", "default": 3 },
+		{ "code": "art", "name": "Art", "format": "rate", "default": 3 },
+		{ "code": "sound", "name": "Sound", "format": "rate", "default": 3 },
+		{ "code": "fantasy", "name": "Fantasy", "format": "rate", "default": 3 },
+		{ "code": "sad", "name": "Sad", "format": "rate", "default": 3 },
+		{ "code": "joke", "name": "Joke", "format": "rate", "default": 3 },
+		{ "code": "brand", "name": "Brand", "format": "rate", "default": 3 },
+		{ "code": "review", "name": "Review", "format": "rate", "default": 3 },
+		{ "code": "end", "name": "End", "format": "text" },
+		{ "code": "character", "name": "Character", "format": "text" },
+		{ "code": "time", "name": "Time", "format": "text" }
+	],
+	"buttons": [
+		{ "code": "save", "name": "Save", "icon": "save", "func": "saveForm" },
+		{ "code": "close", "name": "Close", "icon": "close", "func": "closeModal" }
+	]
+}
