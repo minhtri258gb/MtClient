@@ -66,17 +66,17 @@ div.layoutCenter {
 
 /* GridStack */
 .grid-stack {
-	background: #eee;
+	background: #f8f8f8;
 }
 .grid-stack-item-content {
 	color: #2c3e50;
 	text-align: center;
-	background-color: #a5c1e5;
+	background-color: lab(88.59% -0.52 -4.61);
 	border: 2px solid #00000080;
 	cursor: pointer;
 
 	&:hover {
-		background-color: #98b9e4;
+		background-color: #c8d5e6;
 	}
 }
 

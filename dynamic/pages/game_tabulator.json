@@ -1,0 +1,32 @@
+{
+	"type": "list",
+	"data": { "type": "json", "value": "/res/DB/game.json" },
+	"columns": [
+		{ "name": "STT", "type": "stt", "width": 40, "hAlign": "c", "vAlign": "m", "sort": false },
+		{ "name": "Image", "code": "img", "width": 48, "hAlign": "c", "vAlign": "m", "sort": false, "render": "image", "renderOpts": { "path": "/res/images/game" }, "editor": "text" },
+		{ "name": "Name", "code": "name", "sort": true, "editor": "text" },
+		{ "name": "Graphic", "code": "graphic", "width": 98, "hAlign": "c", "vAlign": "m", "sort": true, "render": "rate", "editor": "rate" },
+		{ "name": "Audio", "code": "audio", "width": 98, "hAlign": "c", "vAlign": "m", "sort": true, "render": "rate", "editor": "rate" },
+		{ "name": "Gameplay", "code": "gameplay", "width": 98, "hAlign": "c", "vAlign": "m", "sort": true, "render": "rate", "editor": "rate" },
+		{ "name": "Story", "code": "story", "width": 98, "hAlign": "c", "vAlign": "m", "sort": true, "render": "rate", "editor": "rate" },
+		{ "name": "Review", "code": "review", "width": 98, "hAlign": "c", "vAlign": "m", "sort": true, "render": "rate", "editor": "rate" },
+		{ "name": "Status", "code": "status", "width": 180, "sort": false, "editor": "text" },
+		{ "name": "Tags", "code": "tags", "width": 320, "sort": false, "editor": "text" },
+		{ "name": "Size", "code": "size", "width": 60, "sort": false, "editor": "text" },
+		{ "name": "Date", "code": "date", "width": 80, "sort": true, "editor": "text" }
+	],
+	"buttons": {
+		"permisstion": "",
+		"top": [],
+		"row": [
+			{ "name": "Info", "icon": "fa-regular fa-eye", "color": "primary", "func": "openModalForm", "params": { "page": "game_jsoneditor" }},
+			{ "name": "New", "icon": "fa-solid fa-circle-plus", "func": "newRow" },
+			{ "name": "Remove", "icon": "fa-regular fa-square-minus", "color": "danger", "func": "removeRow" },
+			{ "name": "Filter", "icon": "fa-solid fa-filter", "func": "toggleFilter" },
+			{ "name": "Colunms", "icon": "fa-solid fa-table-columns", "menus": [
+				{ "name": "Name", "func": "toggleColumn", "params": { "column": "name" }},
+				{ "name": "Image", "func": "toggleColumn", "params": { "column": "img" }}
+			]}
+		]
+	}
+}

@@ -7,13 +7,13 @@
 
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="/lib/easyui/themes/icon.css">
-	
+
 	<script type="text/javascript" src="/lib/jquery/jquery-3.6.0.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="/lib/easyui/plugins/jquery.color.js"></script>
 	<script type="text/javascript" src="./lib/qr-creator.min.js"></script>
 	<!-- <script type="text/javascript" src="./lib/qr-scanner.min.js"></script> -->
-	
+
 </head>
 <body>
 
@@ -23,10 +23,10 @@
 
 		<input id="text" class="easyui-textbox" data-options="width:300,height:100,multiline:true,prompt:'content ...'">
 		<br><br><br>
-	
+
 		<input id="radius" class="easyui-slider" data-options="width:300,min:0,max:0.5,step:0.025,value:0,showTip:true,tipFormatter:function(value){return 'Radius: '+value;}">
 		<br>
-	
+
 		<select id="ecLevel" class="easyui-combobox" data-options="width:300,panelHeight:130">
 			<option value="L">Low, 7%</option>
 			<option value="M">Medium, 15%</option>
@@ -34,17 +34,17 @@
 			<option value="H" selected>High, 30%</option>
 		</select>
 		<br><br>
-	
-	
+
+
 		<input id="fill" class="easyui-color" data-options="cellWidth:37,cellHeight:37,prompt:'Color',value:'#000000'" style="width:300px;">
 		<br><br>
-	
-	
+
+
 		<input id="background" class="easyui-color" data-options="cellWidth:37,cellHeight:37,prompt:'Background color',value:'#ffffff'" style="width:300px;">
 		<input id="transparent" class="easyui-checkbox" data-options="label:'Transparent:',labelWidth:86,checked:true">
 		<br><br>
-	
-	
+
+
 		<input id="size" class="easyui-slider" data-options="width:300,min:20,max:1000,step:10,value:300,showTip:true,tipFormatter:function(value){return 'Size: '+value;}">
 		<br>
 
@@ -52,7 +52,7 @@
 			<a href="#" class="easyui-linkbutton" data-options="onClick:mt.generate">Generate</a>
 			<a href="#" class="easyui-linkbutton" data-options="onClick:mt.scan">Scan</a>
 		</div>
-	
+
 	</div>
 
 	<div id="qr-code" style="float:left;"></div>

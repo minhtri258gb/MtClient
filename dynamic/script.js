@@ -4,6 +4,7 @@ import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
 import mtCmd from '/common/cmd.js';
 import mtShow from '/common/show.js';
+import mtUtils from '/common/utils.js';
 
 import MtList from '/dynamic/components/MtList.js';
 import MtForm from '/dynamic/components/MtForm.js';
@@ -15,6 +16,7 @@ let mt = {
 	file: mtFile,
 	cmd: mtCmd,
 	show: mtShow,
+	utils: mtUtils,
 
 	h_debug: true,
 	h_pathDB: '/dynamic/pages/',

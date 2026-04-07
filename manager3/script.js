@@ -47,7 +47,7 @@ let mt = {
 				items: [
 					{ type: 'check', id: 'menu', text: 'Menu', icon: 'fa-solid fa-bars', checked: true },
 					{ type: 'break' },
-					{ type: 'button', id: 'file', text: 'File', icon: 'fa-regular fa-file' },
+					{ type: 'button', id: 'home', text: 'Home', icon: 'fa-solid fa-house' },
 					{ type: 'button', id: 'item1', text: 'Button', icon: 'w2ui-icon-colors' },
 					{ type: 'break' },
 					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
@@ -62,12 +62,12 @@ let mt = {
 				],
 				onClick: (event) => {
 					switch (event.target) {
-						case 'menu':
-							this.btnMenu(!event.object.checked);
-							break;
+						case 'home': mt.home.open(); break;
+						case 'menu': this.btnMenu(!event.object.checked); break;
+						case 'share': this.btnShare(); break;
 					}
 				}
-			})
+			});
 
 			// Left Sidebar
 			let c_w2sidebar = new w2sidebar({
@@ -111,35 +111,46 @@ let mt = {
 					]},
 					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
+						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
 					]},
 					{ id: 'games', text: 'Games', group: true, expanded: true, nodes: [
 						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
 					]},
 				],
-				onClick: (event) => {
+				onClick: async (event) => {
 					let moduleName = event.target;
 					let module = mt[moduleName];
 
-					if (module == null) {
+					// Build Component EXT
+					if (module == 'ext') {
+
+						// Defined Component
+						let tag = await mt.core.buildComponent(window.location.pathname + moduleName);
+
+						let containDiv = document.createElement(tag);
+						this.e_contain.appendChild(containDiv);
+					}
+					else if (module != null) {
+						this.resetLayout();
+
+						// Default open func
+						if (module.open == null) {
+							module.open = async function() {
+								if (!this.m_init) {
+									this.m_init = true;
+									await this.init();
+								}
+								else {
+									this.e_contain.style.display = '';
+								}
+							}
+						}
+						module.open();
+					}
+					else {
 						mt.show.toast('warning', `App "${moduleName}" chưa có sẵn!`);
 						return;
 					}
-
-					this.resetLayout();
-
-					// Default open func
-					if (module.open == null) {
-						module.open = async function() {
-							if (!this.m_init) {
-								this.m_init = true;
-								await this.init();
-							}
-							else {
-								this.e_contain.style.display = '';
-							}
-						}
-					}
-					module.open();
 				},
 			});
 
@@ -200,8 +211,64 @@ let mt = {
 			else
 				this.c_w2layout.hide('left');
 		},
-		btnFile() {
+		async btnShare() {
+			try {
 
+				// Lấy div hiển thị
+				const visibleDivs = Array.from(this.e_contain.children).filter(div => window.getComputedStyle(div).display !== 'none');
+
+				// Lấy id div
+				let tabId = '';
+				if (visibleDivs.length > 0)
+					tabId = visibleDivs[0].id;
+				if (tabId.includes('-contain'))
+					tabId = tabId.replace('-contain', '');
+
+				if (tabId.length == 0)
+					throw new Error('Không tìm thấy URL trang hiện tại!');
+
+				// Lấy URL hiện tại
+				let urlShare = location.origin + location.pathname;
+				if (urlShare.indexOf('localhost') > -1) {
+
+					// Call API - Get IP
+					let response = await fetch('/common/getIPLocal', { method: 'GET' });
+					if (!response.ok)
+						throw { error: true, message: await response.text() };
+
+					let IP = await response.text();
+
+					urlShare = urlShare.replace('localhost', IP);
+				}
+
+				let paramsURL = null;
+				if (mt[tabId]?.getShareParams) {
+					paramsURL = mt[tabId].getShareParams();
+				}
+				else {
+					paramsURL = new URLSearchParams();
+					paramsURL.append('tab', tabId);
+				}
+
+				urlShare += '?' + paramsURL.toString();
+
+				// Copy Clipboard
+				if (window.isSecureContext) {
+					await navigator.clipboard.writeText(urlShare);
+					mt.show.toast('success', `Đã copy URL`); // Notify
+				}
+				else {
+					console.log(urlShare);
+					mt.show.toast('success', 'Đã print console.');
+				}
+
+				// Log
+				mt.h_debug && console.log('[mt.common.btnShare]', { visibleDivs, tabId, urlShare });
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.common.btnShare]', ex);
+			}
 		},
 	},
 	utils: {
@@ -2022,178 +2089,7 @@ let mt = {
 
 		},
 	},
-	midi: {
-
-		/**
-		 * https://www.abcjs.net/
-		 */
-
-		m_init: false,
-		e_contain: null,
-
-		async init() {
-
-			// Import Library
-			await mt.lib.import(['ABCJS', 'CodeMirror']);
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'midi-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			this.e_contain.innerHTML = `
-				<div style="display:flex;">
-					<div>
-						123
-					</div>
-					<div>
-						<textarea id="midi-input" rows="10" cols="60"></textarea>
-						<br>
-						<button onclick="mt.midi.renderABC()">Render</button>
-						<br>
-						<div id="midi-audio"></div>
-						<br>
-						<div id="midi-notation"></div>
-					</div>
-				</div>
-			`.trim().split('\n').map(v=>v.trim()).join('\n');
-
-			// Init Editor
-			CodeMirror.defineMode('abc', (config) => {
-				return {
-					token: function(stream) {
-						if (stream.match(/[A-Ga-g]/)) return 'abc-note';
-						if (stream.match(/\d+\/?\d*/)) return 'abc-duration';
-						if (stream.match(/K:[A-G]/)) return 'abc-key';
-						if (stream.match(/M:\d+\/\d+/)) return 'abc-meter';
-						if (stream.match(/w:.*/)) return 'abc-lyric';
-						stream.next();
-						return null;
-					}
-				};
-			});
-
-			let textarea = document.getElementById('midi-input');
-			this.m_editor = CodeMirror.fromTextArea(textarea, {
-				mode: 'abc',
-				lineNumbers: true,
-				lineWrapping: true,
-				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-				foldGutter: true,
-				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-			});
-			this.setCode(`
-				X: 1
-				T: Level Two - DJ Striden
-				M: 4/4
-				L: 1/8
-				Q: 1/4=144
-				K: Emin
-				%%MIDI program 32
-				G/2F/2E G/2F/2E|G E B d|d3/2B3/2 e2 z2
-				e/2f/2 g/2f/2e g/2f/2e|g a/2 b d'|d'3/2b3/2 e'2 z2
-			`.trim().split('\n').map(v=>v.trim()).join('\n'));
-
-			/*
-				G/2 F/2 E|G/2 F/2 E|G E|B d|d3/2 B3/2 e2 z2
-				e/2 f/2|g/2 f/2 e|g/2 f/2 e|g a/2 b d' d'3/2 b3/2 e'2 z2
-			*/
-
-			/*
-				|:D2|"Em"EBBA B2 EB|\
-						~B2 AB dBAG|\
-						"D"FDAD BDAD|\
-						FDAD dAFD|
-				"Em"EBBA B2 EB|\
-						B2 AB defg|\
-						"D"afe^c dBAF|\
-						"Em"DEFD E2:|
-				|:gf|"Em"eB B2 efge|\
-						eB B2 gedB|\
-						"D"A2 FA DAFA|\
-						A2 FA defg|
-				"Em"eB B2 eBgB|\
-						eB B2 defg|\
-						"D"afe^c dBAF|\
-						"Em"DEFD E2:|
-			*/
-
-			// abcjsEditor = new ABCJS.Editor("midi-input", {
-			//   canvas_id: "paper",
-			//   warnings_id: "warnings",
-			//   synth: {
-			//     el: "#audio",
-			//     options: { displayLoop: true, displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true }
-			//   },
-			//   abcjsParams: {
-			//     add_classes: true,
-			//     clickListener: clickListener
-			//   },
-			//   selectionChangeCallback: selectionChangeCallback
-			// });
-
-			// Init CSS
-			this.initCSS();
-		},
-		async initCSS() {
-			const style = document.createElement('style');
-			style.textContent = `
-				.abc-note { color: blue; font-weight: bold; }
-				.abc-duration { color: green; }
-				.abc-key { color: purple; }
-				.abc-meter { color: orange; }
-				.abc-lyric { color: brown; font-style: italic; }
-			`.trim().split('\n').map(v=>v.trim()).join('\n');
-			document.head.appendChild(style);
-		},
-		setCode(code) {
-			this.m_editor.setValue(code);
-		},
-		getCode() {
-			return this.m_editor.getValue();
-		},
-		async renderABC() {
-			const abcString = this.getCode();
-
-			// Hiển thị bản nhạc
-			ABCJS.renderAbc('midi-notation', abcString, {
-				responsive: 'resize',
-				add_classes: true,
-				jazzchords: true,
-				drum: 'dddd 76 77 77 77 60 30 30 30',
-			});
-
-			// Phát nhạc (MIDI/WebAudio)
-			if (ABCJS.synth.supportsAudio()) {
-				const synthControl = new ABCJS.synth.SynthController();
-				synthControl.load('#midi-audio', null, {
-					// soundFontUrl: "/res/soundfont/marimba-mp3.js",
-					displayLoop: true,
-					displayRestart: true,
-					displayPlay: true,
-					displayProgress: true,
-					displayWarp: true,
-					displayClock: true,
-				});
-				const visualObj = ABCJS.renderAbc('midi-notation', abcString)[0];
-				const synth = new ABCJS.synth.CreateSynth();
-				synth.init({
-					visualObj: visualObj,
-					options: {
-						// soundFontUrl: "/res/soundfont/marimba-mp3.js",
-						soundFontUrl: '/res/soundfont/FluidR3_Salamander_GM/',
-						// instruments: ['marimba'],
-						// program: 12, // marimba-mp3
-						format: 'mp3',
-						soundFontVolume: 1.0,
-					}
-				}).then(() => {
-					synthControl.setTune(visualObj, true);
-				});
-			}
-		}
-	},
+	midi: 'ext',
 	image: {
 		m_init: false,
 		e_contain: null,
@@ -3015,6 +2911,24 @@ let mt = {
 					{ fn: 'x', skipTip: true },
 				]
 			})
+		},
+	},
+	qrcode: {
+		m_init: false,
+		e_contain: null,
+
+		async init() {
+
+			// Add container
+			this.e_contain = document.createElement('div');
+			this.e_contain.id = 'qrcode-contain';
+			this.e_contain.style.height = '100%';
+			mt.common.e_contain.appendChild(this.e_contain);
+
+			this.e_contain.innerHTML = `
+				QRCode
+			`.trim().split('\n').map(v=>v.trim()).join('\n');
+
 		},
 	},
 	minesweeper: {

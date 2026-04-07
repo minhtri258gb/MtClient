@@ -1,0 +1,7 @@
+
+/* CodeMirror - ABC Highlight */
+.abc-note { color: blue; font-weight: bold; }
+.abc-duration { color: green; }
+.abc-key { color: purple; }
+.abc-meter { color: orange; }
+.abc-lyric { color: brown; font-style: italic; }

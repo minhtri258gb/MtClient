@@ -1,0 +1,24 @@
+{
+	"type": "form",
+	"title": "Thông tin Game",
+	"width": "500px",
+	"fields": [
+		{ "code": "id", "type": "hidden", "datatype": "int" },
+		{ "code": "name", "name": "Name", "format": "text" },
+		{ "code": "img", "name": "Image", "format": "text" },
+		{ "code": "graphic", "name": "Graphic", "format": "rate", "default": 3 },
+		{ "code": "audio", "name": "Audio", "format": "rate", "default": 3 },
+		{ "code": "gameplay", "name": "Gameplay", "format": "rate", "default": 3 },
+		{ "code": "story", "name": "Story", "format": "rate", "default": 3 },
+		{ "code": "review", "name": "Review", "format": "rate", "default": 3 },
+		{ "code": "status", "name": "Status", "format": "text" },
+		{ "code": "tags", "name": "Tags", "format": "text" },
+		{ "code": "size", "name": "Size", "format": "text" },
+		{ "code": "size", "name": "Size", "format": "text" },
+		{ "code": "date", "name": "Date", "format": "text" }
+	],
+	"buttons": [
+		{ "code": "save", "name": "Save", "icon": "save", "func": "saveForm" },
+		{ "code": "close", "name": "Close", "icon": "close", "func": "closeModal" }
+	]
+}

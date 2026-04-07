@@ -52,5 +52,30 @@ var mtShow = {
 		}).showToast();
 	},
 
+	async initAlert() {
+		await mt.lib.import(['sweetalert2']);
+	},
+	async alertConfirmPrimary(message, action) {
+		let result = await Swal.fire({
+			title: message,
+			icon: 'info',
+			showCancelButton: true,
+			confirmButtonColor: '#0054e9',
+			confirmButtonText: action,
+			cancelButtonText: 'Đóng'
+		});
+		return result.isConfirmed;
+	},
+	async alertConfirmDanger(message, action) {
+		let result = await Swal.fire({
+			title: message,
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#c5000f',
+			confirmButtonText: action,
+			cancelButtonText: 'Đóng'
+		});
+		return result.isConfirmed;
+	},
 };
 export default mtShow;

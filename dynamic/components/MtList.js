@@ -38,22 +38,22 @@ class MtList extends HTMLElement {
 			layout: 'fitColumns',
 			height: '100%',
 			autoRowHeight: true, // Từ động wraptext
-			progressiveLoad: 'scroll',
-			progressiveLoadScrollMargin: 100,
-			filterMode: 'remote', // Filter
-			headerFilterLiveFilterDelay: 600,
-			sortMode: 'remote', // Sort
-			initialSort: [{column: 'time', dir: 'desc'}],
+			// progressiveLoad: 'scroll',
+			// progressiveLoadScrollMargin: 100,
+			// filterMode: 'remote', // Filter
+			// headerFilterLiveFilterDelay: 600,
+			// sortMode: 'remote', // Sort
+			// initialSort: [{column: 'time', dir: 'desc'}],
 			columns,
 			editorEmptyValue: null,
 			rowContextMenu: (event, row) => this.rowContextMenu(event, row),
-			headerSortElement: function(column, dir) {
-				switch (dir) {
-					case 'asc': return '<img src="/res/icons/sort_up_9x16.png" />';
-					case 'desc': return '<img src="/res/icons/sort_down_9x16.png" />';
-				}
-				return '<img src="/res/icons/sort_9x16.png" />';
-			},
+			// headerSortElement:(column, dir) => {
+			// 	switch (dir) {
+			// 		case 'asc': return '<img src="/res/icons/sort_up_9x16.png" />';
+			// 		case 'desc': return '<img src="/res/icons/sort_down_9x16.png" />';
+			// 	}
+			// 	return '<img src="/res/icons/sort_9x16.png" />';
+			// },
 		});
 
 		// Register Event
@@ -143,9 +143,12 @@ class MtList extends HTMLElement {
 
 			// Render
 			if (config.render) {
-				if (config.render == 'rate') {
+				if (config.render == 'dateFromMiliSecond')
+					column.formatter = (cell) => this.renderDateFromMiliSecond(cell);
+				else if (config.render == 'image')
+					column.formatter = (cell) => this.renderImage(cell, config.renderOpts);
+				else if (config.render == 'rate')
 					column.formatter = (cell) => this.renderRate(cell);
-				}
 			}
 
 			// Editor
@@ -153,20 +156,13 @@ class MtList extends HTMLElement {
 
 				this.m_haveEditor = true;
 
-				let type = '';
-				let opts = null;
-				if (typeof config.editor == 'string')
-					type = config.editor;
-				else {
-					type = config.editor.type;
-					opts = config.editor;
-				}
+				// let opts = config.editorOpts;
 
-				if (type == 'text') {
+				if (config.editor == 'text') {
 					column.editor = 'input';
 					column.editable = false;
 				}
-				else if (type == 'rate') {
+				else if (config.editor == 'rate') {
 					column.editor = 'star';
 					column.editable = false;
 				}
@@ -197,7 +193,7 @@ class MtList extends HTMLElement {
 						case 'newRow': menu.action = (event, row) => this.funcNewRow(); break;
 						case 'removeRow': menu.action = (event, row) => this.funcRemoveRow(row); break;
 						case 'toggleColumn': menu.action = (event, row) => this.funcToggleColumn(config.params?.column); break;
-						case 'toggleFilter': menu.action = (event, row) => this.funcToggleFilter(config.params?.column); break;
+						case 'toggleFilter': menu.action = (event, row) => this.funcToggleFilter(); break;
 						default:
 							let foo = this.d_func[config.func]; // Lấy từ ext function
 							if (foo)
@@ -229,6 +225,21 @@ class MtList extends HTMLElement {
 	}
 
 	// Format Render
+	renderDateFromMiliSecond(cell) {
+		let timestamp = cell.getValue();
+		if (timestamp == null)
+			return '';
+		return mt.utils.date.date_to_str(new Date(timestamp * 1000), 'dd/MM/yyyy');
+	}
+	renderImage(cell, opts) {
+		let value = cell.getValue();
+		if (!value)
+			return '';
+		let path = opts?.path;
+		if (path)
+			value = path + '/' + value;
+		return `<img src="${value}" />`;
+	}
 	renderRate(cell) {
 		let value = cell.getValue(); // Lấy giá trị của ô (1-5)
 		if (value >= 1 && value <= 5)
@@ -270,7 +281,7 @@ class MtList extends HTMLElement {
 		}
 		catch (ex) {
 			console.error('[MtList.funcNewRow]', ex);
-			showService.toast('error', ex.message);
+			mt.show.toast('error', ex.message);
 		}
 	}
 	async funcRemoveRow(row) {
@@ -279,7 +290,7 @@ class MtList extends HTMLElement {
 		}
 		catch (ex) {
 			console.error('[MtList.funcRemoveRow]', ex);
-			showService.toast('error', ex.message);
+			mt.show.toast('error', ex.message);
 		}
 	}
 	funcToggleColumn(column) {
@@ -289,10 +300,10 @@ class MtList extends HTMLElement {
 		}
 		catch (ex) {
 			console.error('[MtList.funcToggleColumn]', ex);
-			showService.toast('error', ex.message);
+			mt.show.toast('error', ex.message);
 		}
 	}
-	funcToggleFilter(columnName) {
+	funcToggleFilter() {
 		try {
 			let column = this.c_table.getColumn(columnName);
 			if (column && column.getDefinition().headerFilter) {
@@ -305,7 +316,7 @@ class MtList extends HTMLElement {
 		}
 		catch (ex) {
 			console.error('[MtList.funcToggleFilter]', ex);
-			showService.toast('error', ex.message);
+			mt.show.toast('error', ex.message);
 		}
 	}
 }

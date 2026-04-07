@@ -43,5 +43,10 @@ var mtUtils = {
 			return strDate;
 		}
 	},
+	html: {
+		trimSrc(html) {
+			return html.trim().split('\n').map(v=>v.trim()).join('\n');
+		},
+	},
 };
 export default mtUtils;

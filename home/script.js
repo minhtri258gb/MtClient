@@ -1,6 +1,7 @@
 import mtAuthen from '/common/authen.js';
 import mtLib from '/common/lib.js';
 import mtShow from '/common/show.js';
+import mtUtils from '/common/utils.js';
 
 /**
  * https://fontawesome.com/v6/search?ic=free-collection
@@ -12,6 +13,9 @@ var mt = {
 	auth: mtAuthen,
 	lib: mtLib,
 	show: mtShow,
+	utils: mtUtils,
+
+	h_debug: true,
 
 	apps: [
 		'music', 'manager', 'piano', 'midi',
@@ -134,12 +138,29 @@ var mt = {
 			this.p_grid = GridStack.init({
 				staticGrid: !this.m_isEdit,
 				float: true,
-				cellHeight: 70,
+				cellHeight: 90,
+				cellWidth: 90,
 				acceptWidgets: true,
 				removable: true,
 				lazyLoad: true,
 				margin: 5,
 			});
+			GridStack.renderCB = (el, widget) => { // Custom Render
+
+				let icon = widget.customData.icon;
+				let name = widget.customData.name || 'No name';
+				let color = widget.customData.color || '#000000';
+
+				// CSS
+				el.style.display = 'flex';
+				el.style.justifyContent = 'center';
+				el.style.alignItems = 'center';
+
+				// HTML
+				let iconHTML = (icon && icon.length > 0) ? `<i class=\"${icon}\" style="color:${color};font-size:larger;"></i>&nbsp;` : '';
+				let nameHtml = `<span style="color:${color};font-weight:bold;">${name}</span>`
+				el.innerHTML = iconHTML + nameHtml;
+			};
 		},
 		load(serializedData) {
 
@@ -150,7 +171,6 @@ var mt = {
 				if (widget.customData == null)
 					widget.customData = {};
 				widget.customData.id = i+1;
-				widget.content = widget.customData.name || '';
 			}
 
 			// Render
@@ -162,7 +182,7 @@ var mt = {
 				elWidget.addEventListener('click', () => this.onWidgetClick(elWidget));
 
 			// Log
-			// console.log('[mt.grid.load]', { serializedData });
+			mt.h_debug && console.log('[mt.grid.load]', { serializedData });
 		},
 		edit(toggle) {
 
@@ -193,15 +213,17 @@ var mt = {
 			}
 		},
 		add() {
+			let newId = this.p_grid.engine.nodes.length + 1;
 			let elWidget = this.p_grid.addWidget({
-				id: 0,
-				x: 0,
-				y: 0,
+				id: newId,
+				x: 0, y: 0,
 				content: 'New',
-				customData: { ...mt.form.h_defaultData },
+				customData: { id: newId, name: '', icon: '', link: '', color: '' }
 			});
 			elWidget.addEventListener('click', () => this.onWidgetClick(elWidget));
-			// console.log('[mt.grid.add]', { elWidget });
+
+			// Log
+			mt.h_debug && console.log('[mt.grid.add]', { elWidget });
 		},
 		async save() {
 			try {
@@ -233,10 +255,7 @@ var mt = {
 				console.error('[mt.grid.save]', ex);
 			}
 		},
-		buildContent() {
-			
-		},
-		async onWidgetClick(elWidget) {
+		async onWidgetClick(elWidget,) {
 
 			// Lấy Id widget
 			let id = +elWidget.getAttribute('gs-id');
@@ -258,7 +277,7 @@ var mt = {
 			else {
 				let data = widget.gridstackNode.customData;
 				if (data.link != null && data.link.length > 0) {
-					let isConfirm = await mt.utils.confirmPrimary(`Xác nhận mở app ${data.name}?`, 'Đến');
+					let isConfirm = await mt.show.alertConfirmPrimary(`Xác nhận mở app ${data.name}?`, 'Đến');
 					if (isConfirm)
 						window.open(data.link);
 				}
@@ -271,7 +290,7 @@ var mt = {
 		},
 	},
 	form: {
-		h_defaultData: { id: 0, name: '', icon: '', link: '' },
+		h_defaultData: { id: 0, name: '', icon: '', link: '', color: '' },
 		c_modal: null, // tingle
 		c_form: null, // jsoneditor
 		m_widget: null, // Current widget
@@ -313,6 +332,8 @@ var mt = {
 						'name': { title: 'Name', type: 'string', format: 'text' },
 						'icon': { title: 'Icon', type: 'string', format: 'text' },
 						'link': { title: 'Link', type: 'string', format: 'url' },
+						'link': { title: 'Link', type: 'string', format: 'url' },
+						'color': { title: 'Color', type: 'string', format: 'color', default: '#ffffff' },
 						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.onSave() }}},
 						'btn_delete': { title: 'Delete', type: 'string', format: 'button', options: { button: { icon: 'trash-can', action: () => this.onDelete() }}},
 						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
@@ -379,31 +400,6 @@ var mt = {
 			}
 		},
 	},
-	utils: {
-
-		async confirmPrimary(message, action) {
-			let result = await Swal.fire({
-				title: message,
-				icon: 'info',
-				showCancelButton: true,
-				confirmButtonColor: '#0054e9',
-				confirmButtonText: action,
-				cancelButtonText: 'Đóng'
-			});
-			return result.isConfirmed;
-		},
-		async confirmDanger(message, action) {
-			let result = await Swal.fire({
-				title: message,
-				icon: 'warning',
-				showCancelButton: true,
-				confirmButtonColor: '#c5000f',
-				confirmButtonText: action,
-				cancelButtonText: 'Đóng'
-			});
-			return result.isConfirmed;
-		},
-	},
 
 	// Method
 	async init() {
@@ -411,9 +407,11 @@ var mt = {
 		// Bind Global
 		window.mt = mt;
 
+		// Import Library
+		await mt.lib.import(['toastify', 'sweetalert2']);
+
 		// Authen
 		await this.auth.init();
-		await this.show.initToast();
 
 		// Read config
 		await this.mgr.loadConfig();
@@ -489,7 +487,6 @@ var mt = {
 			let node = instance.get_node(this);
 			mt.doubleClick(node);
 		});
-
 
 		// Search
 		$('#fieldSearch').on('keypress', (event) => {
