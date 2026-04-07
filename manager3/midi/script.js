@@ -4,20 +4,19 @@
 	 * https://www.abcjs.net/
 	 */
 
-	h_tagName: 'mt-page-midi',
 	h_isShadow: false,
+	e_contain: null,
+	m_init: false,
 
 	async init() {
-
-		// Bind mt
-		mt.midi = this;
 
 		// Import Library
 		await mt.lib.import(['ABCJS', 'CodeMirror', 'jzz', 'svg']); // , 'tone'
 
 		// Add container
-		this.id = 'midi-contain';
-		this.style.height = '100%';
+		this.e_contain.id = 'midi-contain';
+		this.e_contain.style.height = '100%';
+		this.e_contain.style.display = '';
 
 		// Init Editor
 		CodeMirror.defineMode('abc', (config) => {
@@ -114,9 +113,6 @@
 	},
 	initKey() {
 
-	},
-	open() {
-		this.style.display = '';
 	},
 	setCode(code) {
 		this.m_editor.setValue(code);

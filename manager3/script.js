@@ -121,16 +121,13 @@ let mt = {
 					let moduleName = event.target;
 					let module = mt[moduleName];
 
-					// Build Component EXT
+					// Build Module EXT
 					if (module == 'ext') {
-
-						// Defined Component
-						let tag = await mt.core.buildComponent(window.location.pathname + moduleName);
-
-						let containDiv = document.createElement(tag);
-						this.e_contain.appendChild(containDiv);
+						module = await this.loadModule(moduleName);
+						mt[moduleName] = module; // ReBind mt
 					}
-					else if (module != null) {
+
+					if (module != null) {
 						this.resetLayout();
 
 						// Default open func
@@ -193,6 +190,56 @@ let mt = {
 				tab.sidebar.click(tab.id);
 			}
 		},
+
+		async loadModule(moduleName) {
+
+			let pathModule = window.location.pathname + moduleName;
+
+			// Load HTML
+			let [
+				resHtml,
+				resCss,
+				resJs
+			] = await Promise.all([
+				fetch(pathModule + '/index.html', { method: 'GET' }),
+				fetch(pathModule + '/style.css', { method: 'GET' }),
+				fetch(pathModule + '/script.js', { method: 'GET' }),
+			]);
+
+			let [
+				htmlText,
+				cssText,
+				jsText,
+			] = await Promise.all([
+				resHtml.text(),
+				resCss.text(),
+				resJs.text(),
+			]);
+
+			// Process JS
+			let module = window.eval(jsText);
+
+			// Prepare CSS
+			const sheet = new CSSStyleSheet();
+			sheet.replaceSync(cssText);
+
+			// Build
+			if (module.h_isShadow) {
+				module.shadow = this.attachShadow({ mode: 'open' });
+				module.shadow.adoptedStyleSheets = [sheet]; // CSS Shadow
+				module.shadow.innerHTML = htmlText; // HTML
+			}
+			else {
+				document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet]; // CSS Global
+
+				// Add container
+				module.e_contain = document.createElement('div');
+				module.e_contain.innerHTML = htmlText; // HTML
+				this.e_contain.appendChild(module.e_contain);
+			}
+
+			return module;
+		},
 		resetLayout() {
 
 			// Hide all container
@@ -202,7 +249,7 @@ let mt = {
 			// Hide right panel
 			this.c_w2layout.hide('right');
 		},
-	
+
 		btnMenu(toogle) {
 			// let panel = this.c_w2layout.get('left');
 			// if (panel.hidden)
