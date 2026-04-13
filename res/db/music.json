@@ -283,7 +283,7 @@
     "name": "Blue Archive OST 113 - Usagi Flap",
     "rate": 4,
     "duration": 127.268571,
-    "tags": ["GAME","OSU"],
+    "tags": ["GAME", "OSU"],
     "decibel": 100,
     "trackbegin": null,
     "trackend": null,
@@ -352,7 +352,7 @@
   {
     "name": "Bossfight - Pirate Manners",
     "rate": 3,
-    "duration": 182.151837,
+    "duration": 182.114104,
     "tags": ["GEO"],
     "decibel": 100,
     "trackbegin": null,
@@ -1091,13 +1091,13 @@
   },
   {
     "name": "DJ Striden - Electro Blue Electro",
+    "rate": 4,
     "duration": 183.576961,
+    "tags": ["YT"],
     "decibel": 100,
-    "miss": false,
-    "rate": 3,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["YT"]
+    "miss": false
   },
   {
     "name": "DJ Striden - Enigma [Dream Step]",
@@ -3590,6 +3590,16 @@
     "tags": ["OSU"]
   },
   {
+    "name": "Nightcall - Stuck In Dreams",
+    "rate": 4,
+    "duration": 247.125333,
+    "tags": ["EPIC"],
+    "decibel": 100,
+    "trackbegin": 84.3,
+    "trackend": 117.5,
+    "miss": false
+  },
+  {
     "name": "Nightcore - Cambodia",
     "duration": 160.983946,
     "decibel": 100,
@@ -3740,6 +3750,16 @@
     "tags": ["YT"]
   },
   {
+    "name": "Nightcore - Titanium",
+    "rate": 4,
+    "duration": "",
+    "tags": ["YT", "LYRIC", "EN"],
+    "decibel": 100,
+    "trackbegin": null,
+    "trackend": null,
+    "miss": false
+  },
+  {
     "name": "Nightcore ET - Take It Off Switching Vocals",
     "duration": 202.199365,
     "decibel": 100,
@@ -3881,7 +3901,7 @@
   },
   {
     "name": "Oriental Blossom - Eisyokobu",
-    "duration": 116.767347,
+    "duration": 116.726712,
     "decibel": 100,
     "miss": false,
     "rate": 3,
@@ -4161,13 +4181,13 @@
   },
   {
     "name": "Reol - Saisaki",
+    "rate": 4,
     "duration": 221.773787,
+    "tags": ["OSU", "LYRIC", "JP"],
     "decibel": 100,
-    "miss": false,
-    "rate": 3,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["OSU", "LYRIC", "JP"]
+    "miss": false
   },
   {
     "name": "Reol - YoiYoi Kokon",
@@ -4271,13 +4291,13 @@
   },
   {
     "name": "SayMaxWell - Helltaker - Epitomize Remix NO Copyright",
-    "duration": 266.26322,
-    "decibel": 100,
-    "miss": false,
     "rate": 3,
+    "duration": 266.26322,
+    "tags": ["YT", "ROCK"],
+    "decibel": 100,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "Scattered Faith",
@@ -5371,7 +5391,7 @@
   },
   {
     "name": "Zektium - Moonblast",
-    "duration": null,
+    "duration": 194.42068,
     "decibel": 100,
     "rate": 3,
     "tags": ["NEW"],

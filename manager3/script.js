@@ -103,6 +103,7 @@ let mt = {
 						{ id: 'image', text: 'Image', icon: 'fa-solid fa-image' },
 						{ id: 'diagram', text: 'Diagram', icon: 'fa-solid fa-diagram-project' },
 						{ id: 'sheet', text: 'Sheet', icon: 'fa-solid fa-table' },
+						{ id: 'html', text: 'Html', icon: 'fa-brands fa-html5' },
 					]},
 					{ id: 'viewer', text: 'Viewer', group: true, expanded: true, nodes: [
 						{ id: 'pdf', text: 'PDF', icon: 'fa-regular fa-file-pdf' },
@@ -112,6 +113,7 @@ let mt = {
 					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
 						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
+						{ id: 'base64', text: 'Base64', icon: 'fa-regular fa-file-lines' },
 					]},
 					{ id: 'games', text: 'Games', group: true, expanded: true, nodes: [
 						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
@@ -203,21 +205,23 @@ let mt = {
 			] = await Promise.all([
 				fetch(pathModule + '/index.html', { method: 'GET' }),
 				fetch(pathModule + '/style.css', { method: 'GET' }),
-				fetch(pathModule + '/script.js', { method: 'GET' }),
+				import(pathModule + '/script.js')
 			]);
 
+			// console.log(resJs)
 			let [
 				htmlText,
 				cssText,
-				jsText,
+				// jsText,
 			] = await Promise.all([
 				resHtml.text(),
 				resCss.text(),
-				resJs.text(),
+				// resJs.text(),
 			]);
 
 			// Process JS
-			let module = window.eval(jsText);
+			// let module = window.eval(jsText);
+			let module = resJs.default;
 
 			// Prepare CSS
 			const sheet = new CSSStyleSheet();

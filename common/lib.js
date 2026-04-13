@@ -253,7 +253,8 @@ var mtLib = {
 		await mtLib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
 	}},
 	'svg': { init: false, async load() {
-		await mtLib.loadJS('/lib/svg/svg.min.js');
+		await mtLib.loadJS('/lib/svg/svg.min.js', 'cjs', 'SVG');
+		// await mtLib.loadJS('/lib/svg.js-2.7.1/svg.min.js');
 	}},
 	'sweetalert2': { init: false, async load() {
 		let path = '/lib/sweetalert2-11.22.4/';
