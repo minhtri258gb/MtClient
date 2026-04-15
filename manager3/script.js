@@ -1,5 +1,5 @@
 import { w2ui, w2layout, w2toolbar, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 import mtCore from '/common/core.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
@@ -21,7 +21,7 @@ import mtShow from '/common/show.js';
 
 let mt = {
 	h_debug: true,
-	auth: mtAuthen,
+	api: mtApi,
 	core: mtCore,
 	lib: mtLib,
 	file: mtFile,
@@ -169,6 +169,17 @@ let mt = {
 
 			// Process Params
 			this.processParams();
+		},
+		async getClientPath() {
+
+			if (this.m_clientPath.length > 0)
+				return;
+
+			// Call API
+			this.m_clientPath = await mt.api.fileGetClientPath();
+
+			if (this.m_clientPath.length == 0)
+				throw new Error('Không lấy được client path!');
 		},
 		processParams() {
 			let urlParams = new URLSearchParams(window.location.search);
@@ -692,12 +703,13 @@ let mt = {
 		},
 		e_contain: null,
 		m_init: false,
-		m_clientPath: '',
 
 		async init() {
 
 			// Import library
 			await mt.lib.import(['jstree']);
+
+			await mt.common.getClientPath();
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -717,26 +729,17 @@ let mt = {
 				<div id="explorer-jstree"></div>
 			`.trim().split('\n').map(v=>v.trim()).join('\n');
 
-			// Call API
-			let resClientPath = await fetch('/file/getClientPath', {
-				method: 'GET',
-				headers: {
-					'Authorization': 'Bearer ' + mt.auth.getToken(),
-				},
-			});
-			this.m_clientPath = await resClientPath.text();
-
 			// JSTree Init
 			$('#explorer-jstree').jstree({
 				core: {
 					data: {
 						url: '/file/jstree',
 						headers: {
-							'Authorization': 'Bearer ' + mt.auth.getToken(),
+							'Authorization': 'Bearer ' + mt.api.getToken(),
 						},
 						dataType: 'json',
 						data: (node) => {
-							let folder = node.original?.path || this.m_clientPath; // Lấy path
+							let folder = node.original?.path || mt.common.m_clientPath; // Lấy path
 							return { folder };
 						},
 						success: (data) => this.processNode(data),
@@ -756,7 +759,6 @@ let mt = {
 				let node = instance.get_node(this);
 				mt.doubleClick(node);
 			});
-
 
 			// Search
 			// $('#fieldSearch').on('keypress', (event) => {
@@ -800,7 +802,7 @@ let mt = {
 					icon: '/res/icons/play.png',
 					action: (obj) => {
 						let path = node.original.path;
-						path = path.replaceAll(mt.mgr.m_clientPath, '');
+						path = path.replaceAll(mt.common.m_clientPath, '');
 						window.open(path, '_blank');
 					}
 				};
@@ -834,7 +836,7 @@ let mt = {
 		doubleClick(node) { // Nhấn đúp
 			if (node.type == 'html') {
 				let path = node.original.path;
-				path = path.replaceAll(mt.mgr.m_clientPath, '');
+				path = path.replaceAll(mt.common.m_clientPath, '');
 				window.open(path, '_blank');
 			}
 		},
@@ -2150,18 +2152,24 @@ let mt = {
 
 			// Import Library
 			await mt.lib.import(['fabricjs']);
-			
+
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'image-contain';
 			this.e_contain.style.height = '100%';
 			mt.common.e_contain.appendChild(this.e_contain);
 
+			// Tạo Canvas
 			let canvasElm = document.createElement('canvas');
-			canvasElm.style.width = '100%';
-			canvasElm.style.height = '100%';
+			canvasElm.width = '800';
+			canvasElm.height = '500';
+			canvasElm.style.width = '500px';
+			canvasElm.style.height = '500px';
 			canvasElm.style.border = '1px solid #000';
 			this.e_contain.appendChild(canvasElm);
+
+			// Cancas tạo dragdrop file ảnh
+
 
 			// Init Fabric
 			this.c_canvas = new fabric.Canvas(canvasElm);
@@ -3257,7 +3265,7 @@ let mt = {
 		globalThis.mt = this;
 
 		// Init
-		await this.auth.init();
+		await this.api.init();
 		await this.show.initToast();
 
 		// Init

@@ -1,18 +1,79 @@
-<div style="display:flex;">
-	<div>
-		123
+<div>
+	<div style="display:flex;width:100%;">
+		<div>
+
+			<!-- Input Search -->
+			<div class="ui icon input" style="margin:16px 16px;">
+				<input id="midi-search" type="text" placeholder="Search...">
+				<i class="search icon"></i>
+			</div>
+
+			<!-- JSTree -->
+			<div id="midi-jstree"></div>
+
+		</div>
+		<div style="flex:1;display:flex;">
+			<div style="flex:1;">
+
+				<!-- Toolbar -->
+				<div id="midi-toolbar" style="display:flex;justify-content:space-between;margin:0 4px;">
+					<div>
+						<button id="midi-btn-bind" onclick="mt.midi.toolbar.btnBind()"><i class="fa-solid fa-link-slash"></i></button>
+						<button id="midi-btn-showkey" onclick="mt.midi.toolbar.btnShowKey()"><i class="fa-regular fa-eye-slash"></i></button>
+						<button id="midi-btn-render" onclick="mt.midi.toolbar.btnRender()"><i class="fa-solid fa-play"></i></button>
+						<button id="midi-btn-save" onclick="mt.midi.toolbar.btnSave()"><i class="fa-regular fa-floppy-disk"></i></button>
+						<button id="midi-btn-save" onclick="mt.midi.toolbar.btnCompileMidi()"><i class="fa-solid fa-download"></i></button>
+					</div>
+					<div>
+						<button id="midi-btn-applyform" onclick="mt.midi.toolbar.btnApplyForm()"><i class="fa-solid fa-arrow-left"></i></button>
+					</div>
+				</div>
+
+				<!-- CodeMirror -->
+				<textarea id="midi-input" rows="10" cols="60"></textarea>
+
+				<br>
+				<div id="midi-note-name">Key:</div>
+
+			</div>
+			<div style="flex:1;">
+
+				<!-- FORM -->
+				<form id="midi-form" class="form-grid">
+					<div class="col-span-2">
+						<label for="name">Tên:</label>
+						<input type="text" name="name" required>
+					</div>
+					<div class="col-span-2">
+						<label for="age">Tuổi:</label>
+						<input type="number" name="age" required>
+					</div>
+					<div class="col-span-1">
+						<label for="gender">Giới tính:</label>
+						<select name="gender">
+							<option>Nam</option>
+							<option>Nữ</option>
+						</select>
+					</div>
+					<div class="col-span-3">
+						<label for="email">Email:</label>
+						<input type="email" name="email">
+					</div>
+					<div class="col-span-4">
+						<label for="message">Tin nhắn:</label>
+						<textarea name="message"></textarea>
+					</div>
+				</form>
+
+				<br>
+				<div id="midi-audio"></div>
+				<div id="midi-notation"></div>
+
+			</div>
+		</div>
 	</div>
-	<div>
-		<textarea id="midi-input" rows="10" cols="60"></textarea>
-		<br>
-		<button onclick="mt.midi.renderABC()">Render</button>
-		<br>
-		<div id="midi-audio"></div>
-		<br>
-		<div id="midi-notation"></div>
-		<br>
-		<div id="midi-note-name">Key:</div>
-		<br>
-		<div id="midi-key"></div>
-	</div>
+
+	<!-- SVG Key -->
+	<div id="midi-key" style="display:none;"></div>
+
 </div>

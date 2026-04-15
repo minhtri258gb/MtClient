@@ -1,4 +1,4 @@
-var mtAPI = {
+var mtApi = {
 	m_token: '', // Access Token
 
 	// Method
@@ -59,6 +59,39 @@ var mtAPI = {
 			console.error(e);
 		}
 	},
+	async fileList(folderpath) {
+
+		let params = new URLSearchParams();
+		params.append('folder', folderpath);
+
+		let response = await fetch('/file/list?' + params.toString(), {
+			method: 'GET',
+			headers: { 'Authorization': 'Bearer ' + this.m_token }
+		});
+
+		return await response.json();
+	},
+	async fileRead(filepath) {
+
+		let params = new URLSearchParams();
+		params.append('file', filepath);
+
+		let response = await fetch('/file/read?' + params.toString(), {
+			method: 'GET',
+			headers: { 'Authorization': 'Bearer ' + this.m_token }
+		});
+
+		return await response.text();
+	},
+	async fileGetClientPath() {
+		let response = await fetch('/file/getClientPath', {
+			method: 'GET',
+			headers: {
+				'Authorization': 'Bearer ' + this.m_token,
+			},
+		});
+		return await response.text();
+	},
 
 	// Get / Set
 	getToken() {
@@ -68,4 +101,4 @@ var mtAPI = {
 		return this.m_token != null && this.m_token.length > 0;
 	},
 };
-export default mtAPI;
+export default mtApi;

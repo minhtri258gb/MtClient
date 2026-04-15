@@ -5,3 +5,26 @@
 .abc-key { color: purple; }
 .abc-meter { color: orange; }
 .abc-lyric { color: brown; font-style: italic; }
+
+
+/* Form */
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 4px 12px;
+
+	.col-span-1 { grid-column: span 1; }
+	.col-span-2 { grid-column: span 2; }
+	.col-span-3 { grid-column: span 3; }
+	.col-span-4 { grid-column: span 4; }
+
+	input, select, textarea {
+		width: 100%;
+		/* padding: 6px; */
+		box-sizing: border-box;
+	}
+	button {
+		grid-column: 2; /* nút nằm ở cột thứ 2 */
+		padding: 8px 12px;
+	}
+}

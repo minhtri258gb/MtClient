@@ -1,19 +1,191 @@
+/**
+ * https://www.abcjs.net
+ * https://fontawesome.com/v6/search?ic=free-collection
+ */
+
 let mtMidi = {
-
-	/**
-	 * https://www.abcjs.net/
-	 */
-
 	h_isShadow: false,
 	e_contain: null,
 	m_init: false,
 	m_offsetNote: 0, // Offset note
 
-	key: {
+	abc: {
+		c_visualObj: null,
+
+		async render() {
+			const abcString = mtMidi.code.get();
+
+			// Hiển thị bản nhạc
+			ABCJS.renderAbc('midi-notation', abcString, {
+				responsive: 'resize',
+				add_classes: true,
+				jazzchords: true,
+				drum: 'dddd 76 77 77 77 60 30 30 30',
+			});
+
+			// Phát nhạc (MIDI/WebAudio)
+			if (ABCJS.synth.supportsAudio()) {
+				const synthControl = new ABCJS.synth.SynthController();
+				synthControl.load('#midi-audio', null, {
+					// soundFontUrl: "/res/soundfont/marimba-mp3.js",
+					displayLoop: true,
+					displayRestart: true,
+					displayPlay: true,
+					displayProgress: true,
+					displayWarp: true,
+					displayClock: true,
+				});
+				this.c_visualObj = ABCJS.renderAbc('midi-notation', abcString)[0];
+				const synth = new ABCJS.synth.CreateSynth();
+				synth.init({
+					visualObj: this.c_visualObj,
+					options: {
+						// soundFontUrl: "/res/soundfont/marimba-mp3.js",
+						soundFontUrl: '/res/soundfont/FluidR3_Salamander_GM/',
+						// instruments: ['marimba'],
+						// program: 12, // marimba-mp3
+						format: 'mp3',
+						soundFontVolume: 1.0,
+					}
+				}).then(() => {
+					synthControl.setTune(this.c_visualObj, true);
+				});
+			}
+		},
+		compileMidi() {
+			let source = mtMidi.code.get();
+			let midiArray = ABCJS.synth.getMidiFile(source, { chordsOff: true, midiOutputType: 'binary' });
+			let blob = new Blob([midiArray], { type: 'audio/midi' });
+			// let file = new File([blob], 'demo.mid', { type: 'audio/midi' });
+
+			var url = URL.createObjectURL(blob);
+			var a = document.createElement("a");
+			a.href = url;
+			a.download = "demo.mid";
+			document.body.appendChild(a);
+			a.click();
+			URL.revokeObjectURL(url);
+		},
+		analyze(content) {
+			// #TODO
+		},
+	},
+	code: {
+		p_editor: null, // CodeMirror
+
+		init() {
+
+			// Init Editor
+			CodeMirror.defineMode('abc', (config) => {
+				return {
+					token: (stream) => {
+						if (stream.match(/[A-Ga-g]/)) return 'abc-note';
+						if (stream.match(/\d+\/?\d*/)) return 'abc-duration';
+						if (stream.match(/K:[A-G]/)) return 'abc-key';
+						if (stream.match(/M:\d+\/\d+/)) return 'abc-meter';
+						if (stream.match(/w:.*/)) return 'abc-lyric';
+						stream.next();
+						return null;
+					}
+				};
+			});
+
+			let textarea = null;
+			if (mtMidi.h_isShadow)
+				textarea = this.shadow.getElementById('midi-input');
+			else
+				textarea = document.getElementById('midi-input');
+
+			this.p_editor = CodeMirror.fromTextArea(textarea, {
+				mode: 'abc',
+				lineNumbers: true,
+				lineWrapping: true,
+				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+				foldGutter: true,
+				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+			});
+			// this.set(`
+			// 	X: 1
+			// 	T: Level Two - DJ Striden
+			// 	M: 4/4
+			// 	L: 1/8
+			// 	Q: 1/4=144
+			// 	K: Emin
+			// 	%%MIDI program 32
+			// 	G/2F/2E G/2F/2E|G E B d|d3/2B3/2 e2 z2
+			// 	e/2f/2 g/2f/2e g/2f/2e|g a/2 b d'|d'3/2b3/2 e'2 z2
+			// `.trim().split('\n').map(v=>v.trim()).join('\n'));
+
+			/*
+				G/2 F/2 E|G/2 F/2 E|G E|B d|d3/2 B3/2 e2 z2
+				e/2 f/2|g/2 f/2 e|g/2 f/2 e|g a/2 b d' d'3/2 b3/2 e'2 z2
+			*/
+
+			/*
+				|:D2|"Em"EBBA B2 EB|\
+						~B2 AB dBAG|\
+						"D"FDAD BDAD|\
+						FDAD dAFD|
+				"Em"EBBA B2 EB|\
+						B2 AB defg|\
+						"D"afe^c dBAF|\
+						"Em"DEFD E2:|
+				|:gf|"Em"eB B2 efge|\
+						eB B2 gedB|\
+						"D"A2 FA DAFA|\
+						A2 FA defg|
+				"Em"eB B2 eBgB|\
+						eB B2 defg|\
+						"D"afe^c dBAF|\
+						"Em"DEFD E2:|
+			*/
+
+			// abcjsEditor = new ABCJS.Editor("midi-input", {
+			//   canvas_id: "paper",
+			//   warnings_id: "warnings",
+			//   synth: {
+			//     el: "#audio",
+			//     options: { displayLoop: true, displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true }
+			//   },
+			//   abcjsParams: {
+			//     add_classes: true,
+			//     clickListener: clickListener
+			//   },
+			//   selectionChangeCallback: selectionChangeCallback
+			// });
+
+		},
+		set(content) {
+			this.p_editor.setValue(content);
+		},
+		get() {
+			return this.p_editor.getValue();
+		},
+	},
+	form: {
+		init() { },
+		submit() {
+
+			const form = document.getElementById('midi-form');
+			const formData = new FormData(form);
+
+			const data = {};
+			formData.forEach((value, key) => data[key] = value);
+
+			console.log(data);
+		},
+		set(formData) {
+
+			// Log
+			mt.h_debug && console.log('[mt.midi.form.set]', {formData});
+		}
+	},
+	key: { // SVG Keyboard
 		c_keyName: null, // Component hiện tên note
 		m_width: 0, // width layout
 		m_height: 0, // height layout
-		m_isHookKeyBoard: true,
+		m_isHookKeyBoard: false,
+		m_isShow: false, // Ẩn hiện phím
 		map: {}, // Key Bind
 
 		init() {
@@ -70,7 +242,7 @@ let mtMidi = {
 			// Init keybind
 			let maps = [
 				// 123
-				['`', 'D#5'], ['2', 'F#5'], ['3', 'G#5'], ['4', 'Bb5'], ['6', 'C#6'], ['7', 'D#6'], ['9', 'F#6'], ['0', 'G#6'], ['-', 'Bb6'],
+				['`', 'D#5'], ['2', 'F#5'], ['3', 'G#5'], ['4', 'Bb5'], ['6', 'C#6'], ['7', 'D#6'], ['9', 'F#6'], ['0', 'G#6'], ['-', 'Bb6'], // `
 				// QWE
 				['\t', 'E5'], ['Q',  'F5'], ['W',  'G5'], ['E', 'A5'], ['R', 'B5'], ['T', 'C6'], ['Y', 'D6'],
 				['U',  'E6'], ['I',  'F6'], ['O',  'G6'], ['P', 'A6'], ['[', 'B6'], [']', 'C7'],
@@ -151,8 +323,14 @@ let mtMidi = {
 
 			return false;
 		},
+		show(toggle) {
+
+			this.m_isShow = toggle;
+
+			$('#midi-key').css({ 'display': toggle ? '' : 'none' });
+		},
 	},
-	jzz: {
+	jzz: { // Piano
 		h_cov: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
 		out: null, // jzz output
 
@@ -217,7 +395,217 @@ let mtMidi = {
 			return Math.max(20, Math.min(127, baseVelocity + adjustment));
 		},
 	},
-	util: {
+	toolbar: {
+		e_btnBind: null,
+		e_btnShowKey: null,
+
+		init() {
+
+			// Nút bind
+			this.e_btnBind = mtMidi.e_contain.querySelector('#midi-btn-bind');
+			this.e_btnShowKey = mtMidi.e_contain.querySelector('#midi-btn-showkey');
+		},
+		btnBind() {
+
+			// Toogle
+			let isBind = !mtMidi.key.m_isHookKeyBoard;
+
+			// Update UI
+			let classListIcon = this.e_btnBind.children[0].classList;
+			if (isBind) {
+				classListIcon.remove('fa-link-slash');
+				classListIcon.add('fa-link');
+			}
+			else {
+				classListIcon.remove('fa-link');
+				classListIcon.add('fa-link-slash');
+			}
+
+			// Bind keyboard
+			mtMidi.key.bind(isBind);
+		},
+		btnShowKey() {
+
+			// Toogle
+			let isShow = !mtMidi.key.m_isShow;
+
+			// Update UI
+			let classListIcon = this.e_btnShowKey.children[0].classList;
+			if (isShow) {
+				classListIcon.remove('fa-eye-slash');
+				classListIcon.add('fa-eye');
+			}
+			else {
+				classListIcon.remove('fa-eye');
+				classListIcon.add('fa-eye-slash');
+			}
+
+			// Bind keyboard
+			mtMidi.key.show(isShow);
+		},
+		btnRender() {
+			mtMidi.abc.render();
+		},
+		btnSave() {
+			mtMidi.saveABC();
+		},
+		btnCompileMidi() {
+			mtMidi.abc.compileMidi();
+			// mt.show.toast('warning', 'Chưa làm chức năng lưu midi!');
+		},
+		btnApplyForm() {
+			mtMidi.form.submit();
+		},
+	},
+	tree: { // Tree Folder
+		h_abcPath: '/res/midi',
+		h_config: {
+			lstSkip: [
+				'.git', '.gitignore', '.vscode', 'package.json', 'package-lock.json', 'node_modules',
+				'lib', 'res'
+			],
+			lstExt: ['html'],
+			lstExtImage: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'ico', 'svg'],
+			lstExtAudio: ['wav', 'mp3', 'ogg', 'aac', 'mid', 'midi'],
+			lstExtVideo: ['mp4', 'm4v', 'avi', 'mov', 'flv', '3gp'],
+			type: {
+				'folder': { },
+				'abc': { icon: 'fa-regular fa-file-lines' },
+				'midi': { icon: 'fa-regular fa-file-audio' },
+				'file': { icon: '/res/icons/file16.png' },
+				'image': { icon: '/res/icons/image16.png' },
+				'audio': { icon: '/res/icons/audio16.png' },
+				'video': { icon: '/res/icons/video16.png' },
+				'html': { icon: '/res/icons/web16.png' },
+			},
+		},
+		m_currentFile: '',
+
+		init() {
+
+			// JSTree Init
+			$('#midi-jstree').jstree({
+				core: {
+					data: {
+						url: '/file/jstree',
+						headers: {
+							'Authorization': 'Bearer ' + mt.api.getToken(),
+						},
+						dataType: 'json',
+						data: (node) => {
+							let folder = node.original?.path || mt.common.m_clientPath + this.h_abcPath; // Lấy path
+							return { folder };
+						},
+						success: (data) => this.processNode(data),
+					},
+				},
+				plugins: ['types', 'contextmenu', 'search'],
+				types: this.h_config.type,
+				contextmenu: {
+					items: (node) => this.contextmenu(node)
+				},
+			});
+
+			// Đăng ký sự kiện Double click
+			$('#midi-jstree').on('dblclick', '.jstree-anchor', function(e) {
+				e.preventDefault();
+				let instance = $.jstree.reference(this);
+				let node = instance.get_node(this);
+				mtMidi.tree.doubleClick(node);
+			});
+		},
+		processNode(data) { // Khi load node con
+			for (let i = data.length - 1; i >= 0; i--) {
+				let item = data[i];
+
+				// Danh sách ẩn
+				if (this.h_config.lstSkip.includes(item.text)){
+					data.splice(i, 1);
+					continue;
+				}
+
+				// Phân loại
+				if (item.isFolder) { // Folder
+					item.children = true; // Hiển thị action expand
+					item.type = 'folder';
+				}
+				else { // File
+					item.type = this.getType(item.text);
+					item.a_attr = { class: 'custom-node' };
+				}
+			}
+			return data;
+		},
+		contextmenu(node) { // Click phải
+			// doc: https://www.jstree.com/api/#/?q=$.jstree.defaults.contextmenu&f=$.jstree.defaults.contextmenu.items
+
+			let options = {};
+
+			if (node.type == 'folder')
+				return options;
+
+			if (node.type == 'html') {
+				options.open = {
+					label: "Open",
+					icon: '/res/icons/play.png',
+					action: (obj) => {
+						let path = node.original.path;
+						path = path.replaceAll(mt.common.m_clientPath, '');
+						window.open(path, '_blank');
+					}
+				};
+			}
+
+			return options;
+
+			// return {
+			// 	renameItem: {
+			// 		label: "Rename",
+			// 		icon: "fa fa-edit",
+			// 		action: function (obj) {
+			// 			$('#jstree').jstree(true).edit(node);
+			// 		}
+			// 	},
+			// 	deleteItem: {
+			// 		label: "Delete",
+			// 		icon: "fa fa-trash",
+			// 		action: function (obj) {
+			// 			$('#jstree').jstree(true).delete_node(node);
+			// 		}
+			// 	},
+			// 	customItem: {
+			// 		label: "Say Hello",
+			// 		action: function () {
+			// 			alert("Hello from node: " + node.text);
+			// 		}
+			// 	}
+			// };
+		},
+		doubleClick(node) { // Nhấn đúp
+			if (node.type == 'abc') {
+				this.m_currentFile = node.original.path;
+				mtMidi.loadABC(this.m_currentFile);
+			}
+		},
+		getType(filename) { // Lấy type tương ứng trên JsTree
+			let pos = filename.indexOf('.');
+			let ext = filename.substring(pos+1);
+
+			if (ext == 'abc')
+				return 'abc';
+			else if (ext == 'midi')
+				return 'midi';
+
+			if (this.h_config.lstExt.includes(ext))
+				return ext;
+			else if (this.h_config.lstExtImage.includes(ext))
+				return 'image';
+			else if (this.h_config.lstExtAudio.includes(ext))
+				return 'audio';
+			return 'file';
+		},
+	},
+	util: { // Tiện ích
 		covKeyCharKeyCode(value, direct = true) {
 			if (!value) return undefined;
 			if (!mt._covKeyCharKeyCode)
@@ -229,7 +617,7 @@ let mtMidi = {
 				m['F5'] = 116; m['F6'] = 117; m['F7'] = 118; m['F8'] = 119;
 				m['F9'] = 120; m['F10'] = 121; m['F11'] = 122; m['F12'] = 123;
 				// 123
-				m['`'] = 192; m['1'] = 49; m['2'] = 50; m['3'] = 51; m['4'] = 52;
+				m['`'] = 192; m['1'] = 49; m['2'] = 50; m['3'] = 51; m['4'] = 52; // `
 				m['5'] = 53; m['6'] = 54; m['7'] = 55; m['8'] = 56; m['9'] = 57;
 				m['0'] = 48; m['-'] = 189; m['='] = 187; m['\b'] = 8;
 				// QWE
@@ -301,7 +689,9 @@ let mtMidi = {
 	async init() {
 
 		// Import Library
-		await mt.lib.import(['ABCJS', 'CodeMirror', 'jzz', 'svg']); // , 'tone'
+		await mt.lib.import(['ABCJS', 'CodeMirror', 'jzz', 'svg', 'jstree']); // , 'tone'
+
+		await mt.common.getClientPath();
 
 		// Add container
 		this.e_contain.id = 'midi-contain';
@@ -309,152 +699,27 @@ let mtMidi = {
 		this.e_contain.style.display = '';
 
 		// Init component
-		this.key.init();
 		this.jzz.init();
-
-		this.key.bind(true);
-
-		// Init Editor
-		CodeMirror.defineMode('abc', (config) => {
-			return {
-				token: function(stream) {
-					if (stream.match(/[A-Ga-g]/)) return 'abc-note';
-					if (stream.match(/\d+\/?\d*/)) return 'abc-duration';
-					if (stream.match(/K:[A-G]/)) return 'abc-key';
-					if (stream.match(/M:\d+\/\d+/)) return 'abc-meter';
-					if (stream.match(/w:.*/)) return 'abc-lyric';
-					stream.next();
-					return null;
-				}
-			};
-		});
-
-		let textarea = null;
-		if (this.h_isShadow)
-			textarea = this.shadow.getElementById('midi-input');
-		else
-			textarea = document.getElementById('midi-input');
-
-		this.m_editor = CodeMirror.fromTextArea(textarea, {
-			mode: 'abc',
-			lineNumbers: true,
-			lineWrapping: true,
-			// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-			foldGutter: true,
-			gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-		});
-		this.setCode(`
-			X: 1
-			T: Level Two - DJ Striden
-			M: 4/4
-			L: 1/8
-			Q: 1/4=144
-			K: Emin
-			%%MIDI program 32
-			G/2F/2E G/2F/2E|G E B d|d3/2B3/2 e2 z2
-			e/2f/2 g/2f/2e g/2f/2e|g a/2 b d'|d'3/2b3/2 e'2 z2
-		`.trim().split('\n').map(v=>v.trim()).join('\n'));
-
-		/*
-			G/2 F/2 E|G/2 F/2 E|G E|B d|d3/2 B3/2 e2 z2
-			e/2 f/2|g/2 f/2 e|g/2 f/2 e|g a/2 b d' d'3/2 b3/2 e'2 z2
-		*/
-
-		/*
-			|:D2|"Em"EBBA B2 EB|\
-					~B2 AB dBAG|\
-					"D"FDAD BDAD|\
-					FDAD dAFD|
-			"Em"EBBA B2 EB|\
-					B2 AB defg|\
-					"D"afe^c dBAF|\
-					"Em"DEFD E2:|
-			|:gf|"Em"eB B2 efge|\
-					eB B2 gedB|\
-					"D"A2 FA DAFA|\
-					A2 FA defg|
-			"Em"eB B2 eBgB|\
-					eB B2 defg|\
-					"D"afe^c dBAF|\
-					"Em"DEFD E2:|
-		*/
-
-		// abcjsEditor = new ABCJS.Editor("midi-input", {
-		//   canvas_id: "paper",
-		//   warnings_id: "warnings",
-		//   synth: {
-		//     el: "#audio",
-		//     options: { displayLoop: true, displayRestart: true, displayPlay: true, displayProgress: true, displayWarp: true }
-		//   },
-		//   abcjsParams: {
-		//     add_classes: true,
-		//     clickListener: clickListener
-		//   },
-		//   selectionChangeCallback: selectionChangeCallback
-		// });
-
-		// Init CSS
-		this.initCSS();
+		this.key.init();
+		this.tree.init();
+		this.code.init();
+		this.toolbar.init();
 	},
-	async initCSS() {
-		const style = document.createElement('style');
-		style.textContent = `
-			.abc-note { color: blue; font-weight: bold; }
-			.abc-duration { color: green; }
-			.abc-key { color: purple; }
-			.abc-meter { color: orange; }
-			.abc-lyric { color: brown; font-style: italic; }
-		`.trim().split('\n').map(v=>v.trim()).join('\n');
-		document.head.appendChild(style);
-	},
-	initKey() {
+	async loadABC(filepath) {
 
-	},
-	setCode(code) {
-		this.m_editor.setValue(code);
-	},
-	getCode() {
-		return this.m_editor.getValue();
-	},
-	async renderABC() {
-		const abcString = this.getCode();
+		// Call API
+		let content = await mt.api.fileRead(filepath);
 
-		// Hiển thị bản nhạc
-		ABCJS.renderAbc('midi-notation', abcString, {
-			responsive: 'resize',
-			add_classes: true,
-			jazzchords: true,
-			drum: 'dddd 76 77 77 77 60 30 30 30',
-		});
+		// Set Code
+		this.code.set(content);
 
-		// Phát nhạc (MIDI/WebAudio)
-		if (ABCJS.synth.supportsAudio()) {
-			const synthControl = new ABCJS.synth.SynthController();
-			synthControl.load('#midi-audio', null, {
-				// soundFontUrl: "/res/soundfont/marimba-mp3.js",
-				displayLoop: true,
-				displayRestart: true,
-				displayPlay: true,
-				displayProgress: true,
-				displayWarp: true,
-				displayClock: true,
-			});
-			const visualObj = ABCJS.renderAbc('midi-notation', abcString)[0];
-			const synth = new ABCJS.synth.CreateSynth();
-			synth.init({
-				visualObj: visualObj,
-				options: {
-					// soundFontUrl: "/res/soundfont/marimba-mp3.js",
-					soundFontUrl: '/res/soundfont/FluidR3_Salamander_GM/',
-					// instruments: ['marimba'],
-					// program: 12, // marimba-mp3
-					format: 'mp3',
-					soundFontVolume: 1.0,
-				}
-			}).then(() => {
-				synthControl.setTune(visualObj, true);
-			});
-		}
-	}
+		// Analyze and setForm
+		let formData = this.abc.analyze(content);
+		this.form.set(formData);
+	},
+	saveABC() {
+		console.log('filepath: ' + this.tree.m_currentFile);
+		mt.show.toast('warning', 'Chưa làm chức năng lưu!');
+	},
 }
 export default mtMidi;
