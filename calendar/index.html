@@ -50,13 +50,13 @@
 	<div id="calendar"></div>
 
 	<script type="module">
-		import mtAuthen from '/common/authen.js';
+		import mtApi from '/common/api.js';
 		import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 
 		var mt = {
 			h_debug: true,
 			h_pathDB: 'res/DB/calendar/', // Link Data Client
-			auth: mtAuthen,
+			api: mtApi,
 			d_event: {},
 
 			// Module
@@ -72,7 +72,7 @@
 							throw { error: true, message: 'Số năm không hợp lệ' };
 
 						// Authen
-						if (mt.auth.checkAuthn() == false)
+						if (mt.api.checkAuthn() == false)
 							return;
 
 						// DB Path
@@ -113,7 +113,7 @@
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer '+mt.auth.getToken() },
+								headers: { 'Authorization': 'Bearer '+mt.api.getToken() },
 							});
 							if (!response.ok)
 								throw { error: true, message: await response.text() };
@@ -132,7 +132,7 @@
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer '+mt.auth.getToken(),
+								'Authorization': 'Bearer '+mt.api.getToken(),
 							},
 							body: JSON.stringify(this.d_event[year]),
 						});
@@ -474,7 +474,7 @@
 				window.mt = this;
 
 				// Init
-				await this.auth.init();
+				await this.api.init();
 				this.form.init();
 				this.calendar.init();
 				this.utils.init();

@@ -255,12 +255,12 @@
 	</div>
 
 	<script type="module">
-		import mtAuthen from '/common/authen.js';
+		import mtApi from '/common/api.js';
 		import mtLib from '/common/lib.js';
 		import mtShow from '/common/show.js';
 
 		var mt = {
-			auth: mtAuthen,
+			api: mtApi,
 			lib: mtLib,
 			show: mtShow,
 
@@ -334,14 +334,14 @@
 					try {
 
 						// Authen
-						if (mt.auth.checkAuthn() == false)
-							await mt.auth.init();
+						if (mt.api.checkAuthn() == false)
+							await mt.api.init();
 
 						// Kiểm tra và lấy client path
 						if (this.m_clientPath.length == 0) {
 							let response = await fetch('/file/getClientPath', {
 								method: 'GET',
-								headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+								headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
 							});
 							if (!response.ok)
 								throw { error: true, message: await response.text() };
@@ -365,7 +365,7 @@
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer ' + mt.auth.getToken(),
+								'Authorization': 'Bearer ' + mt.api.getToken(),
 							},
 							body: JSON.stringify(listData),
 						});
@@ -1255,15 +1255,15 @@
 					async open() {
 
 						// Authen
-						if (mt.auth.checkAuthn() == false)
-							await mt.auth.init();
+						if (mt.api.checkAuthn() == false)
+							await mt.api.init();
 
 						// Call API - Lấy danh sách file trong thư mục nhạc
 						let paramsURL = new URLSearchParams();
 						paramsURL.append('folder', mt.mgr.h_pathMusic);
 						let response = await fetch('/file/list?' + paramsURL.toString(), {
 							method: 'GET',
-							headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+							headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
 						});
 						if (!response.ok)
 							throw { error: true, message: await response.text(), detail: response };

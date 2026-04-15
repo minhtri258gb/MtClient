@@ -1,4 +1,4 @@
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 import mtCore from '/common/core.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
@@ -10,7 +10,7 @@ import MtList from '/dynamic/components/MtList.js';
 import MtForm from '/dynamic/components/MtForm.js';
 
 let mt = {
-	auth: mtAuthen,
+	api: mtApi,
 	core: mtCore,
 	lib: mtLib,
 	file: mtFile,
@@ -38,7 +38,7 @@ let mt = {
 			this.lib.jsonEditor.ex.TagBoxRegister();
 
 			// Init
-			await this.auth.init();
+			await this.api.init();
 			await this.show.initToast();
 
 			// processParams

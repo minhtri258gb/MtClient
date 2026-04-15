@@ -1,8 +1,8 @@
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 
 var mt = {
 	h_debug: false,
-	auth: mtAuthen,
+	api: mtApi,
 
 	dev() {
 		this.calendar.createEvent();
@@ -13,7 +13,7 @@ var mt = {
 		window.mt = this;
 
 		// Authen
-		await this.auth.init();
+		await this.api.init();
 
 		this.calendar.init();
 		this.event.refresh(-2);
@@ -54,7 +54,7 @@ var mt = {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + mt.auth.getToken(),
+						'Authorization': 'Bearer ' + mt.api.getToken(),
 					},
 					body: JSON.stringify({
 						"database": "calendar",

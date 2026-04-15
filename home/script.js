@@ -1,4 +1,4 @@
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 import mtLib from '/common/lib.js';
 import mtShow from '/common/show.js';
 import mtUtils from '/common/utils.js';
@@ -10,7 +10,7 @@ import mtUtils from '/common/utils.js';
  */
 
 var mt = {
-	auth: mtAuthen,
+	api: mtApi,
 	lib: mtLib,
 	show: mtShow,
 	utils: mtUtils,
@@ -62,7 +62,7 @@ var mt = {
 			let resClientPath = await fetch('/file/getClientPath', {
 				method: 'GET',
 				headers: {
-					'Authorization': 'Bearer ' + mt.auth.getToken(),
+					'Authorization': 'Bearer ' + mt.api.getToken(),
 				},
 			});
 			this.m_clientPath = await resClientPath.text();
@@ -89,7 +89,7 @@ var mt = {
 				if (this.m_clientPath.length == 0) {
 					let response = await fetch('/file/getClientPath', {
 						method: 'GET',
-						headers: { 'Authorization': 'Bearer '+mt.auth.getToken() },
+						headers: { 'Authorization': 'Bearer '+mt.api.getToken() },
 					});
 					if (!response.ok)
 						throw { error: true, message: await response.text() };
@@ -105,7 +105,7 @@ var mt = {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'text/plain',
-						'Authorization': 'Bearer ' + mt.auth.getToken(),
+						'Authorization': 'Bearer ' + mt.api.getToken(),
 					},
 					body: JSON.stringify(data),
 				});
@@ -411,7 +411,7 @@ var mt = {
 		await mt.lib.import(['toastify', 'sweetalert2']);
 
 		// Authen
-		await this.auth.init();
+		await this.api.init();
 
 		// Read config
 		await this.mgr.loadConfig();
@@ -463,7 +463,7 @@ var mt = {
 				data: {
 					url: '/file/jstree',
 					headers: {
-						'Authorization': 'Bearer '+this.auth.getToken(),
+						'Authorization': 'Bearer '+this.api.getToken(),
 					},
 					dataType: 'json',
 					data: (node) => {

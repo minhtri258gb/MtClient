@@ -33,10 +33,10 @@
 	<div id="jstree">asd</div>
 
 	<script type="module">
-		import mtAuthen from '/common/authen.js';
+		import mtApi from '/common/api.js';
 
 		var mt = {
-			auth: mtAuthen,
+			api: mtApi,
 			m_clientPath: '',
 
 			config: {
@@ -70,13 +70,13 @@
 				window.mt = mt;
 
 				// Authen auto
-				await this.auth.login('-1393153393');
+				await this.api.login('-1393153393');
 
 				// Read config
 				let resClientPath = await fetch('/file/getClientPath', {
 					method: 'GET',
 					headers: {
-						'Authorization': 'Bearer '+this.auth.getToken(),
+						'Authorization': 'Bearer '+this.api.getToken(),
 					},
 				});
 				this.m_clientPath = await resClientPath.json();
@@ -92,7 +92,7 @@
 						data: {
 							url: '/file/jstree',
 							headers: {
-								'Authorization': 'Bearer '+this.auth.getToken(),
+								'Authorization': 'Bearer '+this.api.getToken(),
 							},
 							dataType: 'json',
 							data: (node) => {

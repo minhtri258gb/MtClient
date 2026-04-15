@@ -1,4 +1,4 @@
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 
 /**
@@ -22,7 +22,7 @@ var mt = {
 	mgr: {
 		h_pathWallpaper: '', // Link folder on Server
 		h_pathDB: 'res/DB/image.json', // Link Data Client
-		auth: mtAuthen,
+		api: mtApi,
 		m_clientPath: '', // Đường dẫn client
 		d_wallpaper: [], // List Image
 
@@ -39,7 +39,7 @@ var mt = {
 		// 	try {
 
 		// 		// Authen
-		// 		if (this.auth.checkAuthn() == false)
+		// 		if (this.api.checkAuthn() == false)
 		// 			return;
 
 		// 		// Call API
@@ -47,7 +47,7 @@ var mt = {
 		// 			method: 'POST',
 		// 			headers: {
 		// 				'Content-Type': 'application/json',
-		// 				'Authorization': 'Bearer '+this.auth.getToken(),
+		// 				'Authorization': 'Bearer '+this.api.getToken(),
 		// 			},
 		// 			body: JSON.stringify({ 'folder': this.h_pathWallpaper })
 		// 		});
@@ -81,8 +81,8 @@ var mt = {
 			try {
 
 				// Authen
-				if (this.auth.checkAuthn() == false)
-					await this.auth.init();
+				if (this.api.checkAuthn() == false)
+					await this.api.init();
 
 				// Call API
 				let paramURL = new URLSearchParams();
@@ -90,7 +90,7 @@ var mt = {
 				let url = '/file/list?' + paramURL.toString();
 				let response = await fetch(url, {
 					method: 'GET',
-					headers: { 'Authorization': 'Bearer '+this.auth.getToken() },
+					headers: { 'Authorization': 'Bearer '+this.api.getToken() },
 				});
 				if (!response.ok)
 					throw { error: true, msg: await response.text() };
@@ -117,14 +117,14 @@ var mt = {
 		async saveToJson() {
 
 			// Authen
-			if (this.auth.checkAuthn() == false)
-				await this.auth.init();
+			if (this.api.checkAuthn() == false)
+				await this.api.init();
 
 			// Kiểm tra và lấy client path
 			if (this.m_clientPath.length == 0) {
 				let response = await fetch('/file/getClientPath', {
 					method: 'GET',
-					headers: { 'Authorization': 'Bearer '+this.auth.getToken() },
+					headers: { 'Authorization': 'Bearer '+this.api.getToken() },
 				});
 				if (!response.ok)
 					throw { error: true, msg: await response.text() };
@@ -140,7 +140,7 @@ var mt = {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain',
-					'Authorization': 'Bearer '+this.auth.getToken(),
+					'Authorization': 'Bearer '+this.api.getToken(),
 				},
 				body: JSON.stringify(this.d_wallpaper),
 			});
@@ -351,7 +351,7 @@ var mt = {
 		globalThis.mt = this;
 
 		// Authen
-		// await this.mgr.auth.init();
+		// await this.mgr.api.init();
 
 		// Read Config
 		await this.mgr.readConfig();

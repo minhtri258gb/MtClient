@@ -1,8 +1,8 @@
-import mtAuthen from '/common/authen.js';
+import mtApi from '/common/api.js';
 import mtUtils from '/common/utils.js';
 
 var mt = {
-	auth: mtAuthen,
+	api: mtApi,
 	utils: mtUtils,
 
 	// h_endpoint: 'https://api.jikan.moe/v4/top/anime',
@@ -19,7 +19,7 @@ var mt = {
 		window.mt = mt;
 
 		// Authen
-		await this.auth.init();
+		await this.api.init();
 
 		// Init
 		this.initUI();
@@ -60,7 +60,7 @@ var mt = {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': 'Bearer ' + this.auth.getToken(),
+					'Authorization': 'Bearer ' + this.api.getToken(),
 				}
 			},
 			ajaxContentType: {
@@ -396,7 +396,7 @@ var mt = {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + this.auth.getToken(),
+				'Authorization': 'Bearer ' + this.api.getToken(),
 			},
 			body: JSON.stringify({
 				database: this.m_database,

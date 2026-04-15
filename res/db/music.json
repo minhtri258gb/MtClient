@@ -41,13 +41,13 @@
   },
   {
     "name": "A SAKA - Nanatsu Issenzakura",
-    "duration": 117.56263,
-    "decibel": 120,
-    "miss": false,
     "rate": 4,
-    "trackbegin": null,
-    "trackend": null,
-    "tags": ["OSU", "FAV"]
+    "duration": 117.56263,
+    "tags": ["OSU"],
+    "decibel": 120,
+    "trackbegin": 20.6,
+    "trackend": 45,
+    "miss": false
   },
   {
     "name": "Aaro - Indestructable",
@@ -61,7 +61,7 @@
   },
   {
     "name": "Addiction - GigaReol EVO",
-    "duration": 196.257959,
+    "duration": 196.231837,
     "decibel": 100,
     "miss": false,
     "rate": 2,
@@ -352,7 +352,7 @@
   {
     "name": "Bossfight - Pirate Manners",
     "rate": 3,
-    "duration": 182.114104,
+    "duration": 182.151837,
     "tags": ["GEO"],
     "decibel": 100,
     "trackbegin": null,
@@ -641,13 +641,13 @@
   },
   {
     "name": "Detious & Lockyn - Allure (Original Mix) [Melodic Dubstep]",
-    "duration": 385.149388,
-    "decibel": 110,
-    "miss": false,
     "rate": 4,
-    "trackbegin": null,
-    "trackend": null,
-    "tags": ["YT", "ROCK"]
+    "duration": 385.149388,
+    "tags": ["YT", "ROCK"],
+    "decibel": 110,
+    "trackbegin": 176,
+    "trackend": 230.42,
+    "miss": false
   },
   {
     "name": "Dex Arson - Machina",
@@ -1091,13 +1091,13 @@
   },
   {
     "name": "DJ Striden - Electro Blue Electro",
-    "rate": 4,
     "duration": 183.576961,
-    "tags": ["YT"],
     "decibel": 100,
+    "miss": false,
+    "rate": 4,
     "trackbegin": null,
     "trackend": null,
-    "miss": false
+    "tags": ["YT"]
   },
   {
     "name": "DJ Striden - Enigma [Dream Step]",
@@ -2755,8 +2755,8 @@
     "duration": 220.31093,
     "tags": ["OSU"],
     "decibel": 100,
-    "trackbegin": null,
-    "trackend": null,
+    "trackbegin": 40.5,
+    "trackend": 58,
     "miss": false
   },
   {
@@ -3901,7 +3901,7 @@
   },
   {
     "name": "Oriental Blossom - Eisyokobu",
-    "duration": 116.726712,
+    "duration": 116.767347,
     "decibel": 100,
     "miss": false,
     "rate": 3,

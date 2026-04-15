@@ -386,11 +386,11 @@
 	</div>
 
 	<script type="module">
-		import mtAuthen from '/common/authen.js';
+		import mtApi from '/common/api.js';
 		var mt = {
 			h_pathDB: '/res/DB/server.json',
 			h_pathNmap: 'D:/Apps/Nmap',
-			auth: mtAuthen,
+			api: mtApi,
 			d_servers: [],
 
 			async init() {
@@ -399,7 +399,7 @@
 				window.mt = this;
 
 				// Init
-				await this.auth.init();
+				await this.api.init();
 
 				// Load
 				await this.load();
@@ -425,7 +425,7 @@
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + mt.auth.getToken(),
+						'Authorization': 'Bearer ' + mt.api.getToken(),
 					},
 					body: JSON.stringify({
 						path: [this.h_pathNmap],
