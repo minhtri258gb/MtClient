@@ -203,10 +203,13 @@
 					</div>
 
 					<!-- Filter -->
-					<div style="margin-top:5px;">
-						<span style="display:inline-block;width:32px;">Inc </span><input id="tagInclude" type="text" style="width: calc(100% - 40px);" />
-						<br>
-						<span style="display:inline-block;width:32px;">Exc </span><input id="tagExclude" type="text" style="width: calc(100% - 40px);" />
+					<div style="display:flex;margin-top:5px;">
+						<span style="display:inline-block;width:32px;">Inc </span>
+						<mt-tagbox id="tagInclude" style="width: calc(100% - 32px);"></mt-tagbox>
+					</div>
+					<div style="display:flex;margin-top:5px;">
+						<span style="display:inline-block;width:32px;">Exc </span>
+						<mt-tagbox id="tagExclude" style="width: calc(100% - 32px);"></mt-tagbox>
 					</div>
 
 				</div>
@@ -483,6 +486,16 @@
 				load(lstRow) {
 					this.p_table.setData(lstRow);
 				},
+				updateFilter() {
+					this.p_table.setFilter((data) => {
+						const includeOk = mt.player.m_filterInc.length === 0 || mt.player.m_filterInc.some(tag => data.tags.includes(tag));
+						const excludeOk = mt.player.m_filterExc.every(tag => !data.tags.includes(tag));
+						return includeOk && excludeOk;
+					});
+				},
+				cleanFilter() {
+					this.p_table.clearFilter();
+				},
 				highlightRow(id) {
 
 					// Xóa highlight cũ
@@ -692,6 +705,8 @@
 				c_pause: null, // Element Button Pause
 				c_ckbNext: null, // Checkbox auto next
 				c_loop: null, // Element Input Loop
+				c_filterInc: null, // Element tagbox include
+				c_filterExc: null, // Element tagbox exclude
 				c_playlist: null, // Element playlist
 				p_audioContext: null, // AudioContext
 				m_currentMusic: null, // Data bài phát hiện tại
@@ -700,6 +715,8 @@
 				m_volumeBase: 1, // Volume chuẩn (chưa thay đổi theo từng bài)
 				m_volumeMute: false, // Cờ tắt âm thanh
 				m_autoNext: true, // Cờ tự random bài tiếp theo
+				m_filterInc: [],
+				m_filterExc: [],
 				d_playList: [], // Danh sách nhạc
 
 				init() {
@@ -727,7 +744,18 @@
 					this.c_pause = document.getElementById('btnPause');
 					this.c_ckbNext = document.getElementById('ckbNext');
 					this.c_loop = document.getElementById('loop');
+					this.c_filterInc = document.getElementById('tagInclude');
+					this.c_filterExc = document.getElementById('tagExclude');
 					this.c_playlist = document.getElementById('playlist');
+
+					this.c_filterInc.addEventListener('change', e => {
+						this.m_filterInc = e.detail.value;
+						mt.list.updateFilter();
+					});
+					this.c_filterExc.addEventListener('change', e => {
+						this.m_filterExc = e.detail.value;
+						mt.list.updateFilter();
+					});
 
 					// UI
 					this.c_volumeBar.value = this.m_volumeBase * 100;
@@ -1878,7 +1906,8 @@
 				globalThis.mt = this;
 
 				// Import Library
-				await mt.lib.import(['tingle','jsonEditor']);
+				this.lib.component(['Rate','TagBox']); // Ko cần đợi
+				await this.lib.import(['tingle','jsonEditor']);
 
 				// Read Config
 				await this.mgr.loadConfig();

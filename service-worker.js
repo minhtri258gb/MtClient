@@ -1,12 +1,12 @@
 const CACHE_NAME = 'hello-world-pwa-v1';
 const urlsToCache = [
   '/',
-  '/pwa/index.html',
-  '/pwa/index1.html',
-  '/pwa/index2.html',
-  '/pwa/index3.html',
+  // '/pwa/index.html',
+  // '/pwa/index1.html',
+  // '/pwa/index2.html',
+  // '/pwa/index3.html',
   '/pwa/index4.html',
-  '/pwa/index5.html',
+  // '/pwa/index5.html',
   '/pwa/styles.css',
   '/pwa/script.js',
   '/pwa/icon-192x192.png',

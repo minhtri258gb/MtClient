@@ -48,7 +48,7 @@ var mt = {
 			window.history.pushState('', '', '/music');
 		},
 		access() {
-			mt.auth.show((result) => {
+			mt.api.show((result) => {
 				if (result)
 					$('#btnAccess').hide();
 			});
@@ -447,7 +447,7 @@ var mt = {
 				url: '/common/getIPLocal',
 				type: 'GET',
 				data: {
-					token: mt.auth.get()
+					token: mt.api.get()
 				},
 				success: (res, status) => {
 					if (status == 'success') {
@@ -1132,7 +1132,7 @@ var mt = {
 			this.form.form({
 				url: '/music/edit',
 				onSubmit: (param) => {
-					param.token = mt.auth._token; // Add token
+					param.token = mt.api._token; // Add token
 				},
 				success: (res) => {
 					if (res == "Access denied") {
@@ -1237,7 +1237,7 @@ var mt = {
 				type: 'POST',
 				url: '/music/refresh',
 				data: {
-					token: mt.auth.get()
+					token: mt.api.get()
 				},
 				dataType: 'json',
 				success: (res) => {
@@ -1265,7 +1265,7 @@ var mt = {
 				url: '/music/addAll',
 				data: {
 					lstFileName: lstFileName,
-					token: mt.auth.get(),
+					token: mt.api.get(),
 				},
 				success: (res) => {
 					mt.gui.layout.layout('collapse', 'east'); // Đóng phần chỉnh sửa
@@ -1308,7 +1308,7 @@ var mt = {
 					url: '/music/add',
 					data: {
 						name: mt.new.lstMusicNew[index].name,
-						token: mt.auth.get(),
+						token: mt.api.get(),
 					},
 					success: (res) => {
 						let lst = mt.new.lstMusicNew;

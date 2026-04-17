@@ -6,8 +6,8 @@ var mtFile = {
 		try {
 
 			// Check auth
-			if (!mt.auth.checkAuthn())
-				await mt.auth.init();
+			if (!mt.api.checkAuthn())
+				await mt.api.init();
 
 			// ParamsURL
 			let params = new URLSearchParams();
@@ -16,7 +16,7 @@ var mtFile = {
 			// Call API
 			let response = await fetch('/file/list?' + params.toString(), {
 				method: 'GET',
-				headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
 			});
 
 			if (!response.ok) {
@@ -54,8 +54,8 @@ var mtFile = {
 		try {
 
 			// Check auth
-			if (!mt.auth.checkAuthn())
-				await mt.auth.init();
+			if (!mt.api.checkAuthn())
+				await mt.api.init();
 
 			// ParamsURL
 			let params = new URLSearchParams();
@@ -64,7 +64,7 @@ var mtFile = {
 			// Call API
 			let response = await fetch('/file/read?' + params.toString(), {
 				method: 'GET',
-				headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
 			});
 
 			if (!response.ok) {
@@ -112,14 +112,14 @@ var mtFile = {
 		try {
 
 			// Authen
-			if (mt.auth.checkAuthn() == false)
-				await mt.auth.init();
+			if (mt.api.checkAuthn() == false)
+				await mt.api.init();
 
 			// Kiểm tra và lấy client path
 			if (this.m_clientPath.length == 0) {
 				let response = await fetch('/file/getClientPath', {
 					method: 'GET',
-					headers: { 'Authorization': 'Bearer ' + mt.auth.getToken() },
+					headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
 				});
 				if (!response.ok)
 					throw { error: true, message: await response.text() };
@@ -135,7 +135,7 @@ var mtFile = {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'text/plain',
-					'Authorization': 'Bearer ' + mt.auth.getToken(),
+					'Authorization': 'Bearer ' + mt.api.getToken(),
 				},
 				body: JSON.stringify(data),
 			});

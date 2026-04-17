@@ -1,6 +1,6 @@
 {
-  "name": "PWA Demo",
-  "short_name": "PWA Demo",
+  "name": "Mt Client",
+  "short_name": "MtClient",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

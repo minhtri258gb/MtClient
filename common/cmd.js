@@ -7,7 +7,7 @@ var mtCmd = {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + mt.auth.getToken(),
+				'Authorization': 'Bearer ' + mt.api.getToken(),
 			},
 			body: JSON.stringify({ path, cmd }),
 		});

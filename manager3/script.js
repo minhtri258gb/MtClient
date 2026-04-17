@@ -48,7 +48,9 @@ let mt = {
 					{ type: 'check', id: 'menu', text: 'Menu', icon: 'fa-solid fa-bars', checked: true },
 					{ type: 'break' },
 					{ type: 'button', id: 'home', text: 'Home', icon: 'fa-solid fa-house' },
-					{ type: 'button', id: 'item1', text: 'Button', icon: 'w2ui-icon-colors' },
+					{ type: 'button', id: 'music', text: 'Music', icon: 'fa-solid fa-music' },
+					{ type: 'button', id: 'piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
+					{ type: 'button', id: 'dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
 					{ type: 'break' },
 					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
 					{ type: 'check', id: 'item3', text: 'Check 2', icon: 'w2ui-icon-check' },
@@ -62,7 +64,9 @@ let mt = {
 				],
 				onClick: (event) => {
 					switch (event.target) {
-						case 'home': mt.home.open(); break;
+						case 'home': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home'); break;
+						case 'music': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2'); break;
+						case 'piano': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano'); break;
 						case 'menu': this.btnMenu(!event.object.checked); break;
 						case 'share': this.btnShare(); break;
 					}
@@ -73,12 +77,6 @@ let mt = {
 			let c_w2sidebar = new w2sidebar({
 				name: 'sidebar',
 				nodes: [
-					{ id: 'app', text: 'Apps', group: true, expanded: true, nodes: [
-						{ id: 'home', text: 'Home', icon: 'fa-solid fa-house-chimney' },
-						{ id: 'music', text: 'Music', icon: 'fa-solid fa-music' },
-						{ id: 'piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
-						{ id: 'dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
-					]},
 					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
 						{ id: 'explorer', text: 'Explorer', icon: 'fa-solid fa-folder-tree' },
 						{ id: 'document', text: 'Document', icon: 'fa-solid fa-book' },
@@ -93,9 +91,6 @@ let mt = {
 						{ id: 'game', text: 'Game', icon: 'fa-solid fa-gamepad' },
 						{ id: 'movie', text: 'Movie', icon: 'fa-solid fa-film' },
 						{ id: 'manga', text: 'Manga', icon: 'fa-solid fa-book-open' },
-					]},
-					{ id: 'social', text: 'Social', group: true, expanded: true, nodes: [
-						{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
 					]},
 					{ id: 'editor', text: 'Editor', group: true, expanded: true, nodes: [
 						{ id: 'markdown', text: 'Markdown', icon: 'fa-brands fa-markdown' },
@@ -114,6 +109,9 @@ let mt = {
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
 						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
 						{ id: 'base64', text: 'Base64', icon: 'fa-regular fa-file-lines' },
+					]},
+					{ id: 'social', text: 'Social', group: true, expanded: true, nodes: [
+						{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
 					]},
 					{ id: 'games', text: 'Games', group: true, expanded: true, nodes: [
 						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
@@ -353,21 +351,6 @@ let mt = {
 				window.open(link);
 			})
 			.cancel(() => w2popup.close());
-		}
-	},
-	home: {
-		open() {
-			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home');
-		}
-	},
-	music: {
-		open() {
-			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2');
-		}
-	},
-	piano: {
-		open() {
-			mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano');
 		}
 	},
 	dynamic: {
@@ -2456,6 +2439,7 @@ let mt = {
 			mt.h_debug && console.log('[mt.sheet.load]', { filepath, csvText: this.d_dataText, results: this.d_dataParse });
 		}
 	},
+	html: 'ext',
 	pdf: {
 		m_init: false,
 		e_contain: null,

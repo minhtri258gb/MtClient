@@ -1,4 +1,5 @@
 var mtLib = {
+	m_components: [], // Danh sách component đã đăng ký
 
 	async import(libs) {
 		let promise = [];
@@ -52,7 +53,22 @@ var mtLib = {
 		let res = await fetch(url)
 		target[name] = await res.text();
 	},
-	
+	async component(components) {
+		let promise = [];
+		for (let name of components) {
+
+			// Chỉ định nghĩa component 1 lần
+			if (this.m_components.includes(name))
+				continue;
+			this.m_components.push(name);
+
+			// Load component
+			let p = import(`/common/components/${name}.js`);
+			promise.push(p);
+		}
+		await Promise.all(promise); // Đợi load toàn bộ
+	},
+
 	'ABCJS': { init: false, async load() {
 		let path = '/lib/abcjs/';
 		await Promise.all([
