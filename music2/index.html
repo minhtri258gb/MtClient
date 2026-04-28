@@ -237,7 +237,10 @@
 				<div id="toolbox-track" class="toolbox-content">
 					<div style="margin:4px 4px 0 0; display:flex;justify-content:center;gap:4px">
 						<button onclick="mt.tools.track.play()" title="Chạy thử bản track" class="iconButton"><i class="fa-solid fa-play"></i></button>
+						<button onclick="mt.tools.track.fill(true)" title="Fill begin" class="iconButton"><i class="fa-solid fa-backward-step"></i></button>
+						<button onclick="mt.tools.track.fill(false)" title="Fill end" class="iconButton"><i class="fa-solid fa-forward-step"></i></button>
 						<button onclick="mt.tools.track.save()" title="Lưu track" class="iconButton"><i class="fa-solid fa-floppy-disk"></i></button>
+						<button onclick="mt.tools.track.download()" title="Tải track" class="iconButton"><i class="fa-solid fa-download"></i></button>
 					</div>
 					<div style="margin-top:8px;display:flex;justify-content:space-around">
 						<input id="toolbox-track-begin" type="text">
@@ -266,6 +269,8 @@
 			api: mtApi,
 			lib: mtLib,
 			show: mtShow,
+
+			h_debug: true,
 
 			// Module
 			mgr: {
@@ -1476,10 +1481,53 @@
 							mt.show.toast('error', ex.message);
 						}
 					},
+					fill(isBegin) {
+
+						// Lấy thời gian hiện tại
+						let curTime = mt.player.c_audio.currentTime;
+
+						// Fill vào input
+						if (isBegin)
+							this.c_begin.value = curTime;
+						else
+							this.c_end.value = curTime;
+
+						// Log
+						mt.h_debug && console.log('[music.tools.track.fill]', { isBegin, curTime });
+					},
 					save() {
+
+						let curMusic = mt.player.m_currentMusic;
+						if (curMusic == null) {
+							mt.show.toast('warning', 'Chưa chọn nhạc!');
+							return;
+						}
+
+						let trackbegin = Number.parseFloat(this.c_begin.value);
+						let trackend = Number.parseFloat(this.c_end.value);
+
+						if (isNaN(trackbegin) || isNaN(trackend)) {
+							mt.show.toast('warning', 'Chưa nhập đủ bắt đầu và kết thúc track!');
+							return;
+						}
+						if (trackbegin < 0 || trackbegin > trackend || trackend > curMusic.duration) {
+							mt.show.toast('warning', 'Thời điểm bắt đầu và kết thúc không hợp lệ!');
+							return;
+						}
+
+						let cloneMusic = JSON.parse(JSON.stringify(curMusic));
+						cloneMusic.trackbegin = trackbegin;
+						cloneMusic.trackend = trackend;
+
+						mt.form.open(cloneMusic);
+
+						mt.h_debug && console.log('[music.tools.track.save]', { curMusic });
+					},
+					download() {
 						if (mt.player.m_currentMusic == null)
 							return;
 
+						mt.show.toast('warning', 'Chưa có chức năng save!');
 					},
 					setTime(music) {
 						this.c_begin.value = music.trackbegin;
