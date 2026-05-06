@@ -941,7 +941,7 @@ let mt = {
 
 			// Init Mermaid
 			mermaid.initialize({ startOnLoad: false });
-			
+
 			// Init CSS
 			this.initCSS();
 
@@ -2178,60 +2178,7 @@ let mt = {
 			return this.c_canvas.toDataURL();
 		}
 	},
-	diagram: {
-		m_init: false,
-		e_contain: null,
-		
-		async init() {
-
-			// Import Library
-			await mt.lib.import(['CodeMirror']);
-			await mt.lib.import(['CodeMirror-md',]);
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'diagram-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			this.e_contain.innerHTML = `
-				<textarea id="diagram-input" rows="10" cols="60"></textarea>
-				<br>
-				<button onclick="mt.diagram.renderABC()">Render</button>
-				<br>
-				<div id="diagram-audio"></div>
-				<br>
-				<div id="diagram-notation"></div>
-			`.trim().split('\n').map(v=>v.trim()).join('\n');
-
-			// Init Editor
-			let textarea = document.getElementById('diagram-input');
-			this.m_editor = CodeMirror.fromTextArea(textarea, {
-				mode: 'markdown',
-				lineNumbers: true,
-				lineWrapping: true,
-				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-				foldGutter: true,
-				gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-			});
-			this.setCode(`
-				# Header 1
-				## Header 2
-				* Wat
-					- tree1
-					- tree2
-					- tree3
-				- [ ] TODO 1
-				- [ ] TODO 2
-			`.trim().split('\n').map(v=>v.trim()).join('\n'));
-		},
-		setCode(code) {
-			this.m_editor.setValue(code);
-		},
-		getCode() {
-			return this.m_editor.getValue();
-		},
-	},
+	diagram: 'ext',
 	sheet: {
 
 		/**

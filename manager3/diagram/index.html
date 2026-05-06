@@ -1,0 +1,21 @@
+<div style="width:100%;height:100%;display:flex;">
+
+	<!-- Left -->
+	<div style="flex:1;">
+
+		<!-- Toolbar -->
+		<button onclick="mt.diagram.btnRender()">Render</button>
+
+		<!-- Code -->
+		<textarea id="diagram-input" rows="10" cols="60"></textarea>
+
+		<label>Type</label>
+		<select id="diagram-type" onchange="mt.diagram.onChangeType()"></select>
+		<br><br>
+
+	</div>
+
+	<!-- Right -->
+	<div id="diagram-render" style="flex:1;height:100%;border-left:1px solid #000;text-align:center;"></div>
+
+</div>

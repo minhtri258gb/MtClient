@@ -4111,13 +4111,13 @@
   },
   {
     "name": "Plants vs Zombies Soundtrack - Mini Games",
-    "duration": 106.800979,
-    "decibel": 100,
-    "miss": false,
     "rate": 3,
+    "duration": 106.800979,
+    "tags": ["GAME"],
+    "decibel": 100,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "Plants vs Zombies Soundtrack - Zomboss Stage",
