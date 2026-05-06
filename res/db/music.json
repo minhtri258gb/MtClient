@@ -111,13 +111,13 @@
   },
   {
     "name": "Alan Walker - Spectre  Force  Fade NCS Tribute Remake",
+    "rate": 2,
     "duration": 730.109388,
+    "tags": ["YT"],
     "decibel": 100,
-    "miss": false,
-    "rate": 3,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "Alan Walker - The Spectre",
@@ -128,6 +128,16 @@
     "trackbegin": null,
     "trackend": null,
     "tags": ["YT"]
+  },
+  {
+    "name": "Alan Walker, Sabrina Carpenter x Farruko  - On My Way",
+    "rate": 3,
+    "duration": 216.886,
+    "tags": ["LYRIC", "EN"],
+    "decibel": 100,
+    "trackbegin": 171,
+    "trackend": 197,
+    "miss": false
   },
   {
     "name": "Alec Benjamin - Let Me Down Slowly",
@@ -312,7 +322,7 @@
   {
     "name": "Blue Archive OST 77 - Burning Love",
     "rate": 3,
-    "duration": null,
+    "duration": 121.997642,
     "tags": ["GAME"],
     "decibel": 100,
     "trackbegin": null,
@@ -352,7 +362,7 @@
   {
     "name": "Bossfight - Pirate Manners",
     "rate": 3,
-    "duration": 182.151837,
+    "duration": 182.114104,
     "tags": ["GEO"],
     "decibel": 100,
     "trackbegin": null,
@@ -371,7 +381,7 @@
   },
   {
     "name": "Brynhildr in the Darkness - Opening 1",
-    "duration": 99.657143,
+    "duration": 99.613605,
     "decibel": 100,
     "miss": false,
     "rate": 3,
@@ -528,6 +538,16 @@
     "trackbegin": null,
     "trackend": null,
     "tags": ["OSU"]
+  },
+  {
+    "name": "Counter Strike - Zombie Scenario",
+    "duration": null,
+    "decibel": 100,
+    "rate": 3,
+    "tags": ["NEW"],
+    "trackbegin": null,
+    "trackend": null,
+    "miss": false
   },
   {
     "name": "Creo - Carnivores",
@@ -811,7 +831,7 @@
   },
   {
     "name": "DJ Spyroof & DJ Striden - Golden Star",
-    "duration": 266.083265,
+    "duration": 266.05424,
     "decibel": 100,
     "miss": false,
     "rate": 4,
@@ -1091,23 +1111,23 @@
   },
   {
     "name": "DJ Striden - Electro Blue Electro",
-    "duration": 183.576961,
-    "decibel": 100,
-    "miss": false,
     "rate": 4,
+    "duration": 183.576961,
+    "tags": ["YT"],
+    "decibel": 100,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["YT"]
+    "miss": false
   },
   {
     "name": "DJ Striden - Enigma [Dream Step]",
-    "duration": 300.396553,
-    "decibel": 100,
-    "miss": false,
     "rate": 3,
+    "duration": 300.396553,
+    "tags": ["YT"],
+    "decibel": 100,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "DJ Striden - Epiphany [Trance Drive]",
@@ -1151,7 +1171,7 @@
   },
   {
     "name": "DJ Striden - Fight [EDM]",
-    "duration": null,
+    "duration": 198.878917,
     "decibel": 100,
     "rate": 3,
     "tags": ["NEW"],
@@ -1651,10 +1671,10 @@
   },
   {
     "name": "DJ Striden - Smash Hit [Electro]",
-    "duration": null,
+    "rate": 2,
+    "duration": 255.001563,
+    "tags": ["YT"],
     "decibel": 100,
-    "rate": 3,
-    "tags": ["NEW"],
     "trackbegin": null,
     "trackend": null,
     "miss": false
@@ -1821,7 +1841,7 @@
   },
   {
     "name": "DJ Totto - Astrogazer",
-    "duration": null,
+    "duration": 107.43873,
     "decibel": 100,
     "miss": false,
     "rate": 3,
@@ -1941,7 +1961,7 @@
   },
   {
     "name": "Drop - Granat",
-    "duration": 47.15102,
+    "duration": 47.113288,
     "decibel": 100,
     "miss": false,
     "rate": 4,
@@ -2951,13 +2971,13 @@
   },
   {
     "name": "Kirara Magic & Yirokos - Chrono",
-    "duration": 244.157823,
-    "decibel": 140,
-    "miss": false,
     "rate": 5,
+    "duration": 244.157823,
+    "tags": ["YT"],
+    "decibel": 140,
     "trackbegin": 64.9,
     "trackend": 91,
-    "tags": ["YT", "FAV"]
+    "miss": false
   },
   {
     "name": "Kitsune2 - Rainbow Tylenol",
@@ -3321,13 +3341,13 @@
   },
   {
     "name": "MadhouseDude - Now Were Talking",
-    "duration": 249.939592,
+    "rate": 2,
+    "duration": 249.893152,
+    "tags": ["YT"],
     "decibel": 100,
-    "miss": false,
-    "rate": 3,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "MadhouseDude - Omega",
@@ -3351,7 +3371,7 @@
   },
   {
     "name": "Marshmello - Alone",
-    "duration": 199.549388,
+    "duration": 199.50585,
     "decibel": 100,
     "miss": false,
     "rate": 3,
@@ -3590,6 +3610,26 @@
     "tags": ["OSU"]
   },
   {
+    "name": "Nightcall - Kallocain",
+    "duration": 228.008354,
+    "decibel": 100,
+    "rate": 3,
+    "tags": ["NEW"],
+    "trackbegin": null,
+    "trackend": null,
+    "miss": false
+  },
+  {
+    "name": "Nightcall - Reverie",
+    "rate": 3,
+    "duration": 290.197333,
+    "tags": ["NEW"],
+    "decibel": 130,
+    "trackbegin": null,
+    "trackend": null,
+    "miss": false
+  },
+  {
     "name": "Nightcall - Stuck In Dreams",
     "rate": 4,
     "duration": 247.125333,
@@ -3597,6 +3637,16 @@
     "decibel": 100,
     "trackbegin": 84.3,
     "trackend": 117.5,
+    "miss": false
+  },
+  {
+    "name": "Nightcore - Alan Walker, Sabrina Carpenter x Farruko - On My Way",
+    "rate": 3,
+    "duration": 173.034667,
+    "tags": ["LYRIC", "EN"],
+    "decibel": 100,
+    "trackbegin": null,
+    "trackend": null,
     "miss": false
   },
   {
@@ -3618,6 +3668,16 @@
     "trackbegin": null,
     "trackend": null,
     "tags": ["YT"]
+  },
+  {
+    "name": "Nightcore - Darkside - (Alan Walker _ Lyrics)",
+    "duration": null,
+    "decibel": 100,
+    "rate": 3,
+    "tags": ["NEW"],
+    "trackbegin": null,
+    "trackend": null,
+    "miss": false
   },
   {
     "name": "Nightcore - Feeling So Blue",
@@ -3702,7 +3762,7 @@
   {
     "name": "Nightcore - Nevada",
     "rate": 4,
-    "duration": "",
+    "duration": 184.227125,
     "tags": ["YT", "LYRIC", "EN"],
     "decibel": 100,
     "trackbegin": null,
@@ -3901,7 +3961,7 @@
   },
   {
     "name": "Oriental Blossom - Eisyokobu",
-    "duration": 116.767347,
+    "duration": 116.726712,
     "decibel": 100,
     "miss": false,
     "rate": 3,
@@ -4701,13 +4761,13 @@
   },
   {
     "name": "Two Steps From Hell - Cannon in D Minor",
-    "duration": 190.078549,
-    "decibel": 100,
-    "miss": false,
     "rate": 3,
+    "duration": 190.078549,
+    "tags": ["EPIC"],
+    "decibel": 100,
     "trackbegin": null,
     "trackend": null,
-    "tags": ["NEW"]
+    "miss": false
   },
   {
     "name": "Two Steps From Hell - El Dorado SkyWorld",
@@ -4955,14 +5015,14 @@
     "duration": 208.596479,
     "tags": ["YT", "LYRIC", "EN"],
     "decibel": 100,
-    "trackbegin": null,
-    "trackend": null,
+    "trackbegin": 92,
+    "trackend": 110.3,
     "miss": false
   },
   {
     "name": "Vicetone - Nevada (Instrumental)",
     "rate": 4,
-    "duration": "",
+    "duration": 211.081,
     "tags": ["YT"],
     "decibel": 100,
     "trackbegin": null,

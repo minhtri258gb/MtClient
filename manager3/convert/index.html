@@ -1,0 +1,53 @@
+<div>
+
+	<h1>Search convert</h1>
+	<input type="text" />
+
+	<div id="convert-convertBase64">
+		<h2 id="convert-labelBase64">Text -> Base64</h2>
+		<input id="convert-directBase64" type="hidden" value="1" />
+		<button onclick="mt.convert.switch('Base64')">Switch</button>
+		<input id="convert-inputBase64" type="text" />
+		<button onclick="mt.convert.exec('Base64')">Convert</button>
+		<span id="convert-outputBase64"></span>
+	</div>
+
+	<div id="convert-convertURL">
+		<h2 id="convert-labelURL">URL -> ParamURL</h2>
+		<input id="convert-directURL" type="hidden" value="1" />
+		<button onclick="mt.convert.switch('URL')">Switch</button>
+		<select id="convert-typeConvertURL">
+			<option value="all">All</option>
+			<option value="keep">Keep struct</option>
+		</select>
+		<input id="convert-inputURL" type="text" />
+		<button onclick="mt.convert.exec('URL')">Convert</button>
+		<span id="convert-outputURL"></span>
+	</div>
+
+	<div id="convert-hashString">
+		<h2 id="convert-labelHashString">String -> MD5</h2>
+		<select id="convert-typeHashString">
+			<option value="MD5">MD5</option>
+			<option value="SHA1">SHA1</option>
+		</select>
+		<input id="convert-inputHashString" type="text" />
+		<button onclick="mt.convert.exec('HashString')">Convert</button>
+		<span id="convert-outputHashString"></span>
+	</div>
+
+	<div id="convert-fixUnicode">
+		<h2 id="convert-labelFixUnicode">Asscii -> Unicode</h2>
+		<input id="convert-inputFixUnicode" type="text" />
+		<button onclick="mt.convert.exec('FixUnicode')">Convert</button>
+		<span id="convert-outputFixUnicode"></span>
+	</div>
+
+	<div id="convert-base64ToFile">
+		<h2 id="convert-labelBase64ToFile">Base64 -> File</h2>
+		<input id="convert-inputBase64ToFile" type="text" />
+		<button onclick="mt.convert.exec('Base64ToFile')">Convert</button>
+		<span id="convert-outputBase64ToFile"></span>
+	</div>
+
+</div>

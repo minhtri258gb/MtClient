@@ -1,0 +1,41 @@
+<div>
+
+	<image id="qrcode-image" style="width:300px;height:300px;float:left;border:solid;border-width:1px;"></image>
+	<div id="qrcode-result" style="display:none;float:left;"></div>
+
+	<div style="float:left;margin-left:20px;">
+
+		<label>Text</label>
+		<textarea id="qrcode-text" placeholder="content ..." style="width:650px;height:100px;"></textarea>
+		<br><br>
+
+		<label>Radius</label>
+		<input id="qrcode-radius" type="range" min="0" max="0.5" step="0.025" value="0">
+		<span>(0 - 0.5)</span>
+		<br><br>
+
+		<label>EC Level</label>
+		<select id="qrcode-ecLevel" class="easyui-combobox" data-options="width:300,panelHeight:130">
+			<option value="L">Low, 7%</option>
+			<option value="M">Medium, 15%</option>
+			<option value="Q">Quarter, 25%</option>
+			<option value="H" selected>High, 30%</option>
+		</select>
+		<br><br>
+
+		<label>Fill Color</label>
+		<input id="qrcode-fill" type="color" value="#000000">
+		<label>Background Color</label>
+		<input id="qrcode-background" type="color" value="#ffffff">
+		<br><br>
+
+		<label>Size</label>
+		<input id="qrcode-size" type="range" min="20" max="1000" step="10" value="300">
+		<span>(20 - 1000)</span>
+		<br><br>
+
+		<button onclick="mt.qrcode.generate()">Generate</button>
+
+	</div>
+
+</div>

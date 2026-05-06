@@ -31,3 +31,7 @@ body {
 .nGY2Viewer {
 	z-index: 999 !important;
 }
+
+.jstree-contextmenu {
+	z-index: 120;
+}

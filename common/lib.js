@@ -214,6 +214,9 @@ var mtLib = {
 	'mathjs': { init: false, async load() {
 		await mtLib.loadJS('/lib/mathjs-15.1.1/math.js');
 	}},
+	'md5': { init: false, async load() {
+		await mtLib.loadJS('/lib/blueimp-md5/js/md5.min.js');
+	}},
 	'mermaid': { init: false, async load() {
 		await mtLib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
 	}},
@@ -259,6 +262,13 @@ var mtLib = {
 			// mtLib.loadJS(path+'gchart_renderers.min.js'),
 			// mtLib.loadJS(path+'plotly_renderers.min.js'),
 			mtLib.loadJS(path+'tips_data.min.js'),
+		]);
+	}},
+	'QrCode': { init: false, async load() {
+		let path = '/lib/QrCode/';
+		await Promise.all([
+			mtLib.loadJS(path+'qr-creator.min.js'),
+			mtLib.loadJS(path+'qr-scanner.min.js', 'es', 'QrScanner'),
 		]);
 	}},
 	'SimpleMDE': { init: false, async load() {

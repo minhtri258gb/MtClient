@@ -23,7 +23,7 @@
     "name": "Ngày Giải phóng Miền Nam, Thống nhất Đất nước",
     "type": "holiday"
   },
-  { "date": "2026-05-01", "name": "Ngày Quốc tế Lao động" },
+  { "date": "2026-05-01", "name": "Ngày Quốc tế Lao động", "type": "holiday" },
   { "date": "2026-05-12", "name": "Ngày Quốc tế Điều dưỡng" },
   { "date": "2026-05-22", "name": "Lễ Phật Đản" },
   { "date": "2026-06-01", "name": "Ngày Quốc tế Thiếu nhi" },
@@ -35,7 +35,7 @@
   { "date": "2026-07-27", "name": "Ngày Thương binh Liệt sĩ" },
   { "date": "2026-08-18", "name": "Tết Trung nguyên / Lễ Vu-lan" },
   { "date": "2026-08-19", "name": "Ngày hội Toàn dân bảo vệ an ninh Tổ quốc" },
-  { "date": "2026-09-02", "name": "Ngày Quốc khánh" },
+  { "date": "2026-09-02", "name": "Ngày Quốc khánh", "type": "holiday" },
   { "date": "2026-09-14", "name": "Ngày Sân Khấu Việt Nam" },
   { "date": "2026-09-17", "name": "Tết Trung Thu" },
   { "date": "2026-10-20", "name": "Ngày Khuyến học Việt Nam" },
@@ -104,5 +104,10 @@
     "type": "meet",
     "time": "18:00",
     "location": { "lat": 10.775754473811272, "lng": 106.68061494827272 }
+  },
+  {
+    "date": "2026-11-13",
+    "name": "Chứng chỉ hinnova.vn hết hạn",
+    "type": "note"
   }
 ]
