@@ -251,6 +251,9 @@
 			</div>
 			<br>
 
+			<!-- Image -->
+			<img id="music-image" style="display:none;width:100%;" />
+
 		</div>
 		<div class="layoutCenter">
 
@@ -286,11 +289,7 @@
 				async loadConfig() {
 
 					// Call API - read Enviroment
-					let response = await fetch('/common/getConfig?key=PATH_MUSIC', { method: 'GET' });
-					if (!response.ok)
-						throw { error: true, msg: await response.text() };
-
-					this.h_pathMusic = await response.text();
+					this.h_pathMusic = await mt.api.config('PATH_MUSIC');
 				},
 				processParamURL() {
 					let urlParams = new URLSearchParams(window.location.search);
@@ -409,7 +408,12 @@
 						// Giải phóng dữ liệu cũ và mã hóa dữ liệu mới
 						if (this.d_blogUrl.length > 0)
 							URL.revokeObjectURL(this.d_blogUrl);
-						this.d_blogUrl = URL.createObjectURL(new Blob([this.d_arrayBufferFile]));
+
+						let blob = new Blob([this.d_arrayBufferFile]);
+						this.d_blogUrl = URL.createObjectURL(blob);
+
+						// Lấy image nếu có
+						mt.tools.readImage(blob);
 					}
 					catch (ex) {
 						throw { error: true, message: ex.message, detail: ex };
@@ -713,6 +717,7 @@
 				c_filterInc: null, // Element tagbox include
 				c_filterExc: null, // Element tagbox exclude
 				c_playlist: null, // Element playlist
+				c_image: null, // Element Image
 				p_audioContext: null, // AudioContext
 				m_currentMusic: null, // Data bài phát hiện tại
 				m_track: { id:null, begin:0, end:0 }, // Bài track hiện tại
@@ -752,6 +757,7 @@
 					this.c_filterInc = document.getElementById('tagInclude');
 					this.c_filterExc = document.getElementById('tagExclude');
 					this.c_playlist = document.getElementById('playlist');
+					this.c_image = document.getElementById('music-image');
 
 					this.c_filterInc.addEventListener('change', e => {
 						this.m_filterInc = e.detail.value;
@@ -1608,6 +1614,33 @@
 						console.log('[mt.tools.run]', ex);
 					}
 				},
+
+				readImage(fileOrBlob) {
+
+					// Ẩn ảnh
+					if (mt.player.c_image.style.display == '')
+						mt.player.c_image.style.display = 'none';
+
+					// Lib exec
+					jsmediatags.read(fileOrBlob, {
+						onSuccess: (tag) => {
+							const picture = tag.tags.picture;
+							if (picture) {
+								const base64String = picture.data.map(byte => String.fromCharCode(byte)).join('');
+								const base64 = btoa(base64String);
+								const mimeType = picture.format;
+								const imageUrl = `data:${mimeType};base64,${base64}`;
+
+								// Render ra <img>
+								mt.player.c_image.style.display = '';
+								mt.player.c_image.src = imageUrl;
+							}
+						},
+						onError: (ex) => {
+							console.error('[mt.tools.readImage] Error reading tags:', ex);
+						}
+					});
+				},
 			},
 			event: {
 				m_action: '',
@@ -1955,7 +1988,7 @@
 
 				// Import Library
 				this.lib.component(['Rate','TagBox']); // Ko cần đợi
-				await this.lib.import(['tingle','jsonEditor']);
+				await this.lib.import(['tingle','jsonEditor','jsmediatags']);
 
 				// Read Config
 				await this.mgr.loadConfig();

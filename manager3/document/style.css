@@ -1,0 +1,16 @@
+
+.md-contain { display: flex; height: 100%; }
+.md-toc {
+	flex: 0 0 auto;
+	width: fit-content;
+	max-width: 300px;
+	padding-right: 4px;
+	overflow: auto;
+	border-right: 1px solid #ddd;
+	border-left: 1px solid #ddd;
+	ol { padding-left: 24px; text-decoration: none; }
+}
+.md-doc {
+	flex: 1 1 auto; margin-left: 16px; overflow: auto;
+	a { color: #974908; text-decoration: none; }
+}

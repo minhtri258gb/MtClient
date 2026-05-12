@@ -1,7 +1,8 @@
 var mtApi = {
 	m_token: '', // Access Token
+	m_username: '', // UserName
 
-	// Method
+	// Auth
 	async init() {
 
 		// Lấy từ LocalStorage
@@ -11,16 +12,17 @@ var mtApi = {
 		else {
 			let res = await fetch('/checkToken', {
 				method: 'GET',
-				headers: {
-					'Authorization': 'Bearer '+token,
-				},
+				headers: { 'Authorization': 'Bearer '+token },
 			});
 			if (res.status == 403) {
 				this.m_token = '';
 				await this.promt();
 			}
-			else
+			else {
+				let result = await res.json();
 				this.m_token = token;
+				this.m_username = result.username;
+			}
 		}
 	},
 	async login(password) {
@@ -38,6 +40,7 @@ var mtApi = {
 		const resultAuth = await response.json();
 		if (resultAuth.result == true) {
 			this.m_token = resultAuth.token;
+			this.m_username = resultAuth.username;
 			localStorage.setItem('token', this.m_token);
 		}
 		else
@@ -59,6 +62,19 @@ var mtApi = {
 			console.error(e);
 		}
 	},
+
+	// Info
+	async config(key) {
+
+		// Call API - read Enviroment
+		let response = await fetch(`/common/getConfig?key=${key}`, { method: 'GET' });
+		if (!response.ok)
+			throw { error: true, msg: await response.text() };
+
+		return await response.text();
+	},
+
+	// File
 	async fileList(folderpath) {
 
 		let params = new URLSearchParams();

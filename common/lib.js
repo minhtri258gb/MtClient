@@ -134,6 +134,9 @@ var mtLib = {
 	'interact': { init: false, async load() {
 		await mtLib.loadJS('/lib/interactjs-1.10.27/interact.min.js');
 	}},
+	'jsmediatags': { init: false, async load() {
+		await mtLib.loadJS('/lib/jsmediatags-3.9.7/jsmediatags.min.js');
+	}},
 	'jquery-ui': { init: false, async load() {
 		let path = '/lib/jquery-ui-1.14.0/';
 		await Promise.all([

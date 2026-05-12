@@ -1,6 +1,5 @@
 import { w2ui, w2layout, w2toolbar, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
 import mtApi from '/common/api.js';
-import mtCore from '/common/core.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
 import mtCmd from '/common/cmd.js';
@@ -23,7 +22,6 @@ let mt = {
 	h_debug: true,
 
 	api: mtApi,
-	core: mtCore,
 	lib: mtLib,
 	file: mtFile,
 	cmd: mtCmd,
@@ -109,12 +107,11 @@ let mt = {
 					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
 						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
-						{ id: 'base64', text: 'Base64', icon: 'fa-regular fa-file-lines' },
 						{ id: 'convert', text: 'Convert', icon: 'fa-solid fa-rotate' },
 					]},
-					{ id: 'social', text: 'Social', group: true, expanded: true, nodes: [
-						{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
-					]},
+					// { id: 'social', text: 'Social', group: true, expanded: true, nodes: [
+					// 	{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
+					// ]},
 					{ id: 'games', text: 'Games', group: true, expanded: true, nodes: [
 						{ id: 'minesweeper', text: 'Mine Sweeper', icon: 'fa-solid fa-land-mine-on' },
 					]},
@@ -288,6 +285,12 @@ let mt = {
 
 				if (tabId.length == 0)
 					throw new Error('Không tìm thấy URL trang hiện tại!');
+
+				// Kiểm tra tab có chức năng share ko?
+				if (mt[tabId].share != null) {
+					mt[tabId].share();
+					return;
+				}
 
 				// Lấy URL hiện tại
 				let urlShare = location.origin + location.pathname;
@@ -837,253 +840,7 @@ let mt = {
 			return 'file';
 		},
 	},
-	document: {
-		h_pathDB: '/res/DB/document.json',
-		e_contain: null,
-		c_w2grid: null,
-		c_markdown: null,
-		m_init: false,
-		m_docId: null,
-		d_list: [],
-
-		async init() {
-
-			// Import library
-			await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
-			await mt.lib.import(['markdownIt', 'highlightjs']);
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'document-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			let renderAction = (row, actions) => {
-				let htmlBtn = '<div style="display:flex;gap:4px;">';
-				htmlBtn += `<button onclick="mt.document.btnRead(${row.id})"><i class="fa-solid fa-eye"></i></button>`;
-				let act = ',' + actions + ',';
-				// if (act.includes(',build,'))
-				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},true)"><i class="fa-solid fa-hammer"></i></button>`;
-				// if (row.status === false && act.includes(',start,'))
-				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},false)"><i class="fa-solid fa-play"></i></button>`;
-				if (row.status === true && act.includes(',link,'))
-					htmlBtn += `<button onclick="mt.server.btnLink(${row.id})"><i class="fa-solid fa-link"></i></button>`;
-				return htmlBtn + '</div>';
-			}
-
-			// Grid
-			this.c_w2grid = new w2grid({
-				name: 'grid-document',
-				recid: 'id',
-				show: {
-					toolbar: true,
-					footer: true,
-					lineNumbers: true,
-				},
-				toolbar: {
-					items: [
-						{ type: 'button', id: 'share', text: 'Share', icon: 'fa-solid fa-share-from-square' },
-					],
-					onClick: (event) => {
-						if (event.target == 'share')
-							this.btnShare();
-					}
-				},
-				columns: [
-					{ field: 'actions', text: 'Actions', size: '60px', render: (row, target) => renderAction(row, target.value) },
-					{ field: 'name', text: 'Name', resizable: true, sortable: true, searchable: { operator: 'contains' } },
-				],
-				liveSearch: true,
-				multiSearch: true,
-				textSearch: 'contains',
-				searches: [
-					{ field: 'name', label: 'Name', type: 'text' },
-				],
-			});
-
-			// Load data
-			await this.load();
-			
-			// this.c_w2grid.total = this.d_list.length + 100;
-			this.c_w2grid.records = this.d_list;
-			// this.c_w2grid.sort('time', 'desc');
-			this.c_w2grid.refresh();
-
-			this.c_w2grid.render(this.e_contain);
-
-			// Markdown
-			this.c_markdown = markdownit({
-				html: false,
-				xhtmlOut: true,
-				typographer: true,
-				highlight: function (str, lang) {
-					if (lang && hljs.getLanguage(lang)) {
-						try {
-							return hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
-						}
-						catch (__) {}
-					}
-					return str;
-				}
-			});
-
-			// Markdown Plugin
-			this.c_markdown.use(markdownItAnchor, { permalink: markdownItAnchor.permalink.headerLink() });
-			this.c_markdown.use(markdownItTocDoneRight, { containerId: 'mdToC', listType: 'ol' });
-			this.c_markdown.use(markdownitDeflist);
-			this.c_markdown.use(markdownitEmoji);
-			this.c_markdown.use(markdownitFootnote);
-			this.c_markdown.use(markdownitIns);
-			this.c_markdown.use(markdownitIns);
-			this.c_markdown.use(markdownitMultimdTable);
-			this.c_markdown.use(markdownitSub);
-			this.c_markdown.use(markdownitSup);
-
-			// Init Mermaid
-			mermaid.initialize({ startOnLoad: false });
-
-			// Init CSS
-			this.initCSS();
-
-			// Process Params
-			this.processParams();
-		},
-		async initCSS() {
-			const style = document.createElement('style');
-			style.textContent = `
-				.md-contain { display: flex; height: 100%; }
-				.md-toc {
-					flex: 0 0 auto; width: fit-content; overflow: auto; border-right: 1px solid #ddd;
-					ol { padding-left: 24px; text-decoration: none; }
-				}
-				.md-doc {
-					flex: 1 1 auto; margin-left: 16px; overflow: auto;
-					a { color: #974908; text-decoration: none; }
-				}
-			`.trim();
-			document.head.appendChild(style);
-		},
-		async load() {
-			
-			// Call API
-			this.d_list = await mt.file.loadJson(this.h_pathDB);
-
-			for (let i=0, sz=this.d_list.length; i<sz; i++) {
-				let doc = this.d_list[i];
-				doc.id = i+1; // Thêm ID
-			}
-
-		},
-		async processParams() {
-			let urlParams = new URLSearchParams(window.location.search);
-			let docName = urlParams.get('doc');
-			if (docName != null) {
-
-				// Add filter grid
-				this.c_w2grid.search([{ field: 'name', value: docName, operator: 'contains' }], 'AND');
-
-				// Search
-				for (let doc of this.d_list) {
-					if (doc.name == docName) {
-
-						// Load MD
-						await this.btnRead(doc.id);
-						
-						// Focus fragment
-						if (window.location.hash) {
-							const targetId = window.location.hash.substring(1);
-							const target = document.getElementById(targetId);
-							if (target)
-								target.scrollIntoView({ behavior: 'smooth' });
-						}
-
-						break;
-					}
-				}
-			}
-		},
-		async btnShare() {
-
-			// Lấy Port hiện tại
-			let URL = location.origin + location.pathname;
-			if (URL.indexOf('localhost') > -1) {
-
-				// Call API - Get IP
-				let response = await fetch('/common/getIPLocal', { method: 'GET' });
-				if (!response.ok)
-					throw { error: true, message: await response.text() };
-
-				let IP = await response.text();
-
-				URL = URL.replace('localhost', IP);
-			}
-
-			// Thêm params query
-			let paramURL = new URLSearchParams();
-			let tabName = w2ui.layout_main_tabs.active;
-			paramURL.set('tab', tabName);
-			if (this.m_docId != null) {
-				let doc = this.c_w2grid.get(this.m_docId);
-				paramURL.set('doc', doc.name);
-			}
-			URL += '?' + paramURL.toString();
-			if (window.location.hash)
-				URL += decodeURIComponent(window.location.hash);
-
-			// Tự động copy
-			if (window.isSecureContext) {
-				await navigator.clipboard.writeText(URL);
-				// mt.show.toast('success', 'Đã copy link nhạc.');
-			}
-			else {
-				console.log(URL);
-				// mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
-			}
-		},
-		async btnRead(docId) {
-
-			this.m_docId = docId;
-			let doc = this.c_w2grid.get(docId);
-
-			// Show right panel
-			mt.common.c_w2layout.set('right', { size: '70%' });
-			mt.common.c_w2layout.show('right');
-
-			// Load markdown
-			// let content = await this.loadMarkdown(doc.path);
-			let content = await mt.file.readFile('text', doc.path);
-			content = '${toc}\n' + content;
-
-			// Convert HTML
-			const html = this.c_markdown.render(content);
-			const domParser = new DOMParser();
-			const mdDom = domParser.parseFromString(html, 'text/html');
-			const contentDiv = mdDom.getElementById('mdToC');
-			const tocHtml = contentDiv.outerHTML;
-			contentDiv.remove();
-
-			// CSS
-
-			// Render
-			mt.common.c_w2layout.html('right', `
-				<div class="md-contain">
-					<div class="md-toc">${tocHtml}</div>
-					<div class="md-doc">${mdDom.body.innerHTML}</div>
-				</div>
-			`.trim());
-
-			// Render Mermaid
-			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
-				let el = document.getElementById(svgId);
-				let pre = el.parentElement.parentElement;
-				pre.after(el);
-				pre.remove();
-			}});
-
-			// Log
-			// mt.h_debug && console.log('[mt.document.btnRead]', { content, html });
-		},
-	},
+	document: 'ext',
 	contact: {
 		h_pathDB: '/res/DB/contact.json',
 		d_list: [], // Danh sách liên lạc
@@ -2548,7 +2305,7 @@ let mt = {
 			`.trim().split('\n').map(v=>v.trim()).join('\n');
 
 			// Read config
-			this.h_pathWallpaper = await mt.core.config('PATH_WALLPAPER');
+			this.h_pathWallpaper = await mt.api.config('PATH_WALLPAPER');
 
 			// First load
 			this.d_wallpaper = await mt.file.loadJson(this.h_pathDB);

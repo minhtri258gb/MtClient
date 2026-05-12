@@ -1,5 +1,4 @@
 import mtApi from '/common/api.js';
-import mtCore from '/common/core.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
 import mtCmd from '/common/cmd.js';
@@ -11,7 +10,6 @@ import MtForm from '/dynamic/components/MtForm.js';
 
 let mt = {
 	api: mtApi,
-	core: mtCore,
 	lib: mtLib,
 	file: mtFile,
 	cmd: mtCmd,
