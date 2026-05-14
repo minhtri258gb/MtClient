@@ -34,9 +34,9 @@ let mt = {
 		 * https://w2ui.com/web/docs/2.0/w2layout.set
 		 */
 
-		m_clientPath: '', // Đường dẫn client
-		c_w2layout: null,
 		e_contain: null,
+		c_w2layout: null,
+		m_clientPath: '', // Đường dẫn client
 
 		async init() {
 
@@ -262,6 +262,21 @@ let mt = {
 			this.c_w2layout.hide('right');
 		},
 
+		getCurrentTab() {
+
+			// Lấy div hiển thị
+			const visibleDivs = Array.from(this.e_contain.children).filter(div => window.getComputedStyle(div).display !== 'none');
+
+			// Lấy id div
+			let tabId = '';
+			if (visibleDivs.length > 0)
+				tabId = visibleDivs[0].id;
+			if (tabId.includes('-contain'))
+				tabId = tabId.replace('-contain', '');
+
+			return tabId;
+		},
+
 		btnMenu(toogle) {
 			// let panel = this.c_w2layout.get('left');
 			// if (panel.hidden)
@@ -273,16 +288,8 @@ let mt = {
 		async btnShare() {
 			try {
 
-				// Lấy div hiển thị
-				const visibleDivs = Array.from(this.e_contain.children).filter(div => window.getComputedStyle(div).display !== 'none');
-
 				// Lấy id div
-				let tabId = '';
-				if (visibleDivs.length > 0)
-					tabId = visibleDivs[0].id;
-				if (tabId.includes('-contain'))
-					tabId = tabId.replace('-contain', '');
-
+				let tabId = this.getCurrentTab();
 				if (tabId.length == 0)
 					throw new Error('Không tìm thấy URL trang hiện tại!');
 
@@ -334,6 +341,53 @@ let mt = {
 				mt.show.toast('error', ex.message);
 				console.error('[mt.common.btnShare]', ex);
 			}
+		},
+	},
+	event: {
+		init() {
+
+			// Paste clipboard
+			document.onpaste = (e) => this.onPaste(e);
+
+			// Drag / Drop
+			document.addEventListener('drop', (e) => this.onDrop(e));
+			document.addEventListener('dragover', (event) => event.preventDefault());
+		},
+		onPaste(e) {
+
+			let tabId = mt.common.getCurrentTab();
+			if (tabId.length == 0) {
+				mt.show.toast('warning', 'Chưa mở ứng dụng!');
+				return;
+			}
+
+			let app = mt[tabId];
+			if (!app || !app.event || !app.event.onPaste) {
+				mt.show.toast('warning', `Ứng dụng "${tabId}" không hỗ trợ event.onPaste!`);
+				return;
+			}
+
+			// Call event app
+			app.event.onPaste(e);
+		},
+		onDrop(e) {
+
+			e.preventDefault();
+
+			let tabId = mt.common.getCurrentTab();
+			if (tabId.length == 0) {
+				mt.show.toast('warning', 'Chưa mở ứng dụng!');
+				return;
+			}
+
+			let app = mt[tabId];
+			if (!app || !app.event || !app.event.onDrop) {
+				mt.show.toast('warning', `Ứng dụng "${tabId}" không hỗ trợ event.onDrop!`);
+				return;
+			}
+
+			// Call event app
+			app.event.onDrop(e);
 		},
 	},
 	utils: {
@@ -1885,56 +1939,7 @@ let mt = {
 		},
 	},
 	midi: 'ext',
-	image: {
-		m_init: false,
-		e_contain: null,
-		c_canvas: null,
-
-		async init() {
-
-			// Import Library
-			await mt.lib.import(['fabricjs']);
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'image-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			// Tạo Canvas
-			let canvasElm = document.createElement('canvas');
-			canvasElm.width = '800';
-			canvasElm.height = '500';
-			canvasElm.style.width = '500px';
-			canvasElm.style.height = '500px';
-			canvasElm.style.border = '1px solid #000';
-			this.e_contain.appendChild(canvasElm);
-
-			// Cancas tạo dragdrop file ảnh
-
-
-			// Init Fabric
-			this.c_canvas = new fabric.Canvas(canvasElm);
-			const helloWorld = new fabric.FabricText('Hello world!', {
-				// cornerStyle: 'round',
-				// cornerStrokeColor: 'blue',
-				// cornerColor: 'lightblue',
-				cornerStyle: 'circle',
-				// padding: 10,
-				// transparentCorners: false,
-				// cornerDashArray: [2, 2],
-				borderColor: 'orange',
-				// borderDashArray: [3, 1, 3],
-				// borderScaleFactor: 2,
-			});
-			this.c_canvas.add(helloWorld);
-			this.c_canvas.centerObject(helloWorld);
-
-		},
-		getImage() {
-			return this.c_canvas.toDataURL();
-		}
-	},
+	image: 'ext',
 	diagram: 'ext',
 	sheet: {
 
@@ -2939,6 +2944,7 @@ let mt = {
 		globalThis.mt = this;
 
 		// Init
+		await this.event.init();
 		await this.api.init();
 		await this.show.initToast();
 

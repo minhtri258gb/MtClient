@@ -153,11 +153,14 @@ var mtFile = {
 	},
 
 	// Convert
-	async blobToBase64(blob) { // Blob -> Base64
+	async blobToBase64(blob, split) { // Blob -> Base64
 		return await new Promise((resolve, reject) => {
 			const reader = new FileReader();
 			reader.onloadend = () => {
-				resolve(reader.result.split(",")[1]); // lấy phần Base64
+				if (split)
+					resolve(reader.result.split(",")[1]); // lấy phần Base64
+				else
+					resolve(reader.result);
 			};
 			reader.onerror = reject;
 			reader.readAsDataURL(blob); // đọc blob thành DataURL (base64)

@@ -1,5 +1,7 @@
 /**
- * 
+ * QrCode: gen và scan chỉ QR (cũ)
+ * bwip: Thư viện generate
+ * zxing: Thư viện scan
  */
 
 let mtQrCode = {
@@ -8,28 +10,8 @@ let mtQrCode = {
 	e_image: null,
 	m_init: false,
 
-	async init() {
-
-		// Import Library
-		await mt.lib.import(['QrCode']);
-
-		// Add container
-		this.e_contain.id = 'qrcode-contain';
-		this.e_contain.style.height = '100%';
-		this.e_contain.style.display = '';
-
-		// Prepare element
-		this.e_image = document.getElementById('qrcode-image');
-		this.e_text = document.getElementById('qrcode-text');
-		this.e_radius = document.getElementById('qrcode-radius');
-		this.e_ecLevel = document.getElementById('qrcode-ecLevel');
-		this.e_fill = document.getElementById('qrcode-fill');
-		this.e_background = document.getElementById('qrcode-background');
-		this.e_size = document.getElementById('qrcode-size');
-		this.e_result = document.getElementById('qrcode-result');
-
-		// #TODO
-		document.onpaste = (event) => {
+	event: {
+		onPaste() {
 			const auth = navigator.permissions.query({ name: "clipboard-read" });
 			if (auth.state !== 'denied') {
 				navigator.clipboard.read().then(item_list => {
@@ -49,7 +31,28 @@ let mtQrCode = {
 					}
 				});
 			}
-		};
+		},
+	},
+
+	async init() {
+
+		// Import Library
+		await mt.lib.import(['QrCode','zxing','bwip']);
+
+		// Add container
+		this.e_contain.id = 'qrcode-contain';
+		this.e_contain.style.height = '100%';
+		this.e_contain.style.display = '';
+
+		// Prepare element
+		this.e_image = document.getElementById('qrcode-image');
+		this.e_text = document.getElementById('qrcode-text');
+		this.e_radius = document.getElementById('qrcode-radius');
+		this.e_ecLevel = document.getElementById('qrcode-ecLevel');
+		this.e_fill = document.getElementById('qrcode-fill');
+		this.e_background = document.getElementById('qrcode-background');
+		this.e_size = document.getElementById('qrcode-size');
+		this.e_result = document.getElementById('qrcode-result');
 	},
 	generate() {
 
@@ -92,6 +95,7 @@ let mtQrCode = {
 			mt.h_debug && console.log('[mt.qrcode.scan]', { result });
 		}
 		catch (ex) {
+			mt.show.toast('error', ex);
 			console.error('[mt.qrcode.scan] Error', ex);
 		}
 	},

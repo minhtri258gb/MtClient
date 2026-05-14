@@ -78,6 +78,9 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(path+'abcjs-plugin-min.js');
 	}},
+	'bwip': { init: false, async load() {
+		await mtLib.loadJS('/lib/bwip-js-4.10.1/bwip-js-min.js');
+	}},
 	'c3': { init: false, async load() {
 		let path = '/lib/c3-0.7.20/';
 		await Promise.all([
@@ -337,6 +340,9 @@ var mtLib = {
 			mtLib.loadCSS(path+'xspreadsheet.css'),
 			mtLib.loadJS(path+'xspreadsheet.js'),
 		]);
+	}},
+	'zxing': { init: false, async load() {
+		await mtLib.loadJS('/lib/zxing-js-0.23.0/umd/index.min.js');
 	}},
 };
 export default mtLib;

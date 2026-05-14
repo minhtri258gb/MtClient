@@ -1,0 +1,37 @@
+
+<!-- Tool Header -->
+<div>
+
+	<button onclick="mt.image.tool.show('text')">Text</button>
+
+	<!-- Size -->
+	<label>Size</label>
+	<input id="image-tool-size-w" type="number" style="width:50px;" />
+	x
+	<input id="image-tool-size-h" type="number" style="width:50px;" />
+
+</div>
+
+<div style="display:flex;height:100%;">
+
+	<!-- Left -->
+	<div>
+
+		<!-- Tool Text -->
+		<div id="image-tool-text" style="display:none;">
+			<label>Text</label>
+			<br>
+			<input id="image-tool-text-input"></input>
+			<br>
+			<button onclick="mt.image.event.btnTextAdd()">Thêm</button>
+		</div>
+
+		<!-- List Object -->
+		<ul id="image-list"></ul>
+
+	</div>
+
+	<!-- Render -->
+	<div id="image-render"></div>
+
+</div>
