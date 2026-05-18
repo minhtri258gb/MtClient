@@ -107,6 +107,9 @@ var mtLib = {
 			mtLib.loadJS(path+'addon/fold/markdown-fold.js'),
 		]);
 	}},
+	'ctxmenu': { init: false, async load() {
+		await mtLib.loadJS('/lib/ctxmenu-2.1.0/ctxmenu.min.js');
+	}},
 	'd3': { init: false, async load() {
 		await mtLib.loadJS('/lib/d3/d3.v7.min.js');
 	}},
@@ -308,6 +311,15 @@ var mtLib = {
 			mtLib.loadJS(path+'js/tabulator.min.js'),
 		]);
 	}},
+	'tesseract': { init: false
+		, async load() {
+			await mtLib.loadJS('/lib/tesseract.js-6.0.1/tesseract.min.js');
+		}, getPathWorker() {
+			return '/lib/tesseract.js-6.0.1/worker.min.js';
+		}, getPathRes() {
+			return '/lib/tesseract.js-6.0.1/res/';
+		}
+	},
 	'tingle': { init: false, async load() {
 		let path = '/lib/tingle/';
 		let pathex = '/lib/mt/tingle/';
@@ -326,6 +338,9 @@ var mtLib = {
 	}},
 	'tone': { init: false, async load() {
 		await mtLib.loadJS('/lib/tone/Tone.js');
+	}},
+	'vanilla-context-menu': { init: false, async load() {
+		await mtLib.loadJS('/lib/vanilla-context-menu-1.6.0/vanilla-context-menu.js');
 	}},
 	'visjs': { init: false, async load() {
 		let path = '/lib/vis-4.21.0/';

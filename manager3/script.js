@@ -46,10 +46,10 @@ let mt = {
 				items: [
 					{ type: 'check', id: 'menu', text: 'Menu', icon: 'fa-solid fa-bars', checked: true },
 					{ type: 'break' },
-					{ type: 'button', id: 'home', text: 'Home', icon: 'fa-solid fa-house' },
-					{ type: 'button', id: 'music', text: 'Music', icon: 'fa-solid fa-music' },
-					{ type: 'button', id: 'piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
-					{ type: 'button', id: 'dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
+					{ type: 'button', id: 'page-home', text: 'Home', icon: 'fa-solid fa-house' },
+					{ type: 'button', id: 'page-music', text: 'Music', icon: 'fa-solid fa-music' },
+					{ type: 'button', id: 'page-piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
+					{ type: 'button', id: 'page-dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
 					{ type: 'break' },
 					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
 					{ type: 'check', id: 'item3', text: 'Check 2', icon: 'w2ui-icon-check' },
@@ -57,17 +57,27 @@ let mt = {
 					{ type: 'radio', id: 'item4', group: '1', text: 'Radio 1', icon: 'w2ui-icon-info', checked: true },
 					{ type: 'radio', id: 'item5', group: '1', text: 'Radio 2', icon: 'w2ui-icon-paste' },
 					{ type: 'break' },
+					{ type: 'menu', id: 'link', text: 'Link', icon: 'fa-solid fa-link', items: [
+						{ text: 'Font Awesome', id: 'link-icon', icon: 'fa-solid fa-icons' },
+						{ text: 'w2ui', id: 'link-w2ui', icon: 'fa-solid fa-web-awesome' },
+					]},
+					{ type: 'break' },
 					{ type: 'button', id: 'share', text: 'Share', icon: 'fa-regular fa-share-from-square' },
 					{ type: 'spacer' },
-					{ type: 'button', id: 'item6', text: 'Button', icon: 'w2ui-icon-cross' }
+					{ type: 'menu-check', id: 'setting', text: 'Setting', icon: 'fa-solid fa-gear', selected: ['debug'], items: [
+						{ id: 'debug', text: 'Debug' },
+					]},
 				],
 				onClick: (event) => {
 					switch (event.target) {
-						case 'home': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home'); break;
-						case 'music': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2'); break;
-						case 'piano': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano'); break;
+						case 'page-home': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home'); break;
+						case 'page-music': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2'); break;
+						case 'page-piano': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano'); break;
 						case 'menu': this.btnMenu(!event.object.checked); break;
+						case 'link:link-icon': window.open('https://fontawesome.com/v6/search?ic=free-collection'); break;
+						case 'link:link-w2ui': window.open('https://w2ui.com/web/docs/2.0/'); break;
 						case 'share': this.btnShare(); break;
+						case 'setting:debug': mt.h_debug = !mt.h_debug; break;
 					}
 				}
 			});
@@ -108,6 +118,7 @@ let mt = {
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
 						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
 						{ id: 'convert', text: 'Convert', icon: 'fa-solid fa-rotate' },
+						{ id: 'ocr', text: 'OCR', icon: 'fa-brands fa-searchengin' },
 					]},
 					// { id: 'social', text: 'Social', group: true, expanded: true, nodes: [
 					// 	{ id: 'chat', text: 'Chat', icon: 'fa-solid fa-comment-dots' },
@@ -352,6 +363,9 @@ let mt = {
 			// Drag / Drop
 			document.addEventListener('drop', (e) => this.onDrop(e));
 			document.addEventListener('dragover', (event) => event.preventDefault());
+
+			// Pause worker
+			window.addEventListener('beforeunload', async () => await this.p_worker.terminate());
 		},
 		onPaste(e) {
 
@@ -388,6 +402,19 @@ let mt = {
 
 			// Call event app
 			app.event.onDrop(e);
+		},
+		onBeforeUnload() {
+
+			let tabId = mt.common.getCurrentTab();
+			if (tabId.length == 0)
+				return;
+
+			let app = mt[tabId];
+			if (!app || !app.event || !app.event.onDrop)
+				return;
+
+			// Call event app
+			app.event.onBeforeUnload(e);
 		},
 	},
 	utils: {
@@ -1060,7 +1087,7 @@ let mt = {
 		async init() {
 
 			// Import Library
-			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr']);
+			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr','vanilla-context-menu','ctxmenu']);
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -2669,6 +2696,7 @@ let mt = {
 	},
 	qrcode: 'ext',
 	convert: 'ext',
+	ocr: 'ext',
 	minesweeper: {
 		enum: {
 			NONE: -1,

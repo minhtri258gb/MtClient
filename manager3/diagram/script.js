@@ -480,6 +480,25 @@ let mtDiagram = {
 	e_render: null,
 	m_init: false,
 
+	event: {
+		async onDrop(e) {
+			try {
+
+				const blobs = e.dataTransfer.files;
+				if (blobs.length == 0)
+					return;
+
+				const blob = blobs[0];
+				let text = await blob.text();
+
+				mtDiagram.m_editor.setValue(text);
+			}
+			catch (ex) {
+				console.error('[mt.diagram.onDrop]', ex);
+			}
+		},
+	},
+
 	async init() {
 
 		// Import Library

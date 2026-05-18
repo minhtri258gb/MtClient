@@ -7,6 +7,7 @@ let mtDocument = {
 	h_pathDoc: '', // Link folder on Server
 	e_contain: null,
 	m_init: false,
+	m_currentFile: '', // Current reading
 
 	mgr: {
 		async init() {
@@ -102,9 +103,20 @@ let mtDocument = {
 
 			return options;
 		},
-		doubleClick(node) { // Nhấn đúp
-			if (node.type == 'md')
-				mtDocument.content.load(node.original.path);
+		async doubleClick(node) { // Nhấn đúp
+			if (node.type == 'md') {
+
+				let filepath = node.original.path;
+
+				// Lưu path file hiện tại
+				mtDocument.m_currentFile = filepath;
+
+				// Call API - read file
+				let content = await mt.file.readFile('text', filepath);
+
+				// Render
+				mtDocument.content.load(content);
+			}
 		},
 		getType(filename) { // Lấy type tương ứng trên JsTree
 			let pos = filename.indexOf('.');
@@ -119,7 +131,6 @@ let mtDocument = {
 	content: {
 		e_content: null, // Element content
 		c_markdown: null, // Lib
-		m_currentFile: '', // Current reading
 
 		init() {
 
@@ -170,13 +181,9 @@ let mtDocument = {
 			mermaid.initialize({ startOnLoad: false });
 
 		},
-		async load(filepath) {
+		async load(content) {
 
-			// Lưu path file hiện tại
-			this.m_currentFile = filepath;
-
-			// Load markdown
-			let content = await mt.file.readFile('text', filepath);
+			// Insert Table of Content
 			content = '${toc}\n' + content;
 
 			// Convert HTML
@@ -184,16 +191,26 @@ let mtDocument = {
 			const domParser = new DOMParser();
 			const mdDom = domParser.parseFromString(html, 'text/html');
 			const contentDiv = mdDom.getElementById('mdToC');
+			this.processTOC(contentDiv);
 			const tocHtml = contentDiv.outerHTML;
 			contentDiv.remove();
 
 			// Render
-			this.e_content.innerHTML = `
-				<div class="md-contain">
-					<div class="md-toc">${tocHtml}</div>
-					<div class="md-doc">${mdDom.body.innerHTML}</div>
-				</div>
-			`.trim();
+			this.e_content.replaceChildren(); // Xóa toàn bộ DOM con
+
+			const elmMdcontain = document.createElement('div'); // Tạo div layout
+			elmMdcontain.classList.add('md-contain');
+			this.e_content.appendChild(elmMdcontain);
+
+			const elmMdToc = document.createElement('div'); // Tạo div table of content
+			elmMdToc.classList.add('md-toc');
+			elmMdToc.appendChild(contentDiv);
+			elmMdcontain.appendChild(elmMdToc);
+
+			const elmMdDoc = document.createElement('div'); // Tạo div content
+			elmMdDoc.classList.add('md-doc');
+			elmMdDoc.append(...mdDom.body.childNodes);
+			elmMdcontain.appendChild(elmMdDoc);
 
 			// Render Mermaid
 			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
@@ -205,7 +222,76 @@ let mtDocument = {
 
 			// Log
 			// mt.h_debug && console.log('[mt.document.btnRead]', { content, html });
-		}
+		},
+		processTOC(contentDiv) {
+
+			if (!contentDiv)
+				return;
+
+			let fooRecursion = (elmOL) => {
+				Array.from(elmOL.children).forEach(li => { // Duyệt li trong ol
+					const childOl = li.querySelector('ol'); // Tìm nhánh con
+					if (childOl) { // Nếu có nhánh con
+
+						// Thêm button collapse / expend
+						const btn = document.createElement('button');
+						btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+						btn.style.padding = '0 1px';
+						btn.style.marginLeft = '4px';
+
+						// Event ẩn hiện
+						btn.addEventListener('click', () => {
+							if (childOl.style.display === 'none') {
+								childOl.style.display = 'block';
+								btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+							}
+							else {
+								childOl.style.display = 'none';
+								btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+							}
+						});
+
+						// Thêm button vào DOM
+						li.insertBefore(btn, childOl);
+
+						// Đệ quy xử lý nhánh con
+						fooRecursion(childOl);
+					}
+				});
+			}
+
+			// Start with root
+			const childOl = contentDiv.querySelector('ol');
+			if (childOl)
+				fooRecursion(childOl);
+		},
+	},
+	event: {
+
+		// Global
+		async onDrop(e) {
+			try {
+
+				const blobs = e.dataTransfer.files;
+				if (blobs.length == 0)
+					return;
+
+				const blob = blobs[0];
+				const content = await blob.text();
+
+				// Bỏ path vì drop ko nhận đc filepath
+				mtDocument.m_currentFile = '';
+
+				// Render
+				mtDocument.content.load(content);
+
+				// Log
+				mt.h_debug && console.log('[mt.document.event.onDrop]', { text });
+			}
+			catch (ex) {
+				console.error('[mt.document.onDrop]', ex);
+			}
+		},
 	},
 
 	async init() {
@@ -234,8 +320,14 @@ let mtDocument = {
 
 		if (filepath != null && filepath.length > 0) {
 
-			// Load file
-			await this.content.load(filepath);
+			// Lưu path file hiện tại
+			this.m_currentFile = filepath;
+
+			// Call API - read file
+			let content = await mt.file.readFile('text', filepath);
+
+			// Render
+			await this.content.load(content);
 
 			// Focus fragment
 			if (window.location.hash) {
@@ -266,8 +358,8 @@ let mtDocument = {
 		// Thêm params query
 		let paramURL = new URLSearchParams();
 		paramURL.set('tab', 'document');
-		if (this.content.m_currentFile != null)
-			paramURL.set('path', this.content.m_currentFile);
+		if (this.m_currentFile != null)
+			paramURL.set('path', this.m_currentFile);
 		URL += '?' + paramURL.toString();
 
 		// Thêm hash tag

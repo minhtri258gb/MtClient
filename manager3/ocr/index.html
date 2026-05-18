@@ -1,0 +1,19 @@
+<div style="display:flex;">
+
+	<image id="ocr-image"></image>
+
+	<div>
+
+		<label>Ngôn ngữ</label>
+		<select id="ocr-lang" onchange="mt.ocr.event.onChangeLang()">
+			<option value="vie">Tiếng Việt</option>
+			<option value="eng" selected>Tiếng Anh</option>
+		</select>
+		<br><br>
+
+		<textarea id="ocr-text" placeholder="content ..."></textarea>
+		<br><br>
+
+	</div>
+
+</div>

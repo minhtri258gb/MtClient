@@ -8,6 +8,7 @@
 	overflow: auto;
 	border-right: 1px solid #ddd;
 	border-left: 1px solid #ddd;
+	a { text-decoration: unset; color: #081697 }
 	ol { padding-left: 24px; text-decoration: none; }
 }
 .md-doc {
