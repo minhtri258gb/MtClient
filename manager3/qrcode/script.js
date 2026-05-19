@@ -37,7 +37,7 @@ let mtQrCode = {
 	async init() {
 
 		// Import Library
-		await mt.lib.import(['QrCode','zxing','bwip']);
+		await mt.lib.import(['QrCode']); // 'zxing','bwip'
 
 		// Add container
 		this.e_contain.id = 'qrcode-contain';

@@ -115,6 +115,7 @@ let mt = {
 						{ id: 'pivot', text: 'Pivot', icon: 'fa-solid fa-table' },
 					]},
 					{ id: 'tools', text: 'Tools', group: true, expanded: true, nodes: [
+						{ id: 'sync', text: 'Sync', icon: 'fa-solid fa-right-left' },
 						{ id: 'math', text: 'Math', icon: 'fa-solid fa-calculator' },
 						{ id: 'qrcode', text: 'QR Code', icon: 'fa-solid fa-qrcode' },
 						{ id: 'convert', text: 'Convert', icon: 'fa-solid fa-rotate' },
@@ -191,24 +192,24 @@ let mt = {
 		},
 		processParams() {
 			let urlParams = new URLSearchParams(window.location.search);
-			let tabCode = urlParams.get('tab');
-			if (tabCode != null) {
+			let appCode = urlParams.get('app');
+			if (appCode != null) {
 
-				// Search tab
-				let tab = null;
+				// Search app
+				let app = null;
 				for (let group of w2ui.sidebar.nodes) {
 					for (let node of group.nodes) {
-						if (node.id == tabCode) {
-							tab = node;
+						if (node.id == appCode) {
+							app = node;
 							break;
 						}
 					}
-					if (tab != null)
+					if (app != null)
 						break;
 				}
 
-				// Open tab
-				tab.sidebar.click(tab.id);
+				// Open app
+				app.sidebar.click(app.id);
 			}
 		},
 
@@ -273,19 +274,19 @@ let mt = {
 			this.c_w2layout.hide('right');
 		},
 
-		getCurrentTab() {
+		getCurrentApp() {
 
 			// Lấy div hiển thị
 			const visibleDivs = Array.from(this.e_contain.children).filter(div => window.getComputedStyle(div).display !== 'none');
 
 			// Lấy id div
-			let tabId = '';
+			let appId = '';
 			if (visibleDivs.length > 0)
-				tabId = visibleDivs[0].id;
-			if (tabId.includes('-contain'))
-				tabId = tabId.replace('-contain', '');
+				appId = visibleDivs[0].id;
+			if (appId.includes('-contain'))
+				appId = appId.replace('-contain', '');
 
-			return tabId;
+			return appId;
 		},
 
 		btnMenu(toogle) {
@@ -300,13 +301,13 @@ let mt = {
 			try {
 
 				// Lấy id div
-				let tabId = this.getCurrentTab();
-				if (tabId.length == 0)
+				let appId = this.getCurrentApp();
+				if (appId.length == 0)
 					throw new Error('Không tìm thấy URL trang hiện tại!');
 
-				// Kiểm tra tab có chức năng share ko?
-				if (mt[tabId].share != null) {
-					mt[tabId].share();
+				// Kiểm tra app có chức năng share ko?
+				if (mt[appId].share != null) {
+					mt[appId].share();
 					return;
 				}
 
@@ -325,12 +326,12 @@ let mt = {
 				}
 
 				let paramsURL = null;
-				if (mt[tabId]?.getShareParams) {
-					paramsURL = mt[tabId].getShareParams();
+				if (mt[appId]?.getShareParams) {
+					paramsURL = mt[appId].getShareParams();
 				}
 				else {
 					paramsURL = new URLSearchParams();
-					paramsURL.append('tab', tabId);
+					paramsURL.append('app', appId);
 				}
 
 				urlShare += '?' + paramsURL.toString();
@@ -346,7 +347,7 @@ let mt = {
 				}
 
 				// Log
-				mt.h_debug && console.log('[mt.common.btnShare]', { visibleDivs, tabId, urlShare });
+				mt.h_debug && console.log('[mt.common.btnShare]', { visibleDivs, appId, urlShare });
 			}
 			catch (ex) {
 				mt.show.toast('error', ex.message);
@@ -369,15 +370,15 @@ let mt = {
 		},
 		onPaste(e) {
 
-			let tabId = mt.common.getCurrentTab();
-			if (tabId.length == 0) {
+			let appId = mt.common.getCurrentApp();
+			if (appId.length == 0) {
 				mt.show.toast('warning', 'Chưa mở ứng dụng!');
 				return;
 			}
 
-			let app = mt[tabId];
+			let app = mt[appId];
 			if (!app || !app.event || !app.event.onPaste) {
-				mt.show.toast('warning', `Ứng dụng "${tabId}" không hỗ trợ event.onPaste!`);
+				mt.show.toast('warning', `Ứng dụng "${appId}" không hỗ trợ event.onPaste!`);
 				return;
 			}
 
@@ -388,15 +389,15 @@ let mt = {
 
 			e.preventDefault();
 
-			let tabId = mt.common.getCurrentTab();
-			if (tabId.length == 0) {
+			let appId = mt.common.getCurrentApp();
+			if (appId.length == 0) {
 				mt.show.toast('warning', 'Chưa mở ứng dụng!');
 				return;
 			}
 
-			let app = mt[tabId];
+			let app = mt[appId];
 			if (!app || !app.event || !app.event.onDrop) {
-				mt.show.toast('warning', `Ứng dụng "${tabId}" không hỗ trợ event.onDrop!`);
+				mt.show.toast('warning', `Ứng dụng "${appId}" không hỗ trợ event.onDrop!`);
 				return;
 			}
 
@@ -405,11 +406,11 @@ let mt = {
 		},
 		onBeforeUnload() {
 
-			let tabId = mt.common.getCurrentTab();
-			if (tabId.length == 0)
+			let appId = mt.common.getCurrentApp();
+			if (appId.length == 0)
 				return;
 
-			let app = mt[tabId];
+			let app = mt[appId];
 			if (!app || !app.event || !app.event.onDrop)
 				return;
 
@@ -1087,7 +1088,7 @@ let mt = {
 		async init() {
 
 			// Import Library
-			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr','vanilla-context-menu','ctxmenu']);
+			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr']); // 'vanilla-context-menu','ctxmenu'
 
 			// Add container
 			this.e_contain = document.createElement('div');
@@ -1367,7 +1368,7 @@ let mt = {
 				return;
 			}
 
-			let url = `/manager3/?tab=map&lat=${event.location.lat}&lng=${event.location.lng}`;
+			let url = `/manager3/?app=map&lat=${event.location.lat}&lng=${event.location.lng}`;
 			window.open(url);
 		},
 		async generate(year) { // Tạo data của năm
@@ -1829,8 +1830,8 @@ let mt = {
 
 			// Thêm params query
 			let paramURL = new URLSearchParams();
-			let tabName = w2ui.layout_main_tabs.active;
-			paramURL.set('tab', tabName);
+			let appName = w2ui.layout_main_tabs.active;
+			paramURL.set('app', appName);
 			let tags = mt.server.c_w2grid.getSearchData('tags');
 			if (tags != null)
 				paramURL.set('tag', tags.value);
@@ -1971,7 +1972,7 @@ let mt = {
 	sheet: {
 
 		/**
-		 * http://localhost:958/manager3/?tab=sheet&file=D:/Projects/MtClient/res/private/contacts.csv
+		 * http://localhost:958/manager3/?app=sheet&file=D:/Projects/MtClient/res/private/contacts.csv
 		 * https://github.com/myliang/x-spreadsheet
 		 * https://www.npmjs.com/package/x-data-spreadsheet
 		 */
@@ -2222,7 +2223,7 @@ let mt = {
 
 				// demo: https://mozilla.github.io/pdf.js/web/viewer.html
 
-				// Dùng URL Param để load: http://localhost:958/manager3/?tab=pdf&file=1ZH92G830310976050.pdf
+				// Dùng URL Param để load: http://localhost:958/manager3/?app=pdf&file=1ZH92G830310976050.pdf
 
 				// Dùng JS
 				// PDFViewerApplication.open({url:'/res/pdf/1ZH92G830310976050.pdf'});
@@ -2593,6 +2594,7 @@ let mt = {
 			});
 		},
 	},
+	sync: 'ext',
 	math: {
 
 		/**

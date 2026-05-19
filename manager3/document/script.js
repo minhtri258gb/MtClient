@@ -357,7 +357,7 @@ let mtDocument = {
 
 		// Thêm params query
 		let paramURL = new URLSearchParams();
-		paramURL.set('tab', 'document');
+		paramURL.set('app', 'document');
 		if (this.m_currentFile != null)
 			paramURL.set('path', this.m_currentFile);
 		URL += '?' + paramURL.toString();
