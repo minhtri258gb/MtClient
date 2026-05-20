@@ -8,5 +8,6 @@ node_modules
 /res/midi
 /res/private
 /res/soundfont
+/res/sync
 /package-lock.json
 /2D/res

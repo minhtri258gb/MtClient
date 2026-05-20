@@ -2,7 +2,6 @@ import { w2ui, w2layout, w2toolbar, w2sidebar, w2grid, w2popup, w2alert, w2utils
 import mtApi from '/common/api.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
-import mtCmd from '/common/cmd.js';
 import mtShow from '/common/show.js';
 
 /**
@@ -24,7 +23,6 @@ let mt = {
 	api: mtApi,
 	lib: mtLib,
 	file: mtFile,
-	cmd: mtCmd,
 	show: mtShow,
 
 	// Module
@@ -1791,7 +1789,7 @@ let mt = {
 				cmd = `nmap -p ${port} ${host}`;
 			else
 				cmd = `nmap ${host}`;
-			let result = await mt.cmd.exec(cmd, [this.h_pathNmap]);
+			let result = await mt.api.cmd(cmd, [this.h_pathNmap]);
 			let stdout = result?.stdout || '';
 			// let stderr = result?.stderr || '';
 			

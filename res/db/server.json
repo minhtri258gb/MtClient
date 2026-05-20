@@ -35,6 +35,8 @@
   { "name": "Doris BackEnd","url": "192.168.1.248:9050", "actions": "", "tags": ["248", "DMS", "Vinamilk", "Database", "Doris", "BE"] },
   { "name": "Doris MySQL","url": "192.168.1.248:9030", "actions": "", "tags": ["248", "DMS", "Vinamilk", "Database", "Doris", "MySQL"] },
   { "name": "MariaDB","url": "192.168.1.222:3306", "actions": "", "tags": ["222", "DMS", "Vinamilk", "Database", "MariaDB"] },
+  { "name": "PostgreSQL","url": "192.168.1.136:5432", "actions": "", "tags": ["136", "Database", "PostgreSQL"] },
+  { "name": "SQL Server CBCC","url": "192.168.1.103:1433", "actions": "", "tags": ["103", "Database", "SQL Server", "CBCC"] },
   { "name": "Nginx","url": "192.168.1.222:8000", "actions": "", "tags": ["222", "DMS", "Nginx", "Public"] },
   { "name": "MemCached","url": "192.168.1.222:11211", "actions": "", "tags": ["222", "DMS", "MemCached"] },
   { "name": "ActiveMQ","url": "192.168.1.222:61616", "actions": "", "tags": ["222", "DMS", "ActiveMQ"] },

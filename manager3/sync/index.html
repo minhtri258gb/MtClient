@@ -5,20 +5,20 @@
 
 		<!-- Type -->
 		<select id="sync-type" onchange="mt.sync.event.onChangeType()">
-			<option value="">Chọn Loại</option>
+			<option value="">-- Chọn Loại --</option>
 			<option value="lib">Library</option>
 			<option value="music">Music</option>
 		</select>
 
-		<!-- Device -->
-		<select id="sync-device">
-			<option value="home">Home</option>
-			<option value="company">Company</option>
+		<button onclick="mt.sync.event.btnSave()">Save</button>
+
+		<!-- File Compare -->
+		<select id="sync-file-compare" onchange="mt.sync.event.onChangeFile()">
+			<option value="">-- Chọn file --</option>
 		</select>
 
-		<button onclick="mt.sync.event.btnDownload()">Download</button>
-		<button>Select File</button>
 		<button onclick="mt.sync.event.btnCompare()">Compare</button>
+		<button onclick="mt.sync.event.btnZip()">Zip</button>
 
 	</div>
 
@@ -26,19 +26,22 @@
 	<div style="flex:1;display:flex;">
 
 		<!-- Content Left -->
-		<div style="flex:1;border-right:1px solid;">
-			<ol id="sync-list-left"></ol>
+		<div style="border-right:1px solid;">
+			<h4 id="sync-label-left" style="margin:0;text-align:center;"></h4>
+			<ol id="sync-list-left" style="margin-top:0;"></ol>
 		</div>
 		<!-- Content Right -->
-		<div style="flex:1;border-right:1px solid;">
-			<ol id="sync-list-right"></ol>
+		<div style="border-right:1px solid;">
+			<h4 id="sync-label-right" style="margin:0;text-align:center;"></h4>
+			<ol id="sync-list-right" style="margin-top:0;"></ol>
 		</div>
 		<!-- Content Compare -->
 		<div style="flex:1;display:flex;flex-direction:column;">
 			<!-- Add -->
-			<div id="sync-compare-top" style="flex:1;"></div>
+			<span>All <input type="checkbox" onchange="mt.sync.event.checkTopAll(event)"></input></span>
+			<ol id="sync-compare-top" style="margin-top:0;"></ol>
 			<!-- Remove -->
-			<div id="sync-compare-bottom" style="flex:1;border-top:1px solid;"></div>
+			<ol id="sync-compare-bottom" style="border-top:1px solid;margin-top:0;"></ol>
 		</div>
 	</div>
 

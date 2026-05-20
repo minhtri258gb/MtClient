@@ -85,6 +85,40 @@ var mtFile = {
 			throw ex;
 		}
 	},
+	async writeFileText(filepath, content, force) {
+		try {
+
+			if (force == null)
+				force = false;
+
+			// Check auth
+			if (!mt.api.checkAuthn())
+				await mt.api.init();
+
+			// ParamsURL
+			let params = new URLSearchParams();
+			params.set('file', filepath);
+			params.set('force', force.toString());
+
+			// Call API
+			let response = await fetch('/file/writeText?' + params.toString(), {
+				method: 'POST',
+				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
+				body: content,
+			});
+
+			if (!response.ok) {
+				if (response.status == 404)
+					return null;
+				else
+					throw new Error(await response.text());
+			}
+		}
+		catch (ex) {
+			console.error('[mt.file.readFile] Exception', ex);
+			throw ex;
+		}
+	},
 	downloadFileText(filename, content) {
 		const blob = new Blob([content], { type: 'text/plain' });
 		const url = URL.createObjectURL(blob);

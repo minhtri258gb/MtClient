@@ -30,9 +30,7 @@ var mtApi = {
 		// Call API - Authen
 		const response = await fetch('/authorize', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ password })
 		});
 
@@ -44,7 +42,7 @@ var mtApi = {
 			localStorage.setItem('token', this.m_token);
 		}
 		else
-			throw { error: true, msg: "Lỗi đăng nhập" };
+			throw { error: true, msg: 'Lỗi đăng nhập' };
 	},
 	async promt() {
 
@@ -58,7 +56,7 @@ var mtApi = {
 			await this.login(password);
 		}
 		catch (e) {
-			alert("Lỗi đăng nhập");
+			alert('Lỗi đăng nhập');
 			console.error(e);
 		}
 	},
@@ -69,9 +67,43 @@ var mtApi = {
 		// Call API - read Enviroment
 		let response = await fetch(`/common/getConfig?key=${key}`, { method: 'GET' });
 		if (!response.ok)
-			throw { error: true, msg: await response.text() };
+			throw new Error(await response.text());
 
 		return await response.text();
+	},
+
+	// CMD
+	async cmd(cmd, paths) {
+
+		/* Input: {
+		 *   cmd: string
+		 *   paths: array<string>
+		 * }
+		 * Output: {
+		 *   stderr: string
+		 *   stdout: string
+		 * }
+		 */
+
+		if (paths == null)
+			paths = [];
+
+		let response = await fetch('/common/cmd', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + this.m_token,
+			},
+			body: JSON.stringify({ paths, cmd }),
+		});
+
+		if (!response.ok) {
+			if (response.status == 404) { } // skip
+			else
+				throw { error: true, message: await response.text() };
+		}
+
+		return await response.json();
 	},
 
 	// File
@@ -102,9 +134,7 @@ var mtApi = {
 	async fileGetClientPath() {
 		let response = await fetch('/file/getClientPath', {
 			method: 'GET',
-			headers: {
-				'Authorization': 'Bearer ' + this.m_token,
-			},
+			headers: { 'Authorization': 'Bearer ' + this.m_token },
 		});
 		return await response.text();
 	},

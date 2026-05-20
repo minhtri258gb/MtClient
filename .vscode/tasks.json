@@ -9,6 +9,12 @@
 				"${file}",
 				"${fileDirname}/${fileBasenameNoExtension}.css",
 			]
-		}
+		},
+		{
+			"label": "Git Sync",
+			"type": "shell",
+			"command": "TortoiseGitProc /command:sync /path:.",
+			"options": { "env": { "PATH": "D:/Apps/TortoiseGit/bin;${env:PATH}" }}
+		},
 	]
 }
