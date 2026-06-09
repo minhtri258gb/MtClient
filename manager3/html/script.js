@@ -26,7 +26,7 @@ let mtHtml = {
 		if (this.h_isShadow)
 			textarea = this.shadow.getElementById('html-input');
 		else
-			textarea = document.getElementById('html-input');
+			textarea = this.e_contain.querySelector('#html-input');
 
 		this.c_editor = CodeMirror.fromTextArea(textarea, {
 			mode: 'abc',

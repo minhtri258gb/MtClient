@@ -94,7 +94,7 @@ let mtMidi = {
 			if (mtMidi.h_isShadow)
 				textarea = this.shadow.getElementById('midi-input');
 			else
-				textarea = document.getElementById('midi-input');
+				textarea = mtMidi.e_contain.querySelector('#midi-input');
 
 			this.p_editor = CodeMirror.fromTextArea(textarea, {
 				mode: 'abc',
@@ -166,7 +166,7 @@ let mtMidi = {
 		init() { },
 		submit() {
 
-			const form = document.getElementById('midi-form');
+			const form = mtMidi.e_contain.querySelector('#midi-form');
 			const formData = new FormData(form);
 
 			const data = {};
@@ -191,7 +191,7 @@ let mtMidi = {
 		init() {
 
 			// Note Name
-			this.c_keyName = document.getElementById('midi-note-name');
+			this.c_keyName = mtMidi.e_contain.querySelector('#midi-note-name');
 
 			// Key Bind, Load keybind
 			this.loadKeyBind();
@@ -298,10 +298,24 @@ let mtMidi = {
 			let keyCode = e.keyCode;
 			let keyPress = mtMidi.key.map[keyCode];
 			if (keyPress && !keyPress.press) {
+
+				// Đánh dấu
 				keyPress.press = true;
+
+				// Hiệu ứng trên phím
 				this.keyEffect(SVG('#k'+keyPress.note), true);
-				mtMidi.jzz.send(keyPress.note, true);
+
+				// Phát âm thanh
+				let finalNote = mtMidi.jzz.send(keyPress.note, true);
 				// mtMidi.tone.trigger(keyPress.note, true);
+
+				let noteName = mtMidi.jzz.num2name(finalNote);
+
+				// Show keyname
+				this.c_keyName.innerHTML = 'Key: ' + finalNote + ' - ' + noteName;
+
+				// Record draft
+				mtMidi.tool.recordDraft(noteName);
 			}
 			if (e.keyCode == 123 || e.keyCode == 116)
 				return true;
@@ -353,12 +367,11 @@ let mtMidi = {
 				const velocity = this.calculateVelocity(finalNote); // Chuẩn hóa velocity
 				this.out.send([0x90, finalNote, velocity]);
 				// this.out.send([0x90, finalNote, 0x7f]); // Max velocity
-
-				// Show keyname
-				mtMidi.key.c_keyName.innerHTML = "Key: " + finalNote + " - " + mtMidi.jzz.num2name(finalNote);
 			}
 			else
 				this.out.send([0x80, finalNote, 0]);
+
+			return finalNote;
 		},
 		setInstrument(num) { // 0 - 127
 			this.out.program(0, num);
@@ -395,15 +408,20 @@ let mtMidi = {
 			return Math.max(20, Math.min(127, baseVelocity + adjustment));
 		},
 	},
-	toolbar: {
+	tool: {
 		e_btnBind: null,
 		e_btnShowKey: null,
+		e_btnRecord: null, // Nút record key
+		e_ipDraft: null, // Input draft note
+		m_isRecord: false, // Lưu key bấm vào draft note
 
 		init() {
 
 			// Nút bind
 			this.e_btnBind = mtMidi.e_contain.querySelector('#midi-btn-bind');
 			this.e_btnShowKey = mtMidi.e_contain.querySelector('#midi-btn-showkey');
+			this.e_btnRecord = mtMidi.e_contain.querySelector('#midi-btn-record');
+			this.e_ipDraft = mtMidi.e_contain.querySelector('#midi-input-draft');
 		},
 		btnBind() {
 
@@ -455,6 +473,17 @@ let mtMidi = {
 		},
 		btnApplyForm() {
 			mtMidi.form.submit();
+		},
+		recordDraft(noteName) {
+
+			if (!this.m_isRecord)
+				return;
+
+			let val = this.e_ipDraft.value;
+			if (val.length == 0)
+				this.e_ipDraft.value = noteName;
+			else
+				this.e_ipDraft.value += ' ' + noteName;
 		},
 	},
 	tree: { // Tree Folder
@@ -605,6 +634,61 @@ let mtMidi = {
 			return 'file';
 		},
 	},
+	event: {
+
+		// Record Draft
+		btnRecordDraft() {
+			try {
+				let elmIcon = mtMidi.tool.e_btnRecord.firstElementChild;
+				if (mtMidi.tool.m_isRecord) {
+					// Update flag
+					mtMidi.tool.m_isRecord = false;
+					// Update Icon button
+					elmIcon.classList.toggle('fa-circle-play', true);
+					elmIcon.classList.toggle('fa-circle-stop', false);
+				}
+				else {
+					// Update flag
+					mtMidi.tool.m_isRecord = true;
+					// Update Icon button
+					elmIcon.classList.toggle('fa-circle-play', false);
+					elmIcon.classList.toggle('fa-circle-stop', true);
+				}
+			}
+			catch (ex) {
+				console.log('[mt.midi.event.btnRecordDraft]', ex);
+			}
+		},
+		btnCleanDraft() {
+			mtMidi.tool.e_ipDraft.value = '';
+		},
+		btnWriteDraft() {
+			try {
+
+				let draft = mtMidi.tool.e_ipDraft.value;
+				let lstNote = draft.trim().split(' ');
+
+				// Convert
+				let lstABC = [];
+				for (let noteName of lstNote) {
+					let noteABC = mtMidi.util.cov_NoteName_to_NoteABC(noteName);
+					lstABC.push(noteABC);
+				}
+				let draftConvert = lstABC.join(' ');
+
+				// Write to code
+				let codeText = mtMidi.code.get();
+				codeText += '\n' + draftConvert;
+				mtMidi.code.set(codeText);
+
+				// Log
+				mt.h_debug && console.log('[mt.midi.event.btnWriteDraft]', { lstNote, draftConvert });
+			}
+			catch (ex) {
+				console.log('[mt.midi.event.btnWriteDraft]', ex);
+			}
+		},
+	},
 	util: { // Tiện ích
 		covKeyCharKeyCode(value, direct = true) {
 			if (!value) return undefined;
@@ -684,6 +768,40 @@ let mtMidi = {
 			let v = note % 12;
 			return (v==1 || v==3 || v==6 || v==8 || v==10);
 		},
+		cov_NoteName_to_NoteABC(nodeName) {
+
+			let pitch = '', accidental = '', octave = 0;
+			if (nodeName.length == 3) {
+				pitch = nodeName.substring(0, 1);
+				accidental = nodeName.substring(1, 2);
+				octave = +nodeName.substring(2);
+
+				if (accidental == '#')
+					pitch = '^' + pitch;
+				else if (accidental == 'b')
+					pitch = '_' + pitch;
+			}
+			else {
+				pitch = nodeName.substring(0, 1);
+				octave = +nodeName.substring(1);
+			}
+
+			// Convert note name to note abc
+			let noteABC = '';
+			if (octave === 4)
+				noteABC = pitch;
+			else if (octave === 5)
+				noteABC = pitch.toLowerCase();
+			else if (octave < 4)
+				noteABC = pitch + ",".repeat(4 - octave); 
+			else
+				noteABC = pitch.toLowerCase() + "'".repeat(octave - 5);
+
+			// Log
+			mt.h_debug && console.log('[mt.midi.util.cov_NoteName_to_NoteABC]', { pitch, octave, noteABC });
+
+			return noteABC;
+		},
 	},
 
 	async init() {
@@ -703,7 +821,7 @@ let mtMidi = {
 		this.key.init();
 		this.tree.init();
 		this.code.init();
-		this.toolbar.init();
+		this.tool.init();
 	},
 	async loadABC(filepath) {
 

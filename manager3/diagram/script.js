@@ -511,14 +511,14 @@ let mtDiagram = {
 		this.e_contain.style.display = '';
 
 		// Init Element
-		this.e_type = document.getElementById('diagram-type');
-		this.e_render = document.getElementById('diagram-render');
+		this.e_type = this.e_contain.querySelector('#diagram-type');
+		this.e_render = this.e_contain.querySelector('#diagram-render');
 
 		// Khởi tạo Mermaid
 		mermaid.initialize({ startOnLoad: false });
 
 		// Init Editor
-		let textarea = document.getElementById('diagram-input');
+		let textarea = this.e_contain.querySelector('#diagram-input');
 		this.m_editor = CodeMirror.fromTextArea(textarea, {
 			mode: 'markdown',
 			lineNumbers: true,
@@ -570,7 +570,7 @@ let mtDiagram = {
 			// Render to DOM
 			this.e_render.innerHTML = result.svg;
 
-			const svgElm = document.getElementById(uniqueId);
+			const svgElm = this.e_contain.querySelector('#'+uniqueId);
 			svgElm.style.maxWidth = '';
 			svgElm.style.height = '100%';
 			svgElm.style.marginBottom = '-4px';

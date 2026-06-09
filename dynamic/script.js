@@ -1,7 +1,6 @@
 import mtApi from '/common/api.js';
 import mtLib from '/common/lib.js';
 import mtFile from '/common/file.js';
-import mtCmd from '/common/cmd.js';
 import mtShow from '/common/show.js';
 import mtUtils from '/common/utils.js';
 
@@ -12,7 +11,6 @@ let mt = {
 	api: mtApi,
 	lib: mtLib,
 	file: mtFile,
-	cmd: mtCmd,
 	show: mtShow,
 	utils: mtUtils,
 

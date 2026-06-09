@@ -134,7 +134,7 @@ let mtDocument = {
 
 		init() {
 
-			this.e_content = document.getElementById('document-content');
+			this.e_content = mtDocument.e_contain.querySelector('#document-content');
 
 			let renderAction = (row, actions) => {
 				let htmlBtn = '<div style="display:flex;gap:4px;">';
@@ -214,7 +214,7 @@ let mtDocument = {
 
 			// Render Mermaid
 			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
-				let el = document.getElementById(svgId);
+				let el = mtDocument.e_contain.querySelector('#'+svgId);
 				let pre = el.parentElement.parentElement;
 				pre.after(el);
 				pre.remove();
@@ -332,7 +332,7 @@ let mtDocument = {
 			// Focus fragment
 			if (window.location.hash) {
 				const targetId = window.location.hash.substring(1);
-				const target = document.getElementById(targetId);
+				const target = mtDocument.e_contain.querySelector('#'+targetId);
 				if (target)
 					target.scrollIntoView({ behavior: 'smooth' });
 			}

@@ -16,7 +16,7 @@ let mtImage = {
 		m_currentItem: '', // Mục đang chọn
 
 		init() {
-			this.e_list = document.getElementById('image-list');
+			this.e_list = mtImage.e_contain.querySelector('#image-list');
 		},
 		add(toolName, obj) {
 
@@ -59,7 +59,7 @@ let mtImage = {
 			canvasElm.style.height = mtImage.m_height + 'px';
 			canvasElm.style.border = '1px solid #000';
 
-			let elmRender = document.getElementById('image-render');
+			let elmRender = mtImage.e_contain.querySelector('#image-render');
 			elmRender.appendChild(canvasElm);
 
 			// Cancas tạo dragdrop file ảnh
@@ -93,11 +93,11 @@ let mtImage = {
 			e_height: null,
 
 			init() {
-				this.e_width = document.getElementById('image-tool-size-w');
+				this.e_width = mtImage.e_contain.querySelector('#image-tool-size-w');
 				this.e_width.value = mtImage.m_width;
 				this.e_width.addEventListener('change', () => mtImage.event.onChangeSize());
 
-				this.e_height = document.getElementById('image-tool-size-h');
+				this.e_height = mtImage.e_contain.querySelector('#image-tool-size-h');
 				this.e_height.value = mtImage.m_height;
 				this.e_height.addEventListener('change', () => mtImage.event.onChangeSize());
 			},
@@ -107,8 +107,8 @@ let mtImage = {
 			e_input: null,
 
 			init() {
-				this.e_prop = document.getElementById('image-tool-text');
-				this.e_input = document.getElementById('image-tool-text-input');
+				this.e_prop = mtImage.e_contain.querySelector('#image-tool-text');
+				this.e_input = mtImage.e_contain.querySelector('#image-tool-text-input');
 			},
 		},
 

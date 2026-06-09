@@ -45,14 +45,14 @@ let mtQrCode = {
 		this.e_contain.style.display = '';
 
 		// Prepare element
-		this.e_image = document.getElementById('qrcode-image');
-		this.e_text = document.getElementById('qrcode-text');
-		this.e_radius = document.getElementById('qrcode-radius');
-		this.e_ecLevel = document.getElementById('qrcode-ecLevel');
-		this.e_fill = document.getElementById('qrcode-fill');
-		this.e_background = document.getElementById('qrcode-background');
-		this.e_size = document.getElementById('qrcode-size');
-		this.e_result = document.getElementById('qrcode-result');
+		this.e_image = this.e_contain.querySelector('#qrcode-image');
+		this.e_text = this.e_contain.querySelector('#qrcode-text');
+		this.e_radius = this.e_contain.querySelector('#qrcode-radius');
+		this.e_ecLevel = this.e_contain.querySelector('#qrcode-ecLevel');
+		this.e_fill = this.e_contain.querySelector('#qrcode-fill');
+		this.e_background = this.e_contain.querySelector('#qrcode-background');
+		this.e_size = this.e_contain.querySelector('#qrcode-size');
+		this.e_result = this.e_contain.querySelector('#qrcode-result');
 	},
 	generate() {
 

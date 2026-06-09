@@ -92,6 +92,7 @@ let mt = {
 						{ id: 'map', text: 'Map', icon: 'fa-solid fa-map-location-dot' },
 						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
 						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
+						{ id: 'sticker', text: 'Sticker', icon: 'fa-regular fa-face-grin-squint-tears' },
 					]},
 					{ id: 'entertainment', text: 'Entertainment', group: true, expanded: true, nodes: [
 						{ id: 'anime', text: 'Anime', icon: 'fa-brands fa-gratipay' },
@@ -1855,25 +1856,7 @@ let mt = {
 			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
 		},
 	},
-	chat: {
-		m_init: false,
-		e_contain: null,
-
-		async init() {
-			
-			// Import Library
-			// await mt.lib.import(['SimpleMDE','marked','mermaid']);
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'chat-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			this.e_contain.innerHTML = `<textarea id="chat-editor"></textarea>`;
-
-		},
-	},
+	sticker: 'ext',
 	markdown: {
 
 		/**

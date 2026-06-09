@@ -73,7 +73,7 @@
 	},
 	"try catch": {
 		"scope": "javascript",
-		"prefix": "js try catch",
+		"prefix": "try catch",
 		"body": [
 			"try {",
 			"\t",
@@ -81,6 +81,14 @@
 			"catch (ex) {",
 			"\tconsole.log('[mt.]', ex);",
 			"}",
+		]
+	},
+	"log": {
+		"scope": "javascript",
+		"prefix": "log",
+		"body": [
+			"// Log",
+			"mt.h_debug && console.log('[mt.]', { });",
 		]
 	},
 }

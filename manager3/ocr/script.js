@@ -66,9 +66,9 @@ let mtOCR = {
 		this.e_contain.style.display = '';
 
 		// Prepare element
-		this.e_image = document.getElementById('ocr-image');
-		this.e_lang = document.getElementById('ocr-lang');
-		this.e_text = document.getElementById('ocr-text');
+		this.e_image = this.e_contain.querySelector('#ocr-image');
+		this.e_lang = this.e_contain.querySelector('#ocr-lang');
+		this.e_text = this.e_contain.querySelector('#ocr-text');
 
 		let defaultLang = this.e_lang.value;
 
