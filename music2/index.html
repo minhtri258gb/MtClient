@@ -278,8 +278,7 @@
 			// Module
 			mgr: {
 				h_pathMusic: '', // Link folder on Server
-				h_pathDB: '/res/DB/music.json', // Link Data Client
-				m_clientPath: '', // Đường dẫn client
+				h_pathDB: '', // Link Data Client
 				d_musics: [], // Danh sách nhạc
 				d_arrayBufferFile: '', // arrayBuffer bài hiện tại để tạo sóng
 				d_blogUrl: '', // Blob URL bài hiện tại
@@ -287,9 +286,22 @@
 				d_history: [], // Danh sách lịch sử phát
 
 				async loadConfig() {
+					try {
 
-					// Call API - read Enviroment
-					this.h_pathMusic = await mt.api.config('PATH_MUSIC');
+						// Call API - read Enviroment
+						[ this.h_pathMusic,
+							this.h_pathDB
+						] = await Promise.all([
+							mt.api.config('PATH_MUSIC'),
+							mt.api.config('PATH_SERVER')
+						]);
+
+						this.h_pathDB += '/database';
+					}
+					catch (ex) {
+						mt.show.toast('error', ex.message);
+						console.error('[mt.mgr.loadFromJson] Exception', ex);
+					}
 				},
 				processParamURL() {
 					let urlParams = new URLSearchParams(window.location.search);
@@ -305,19 +317,8 @@
 				async loadFromJson() {
 					try {
 
-						// DB Path
-						let listMusic = [];
-						let urlDB = this.h_pathDB;
-
 						// Call API
-						let response = await fetch(urlDB, { method: 'GET' });
-						if (!response.ok) {
-							if (response.status == 404) { } // skip
-							else
-								throw { error: true, message: await response.text() };
-						}
-						else
-							listMusic = await response.json();
+						let listMusic = await mt.api.fileRead(this.h_pathDB, 'music.json', 'json');
 
 						// Process data
 						for (let i=0, sz=listMusic.length; i<sz; i++) {
@@ -341,20 +342,8 @@
 					try {
 
 						// Authen
-						if (mt.api.checkAuthn() == false)
-							await mt.api.init();
-
-						// Kiểm tra và lấy client path
-						if (this.m_clientPath.length == 0) {
-							let response = await fetch('/file/getClientPath', {
-								method: 'GET',
-								headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-							});
-							if (!response.ok)
-								throw { error: true, message: await response.text() };
-
-							this.m_clientPath = await response.text();
-						}
+						// if (mt.api.checkAuthn() == false)
+						// 	await mt.api.init();
 
 						// Bỏ id
 						let listData = [];
@@ -365,23 +354,9 @@
 						}
 
 						// Call API - Lưu dữ liệu
-						let paramURL = new URLSearchParams();
-						paramURL.set('file', this.m_clientPath + this.h_pathDB);
-						paramURL.set('force', true);
-						let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'text/plain',
-								'Authorization': 'Bearer ' + mt.api.getToken(),
-							},
-							body: JSON.stringify(listData),
-						});
-						if (!responseSave.ok) {
-							let errorMessage = await responseSave.text();
-							this.toast('error', errorMessage);
-							console.error(errorMessage);
-							return;
-						}
+						let filepath = this.h_pathDB + '/' + 'music.json';
+						let content = JSON.stringify(listData)
+						await mt.api.fileWriteText(filepath, true, content)
 					}
 					catch (ex) {
 						console.error('[mt.mgr.saveToJson] Exception', ex);
@@ -392,18 +367,7 @@
 					try {
 
 						// Call API - Load file
-						let paramsURL = new URLSearchParams();
-						paramsURL.append('folder', this.h_pathMusic);
-						paramsURL.append('file', filename + '.mp3');
-						let response = await fetch('/file/static?' + paramsURL.toString());
-						if (response.ok == false) {
-							if (response.status == 404)
-								throw { error: true, message: `Không tìm thấy file nhạc: "${filename}"` };
-							else
-								throw { error: true, message: await response.text() };
-						}
-
-						this.d_arrayBufferFile = await response.arrayBuffer();
+						this.d_arrayBufferFile = await mt.api.fileRead(this.h_pathMusic, filename + '.mp3', 'arrayBuffer');
 
 						// Giải phóng dữ liệu cũ và mã hóa dữ liệu mới
 						if (this.d_blogUrl.length > 0)
@@ -1294,20 +1258,11 @@
 					async open() {
 
 						// Authen
-						if (mt.api.checkAuthn() == false)
-							await mt.api.init();
+						// if (mt.api.checkAuthn() == false)
+						// 	await mt.api.init();
 
 						// Call API - Lấy danh sách file trong thư mục nhạc
-						let paramsURL = new URLSearchParams();
-						paramsURL.append('folder', mt.mgr.h_pathMusic);
-						let response = await fetch('/file/list?' + paramsURL.toString(), {
-							method: 'GET',
-							headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-						});
-						if (!response.ok)
-							throw { error: true, message: await response.text(), detail: response };
-
-						let listFile = await response.json();
+						let listFile = await mt.api.fileList(mt.mgr.h_pathMusic);
 
 						// Tạo mapping
 						let mapFile = {};
@@ -1414,10 +1369,10 @@
 						this.c_content.style.display = 'none';
 
 						// Notify
-						mt.show.toast('success', `Đã thêm toàn bộ bài mới`);
+						mt.show.toast('success', 'Đã thêm toàn bộ bài mới');
 
 						// Log
-						console.log('[mt.tools.check.addAll]', {  });
+						// console.log('[mt.tools.check.addAll]', {  });
 					},
 				},
 				track: {
@@ -1548,11 +1503,7 @@
 						if (URL.indexOf('localhost') > -1) {
 
 							// Call API - Get IP
-							let response = await fetch('/common/getIPLocal', { method: 'GET' });
-							if (!response.ok)
-								throw { error: true, message: await response.text() };
-
-							let IP = await response.text();
+							let IP = await mt.api.infoIP();
 
 							URL = URL.replace('localhost', IP);
 						}
@@ -1988,7 +1939,7 @@
 
 				// Import Library
 				this.lib.component(['Rate','TagBox']); // Ko cần đợi
-				await this.lib.import(['tingle','jsonEditor','jsmediatags']);
+				await this.lib.import(['tingle','jsonEditor','jsmediatags','toastify']);
 
 				// Read Config
 				await this.mgr.loadConfig();

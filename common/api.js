@@ -65,7 +65,16 @@ var mtApi = {
 	async config(key) {
 
 		// Call API - read Enviroment
-		let response = await fetch(`/common/getConfig?key=${key}`, { method: 'GET' });
+		let response = await fetch(`/api/config-get?key=${key}`, { method: 'GET' });
+		if (!response.ok)
+			throw new Error(await response.text());
+
+		return await response.text();
+	},
+	async infoIP() {
+
+		// Call API - read Enviroment
+		let response = await fetch('/api/info-ip', { method: 'GET' });
 		if (!response.ok)
 			throw new Error(await response.text());
 
@@ -112,31 +121,49 @@ var mtApi = {
 		let params = new URLSearchParams();
 		params.append('folder', folderpath);
 
-		let response = await fetch('/file/list?' + params.toString(), {
+		let response = await fetch('/api/file-list?' + params.toString(), {
 			method: 'GET',
-			headers: { 'Authorization': 'Bearer ' + this.m_token }
+			// headers: { 'Authorization': 'Bearer ' + this.m_token }
 		});
 
 		return await response.json();
 	},
-	async fileRead(filepath) {
+	async fileRead(folder, file, type) {
 
 		let params = new URLSearchParams();
-		params.append('file', filepath);
+		params.append('folder', folder);
+		params.append('file', file);
 
-		let response = await fetch('/file/read?' + params.toString(), {
+		let response = await fetch('/api/file-read?' + params.toString(), {
 			method: 'GET',
-			headers: { 'Authorization': 'Bearer ' + this.m_token }
+			// headers: { 'Authorization': 'Bearer ' + this.m_token }
 		});
 
-		return await response.text();
+		if (!response.ok)
+			throw new Error(await response.text());
+
+		switch (type) {
+			case 'text': return await response.text();
+			case 'json': return await response.json();
+			case 'blob': return await response.blob();
+			case 'arrayBuffer': return await response.arrayBuffer();
+			default: throw new Error('type không hợp lệ!');
+		}
 	},
-	async fileGetClientPath() {
-		let response = await fetch('/file/getClientPath', {
-			method: 'GET',
-			headers: { 'Authorization': 'Bearer ' + this.m_token },
+	async fileWriteText(file, confirm, content) {
+
+		let paramURL = new URLSearchParams();
+		paramURL.set('file', file);
+		paramURL.set('confirm', confirm);
+
+		let response = await fetch('/api/file-writeText?' + paramURL.toString(), {
+			method: 'POST',
+			headers: { 'Content-Type': 'text/plain' },
+			body: content,
 		});
-		return await response.text();
+
+		if (!response.ok)
+			throw new Error(await response.text())
 	},
 
 	// Get / Set

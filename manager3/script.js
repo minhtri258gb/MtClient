@@ -184,7 +184,7 @@ let mt = {
 				return;
 
 			// Call API
-			this.m_clientPath = await mt.api.fileGetClientPath();
+			this.m_clientPath = await mt.api.config('PATH_PUBLIC');
 
 			if (this.m_clientPath.length == 0)
 				throw new Error('Không lấy được client path!');
@@ -214,7 +214,10 @@ let mt = {
 
 		async loadModule(moduleName) {
 
-			let pathModule = window.location.pathname + moduleName;
+			let pathModule = window.location.pathname;
+			if (!pathModule.endsWith('/'))
+				pathModule += '/';
+			pathModule += moduleName;
 
 			// Load HTML
 			let [
@@ -315,11 +318,7 @@ let mt = {
 				if (urlShare.indexOf('localhost') > -1) {
 
 					// Call API - Get IP
-					let response = await fetch('/common/getIPLocal', { method: 'GET' });
-					if (!response.ok)
-						throw { error: true, message: await response.text() };
-
-					let IP = await response.text();
+					let IP = await mt.api.infoIP();
 
 					urlShare = urlShare.replace('localhost', IP);
 				}
@@ -663,7 +662,7 @@ let mt = {
 					{ field: 'status', text: 'Status', size: '180px', editable: { type: 'text' } },
 					{ field: 'tags', text: 'Tags', size: '320px', searchable: { operator: 'contains' }, editable: { type: 'text' } },
 					{ field: 'date', text: 'Date', size: '74px', sortable: true },
-					{ field: 'size', text: 'Size', size: '46px', sortable: true, editable: { type: 'text' } },
+					{ field: 'size', text: 'Size', size: '44px', sortable: true, editable: { type: 'text' } },
 				],
 				liveSearch: true,
 				multiSearch: false,
@@ -1819,11 +1818,7 @@ let mt = {
 			if (URL.indexOf('localhost') > -1) {
 
 				// Call API - Get IP
-				let response = await fetch('/common/getIPLocal', { method: 'GET' });
-				if (!response.ok)
-					throw { error: true, message: await response.text() };
-				let IP = await response.text();
-
+				let IP = await mt.api.infoIP();
 				URL = URL.replace('localhost', IP);
 			}
 
@@ -2956,7 +2951,7 @@ let mt = {
 
 		// Init
 		await this.event.init();
-		await this.api.init();
+		// await this.api.init();
 		await this.show.initToast();
 
 		// Init

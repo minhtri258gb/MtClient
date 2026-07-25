@@ -119,7 +119,7 @@ var mt = {
 				{ title: "Brand", field: 'brand', ...ratingProp},
 				{ title: "Review", field: 'review', ...ratingProp},
 				{ title: "End", field: 'end', width: 80, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
-				{ title: "Character", field: 'character', width: 100, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
+				{ title: "Character", field: 'character', width: 320, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
 				{ title: "Time", field: 'time', width: 69, vertAlign: 'middle', formatter: (cell) => {
 					let timestamp = cell.getValue();
 					if (timestamp == null)

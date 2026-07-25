@@ -13,7 +13,7 @@ let mtDocument = {
 		async init() {
 
 			// Read Config
-			mtDocument.h_pathDoc = await mt.api.config('PATH_DOC');
+			mtDocument.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
 		},
 	},
 	tree: {
@@ -346,12 +346,7 @@ let mtDocument = {
 		if (URL.indexOf('localhost') > -1) {
 
 			// Call API - Get IP
-			let response = await fetch('/common/getIPLocal', { method: 'GET' });
-			if (!response.ok)
-				throw { error: true, message: await response.text() };
-
-			let IP = await response.text();
-
+			let IP = await mt.api.infoIP();
 			URL = URL.replace('localhost', IP);
 		}
 

@@ -797,7 +797,8 @@ var mt = {
 
 			this.out = JZZ().openMidiOut().or(()=>{ alert('Cannot open MIDI port!'); });
 
-			this.setVolume(0.6);
+			// this.setVolume(0.6);
+			this.setVolume(1.0);
 		},
 		send: function(note, toggle) {
 			let offsetNote = mt.tool.offsetNote.get();

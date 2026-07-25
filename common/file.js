@@ -2,123 +2,123 @@ var mtFile = {
 	m_clientPath: '', // Đường dẫn của Folder Client
 
 	// Method
-	async listFile(folderpath) {
-		try {
+	// async listFile(folderpath) {
+	// 	try {
 
-			// Check auth
-			if (!mt.api.checkAuthn())
-				await mt.api.init();
+	// 		// Check auth
+	// 		if (!mt.api.checkAuthn())
+	// 			await mt.api.init();
 
-			// ParamsURL
-			let params = new URLSearchParams();
-			params.set('folder', folderpath);
+	// 		// ParamsURL
+	// 		let params = new URLSearchParams();
+	// 		params.set('folder', folderpath);
 
-			// Call API
-			let response = await fetch('/file/list?' + params.toString(), {
-				method: 'GET',
-				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-			});
+	// 		// Call API
+	// 		let response = await fetch('/file/list?' + params.toString(), {
+	// 			method: 'GET',
+	// 			headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
+	// 		});
 
-			if (!response.ok) {
-				if (response.status == 404)
-					return null;
-				else
-					throw { error: true, message: await response.text() };
-			}
+	// 		if (!response.ok) {
+	// 			if (response.status == 404)
+	// 				return null;
+	// 			else
+	// 				throw { error: true, message: await response.text() };
+	// 		}
 
-			return await response.json();
-		}
-		catch (ex) {
-			console.error('[mt.file.listFile] Exception', ex);
-			throw ex;
-		}
-	},
-	async readStatic(type, url) {
+	// 		return await response.json();
+	// 	}
+	// 	catch (ex) {
+	// 		console.error('[mt.file.listFile] Exception', ex);
+	// 		throw ex;
+	// 	}
+	// },
+	// async readStatic(type, url) {
 
-		// Call API
-		let response = await fetch(url, { method: 'GET' });
-		if (!response.ok) {
-			if (response.status == 404)
-				return null;
-			else
-				throw { error: true, message: await response.text() };
-		}
-		switch (type) {
-			case 'text': return await response.text();
-			case 'json': return await response.json();
-			case 'blob': return await response.blob();
-			default: throw { error: true, message: 'type không hợp lệ!' };
-		}
-	},
-	async readFile(type, filepath) {
-		try {
+	// 	// Call API
+	// 	let response = await fetch(url, { method: 'GET' });
+	// 	if (!response.ok) {
+	// 		if (response.status == 404)
+	// 			return null;
+	// 		else
+	// 			throw { error: true, message: await response.text() };
+	// 	}
+	// 	switch (type) {
+	// 		case 'text': return await response.text();
+	// 		case 'json': return await response.json();
+	// 		case 'blob': return await response.blob();
+	// 		default: throw { error: true, message: 'type không hợp lệ!' };
+	// 	}
+	// },
+	// async readFile(type, filepath) {
+	// 	try {
 
-			// Check auth
-			if (!mt.api.checkAuthn())
-				await mt.api.init();
+	// 		// Check auth
+	// 		if (!mt.api.checkAuthn())
+	// 			await mt.api.init();
 
-			// ParamsURL
-			let params = new URLSearchParams();
-			params.set('file', filepath);
+	// 		// ParamsURL
+	// 		let params = new URLSearchParams();
+	// 		params.set('file', filepath);
 
-			// Call API
-			let response = await fetch('/file/read?' + params.toString(), {
-				method: 'GET',
-				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-			});
+	// 		// Call API
+	// 		let response = await fetch('/file/read?' + params.toString(), {
+	// 			method: 'GET',
+	// 			headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
+	// 		});
 
-			if (!response.ok) {
-				if (response.status == 404)
-					return null;
-				else
-					throw { error: true, message: await response.text() };
-			}
-			switch (type) {
-				case 'text': return await response.text();
-				case 'json': return await response.json();
-				case 'blob': return await response.blob();
-				default: throw { error: true, message: 'type không hợp lệ!' };
-			}
-		}
-		catch (ex) {
-			console.error('[mt.file.readFile] Exception', ex);
-			throw ex;
-		}
-	},
-	async writeFileText(filepath, content, force) {
-		try {
+	// 		if (!response.ok) {
+	// 			if (response.status == 404)
+	// 				return null;
+	// 			else
+	// 				throw { error: true, message: await response.text() };
+	// 		}
+	// 		switch (type) {
+	// 			case 'text': return await response.text();
+	// 			case 'json': return await response.json();
+	// 			case 'blob': return await response.blob();
+	// 			default: throw { error: true, message: 'type không hợp lệ!' };
+	// 		}
+	// 	}
+	// 	catch (ex) {
+	// 		console.error('[mt.file.readFile] Exception', ex);
+	// 		throw ex;
+	// 	}
+	// },
+	// async writeFileText(filepath, content, force) {
+	// 	try {
 
-			if (force == null)
-				force = false;
+	// 		if (force == null)
+	// 			force = false;
 
-			// Check auth
-			if (!mt.api.checkAuthn())
-				await mt.api.init();
+	// 		// Check auth
+	// 		if (!mt.api.checkAuthn())
+	// 			await mt.api.init();
 
-			// ParamsURL
-			let params = new URLSearchParams();
-			params.set('file', filepath);
-			params.set('force', force.toString());
+	// 		// ParamsURL
+	// 		let params = new URLSearchParams();
+	// 		params.set('file', filepath);
+	// 		params.set('force', force.toString());
 
-			// Call API
-			let response = await fetch('/file/writeText?' + params.toString(), {
-				method: 'POST',
-				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-				body: content,
-			});
+	// 		// Call API
+	// 		let response = await fetch('/file/writeText?' + params.toString(), {
+	// 			method: 'POST',
+	// 			headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
+	// 			body: content,
+	// 		});
 
-			if (!response.ok) {
-				if (response.status == 404)
-					return null;
-				else
-					throw new Error(await response.text());
-			}
-		}
-		catch (ex) {
-			console.error('[mt.file.readFile] Exception', ex);
-			throw ex;
-		}
-	},
+	// 		if (!response.ok) {
+	// 			if (response.status == 404)
+	// 				return null;
+	// 			else
+	// 				throw new Error(await response.text());
+	// 		}
+	// 	}
+	// 	catch (ex) {
+	// 		console.error('[mt.file.readFile] Exception', ex);
+	// 		throw ex;
+	// 	}
+	// },
 	downloadFileText(filename, content) {
 		const blob = new Blob([content], { type: 'text/plain' });
 		const url = URL.createObjectURL(blob);
