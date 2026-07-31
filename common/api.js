@@ -47,7 +47,7 @@ var mtApi = {
 	async promt() {
 
 		// Input
-		const password = prompt('Nhập mật khẩu:', '');
+		const password = prompt('Nhập mật khẩu:', 'guest');
 		if (password == null || password.length == 0)
 			return;
 
@@ -82,7 +82,7 @@ var mtApi = {
 	},
 
 	// CMD
-	async cmd(cmd, paths) {
+	async cmd(cmd, args, cwd, paths) {
 
 		/* Input: {
 		 *   cmd: string
@@ -97,17 +97,15 @@ var mtApi = {
 		if (paths == null)
 			paths = [];
 
-		let response = await fetch('/common/cmd', {
+		let response = await fetch('/api/cmd', {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + this.m_token,
-			},
-			body: JSON.stringify({ paths, cmd }),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ cmd, args, cwd, paths }),
 		});
 
 		if (!response.ok) {
-			if (response.status == 404) { } // skip
+			if (response.status == 404)
+				{ } // skip
 			else
 				throw { error: true, message: await response.text() };
 		}
@@ -150,7 +148,7 @@ var mtApi = {
 			default: throw new Error('type không hợp lệ!');
 		}
 	},
-	async fileWriteText(file, confirm, content) {
+	async fileWriteText(file, content, confirm) {
 
 		let paramURL = new URLSearchParams();
 		paramURL.set('file', file);

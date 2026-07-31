@@ -516,13 +516,13 @@ let mtMidi = {
 			$('#midi-jstree').jstree({
 				core: {
 					data: {
-						url: '/file/jstree',
+						url: '/api/jstree',
 						headers: {
 							'Authorization': 'Bearer ' + mt.api.getToken(),
 						},
 						dataType: 'json',
 						data: (node) => {
-							let folder = node.original?.path || mt.common.m_clientPath + this.h_abcPath; // Lấy path
+							let folder = node.original?.path || mt.m_clientPath + this.h_abcPath; // Lấy path
 							return { folder };
 						},
 						success: (data) => this.processNode(data),
@@ -579,7 +579,7 @@ let mtMidi = {
 					icon: '/res/icons/play.png',
 					action: (obj) => {
 						let path = node.original.path;
-						path = path.replaceAll(mt.common.m_clientPath, '');
+						path = path.replaceAll(mt.m_clientPath, '');
 						window.open(path, '_blank');
 					}
 				};
@@ -809,8 +809,6 @@ let mtMidi = {
 		// Import Library
 		await mt.lib.import(['ABCJS', 'CodeMirror', 'jzz', 'svg', 'jstree']); // , 'tone'
 
-		await mt.common.getClientPath();
-
 		// Add container
 		this.e_contain.id = 'midi-contain';
 		this.e_contain.style.height = '100%';
@@ -826,7 +824,7 @@ let mtMidi = {
 	async loadABC(filepath) {
 
 		// Call API
-		let content = await mt.api.fileRead(filepath);
+		let content = await mt.api.fileRead('', filepath, 'text');
 
 		// Set Code
 		this.code.set(content);

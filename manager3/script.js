@@ -25,6 +25,10 @@ let mt = {
 	file: mtFile,
 	show: mtShow,
 
+	m_pathPublic: '', // Đường dẫn client
+	m_pathServer: '', // Đường dẫn Server
+	m_pathDB: '', // Đường dẫn Database
+
 	// Module
 	common: {
 
@@ -34,7 +38,6 @@ let mt = {
 
 		e_contain: null,
 		c_w2layout: null,
-		m_clientPath: '', // Đường dẫn client
 
 		async init() {
 
@@ -175,19 +178,17 @@ let mt = {
 
 			this.e_contain = document.getElementById('contain');
 
+			// Get Config
+			[ mt.m_pathPublic,
+				mt.m_pathServer
+			] = await Promise.all([
+				mt.api.config('PATH_PUBLIC'),
+				mt.api.config('PATH_SERVER')
+			]);
+			mt.m_pathDB = mt.m_pathServer + '/database'
+
 			// Process Params
 			this.processParams();
-		},
-		async getClientPath() {
-
-			if (this.m_clientPath.length > 0)
-				return;
-
-			// Call API
-			this.m_clientPath = await mt.api.config('PATH_PUBLIC');
-
-			if (this.m_clientPath.length == 0)
-				throw new Error('Không lấy được client path!');
 		},
 		processParams() {
 			let urlParams = new URLSearchParams(window.location.search);
@@ -777,8 +778,6 @@ let mt = {
 			// Import library
 			await mt.lib.import(['jstree']);
 
-			await mt.common.getClientPath();
-
 			// Add container
 			this.e_contain = document.createElement('div');
 			this.e_contain.id = 'explorer-contain';
@@ -801,13 +800,13 @@ let mt = {
 			$('#explorer-jstree').jstree({
 				core: {
 					data: {
-						url: '/file/jstree',
+						url: '/api/jstree',
 						headers: {
 							'Authorization': 'Bearer ' + mt.api.getToken(),
 						},
 						dataType: 'json',
 						data: (node) => {
-							let folder = node.original?.path || mt.common.m_clientPath; // Lấy path
+							let folder = node.original?.path || mt.m_pathPublic; // Lấy path
 							return { folder };
 						},
 						success: (data) => this.processNode(data),
@@ -870,7 +869,7 @@ let mt = {
 					icon: '/res/icons/play.png',
 					action: (obj) => {
 						let path = node.original.path;
-						path = path.replaceAll(mt.common.m_clientPath, '');
+						path = path.replaceAll(mt.m_pathPublic, '');
 						window.open(path, '_blank');
 					}
 				};
@@ -904,7 +903,7 @@ let mt = {
 		doubleClick(node) { // Nhấn đúp
 			if (node.type == 'html') {
 				let path = node.original.path;
-				path = path.replaceAll(mt.common.m_clientPath, '');
+				path = path.replaceAll(mt.m_pathPublic, '');
 				window.open(path, '_blank');
 			}
 		},
@@ -1069,382 +1068,7 @@ let mt = {
 			}
 		},
 	},
-	calendar: {
-
-		/**
-		 * https://fullcalendar.io/
-		 */
-		h_pathDB: 'res/DB/calendar/',
-		m_init: false,
-		d_events: {}, // Map year -> list event
-		c_calendar: null, // fullcalendar
-		c_modal: null, // tingle
-		c_form: null, // jsoneditor
-		e_content: null,
-		t_tmp: {}, // Quản lý sự kiện tạm
-
-		async init() {
-
-			// Import Library
-			await mt.lib.import(['FullCalendar','solarLunar','tingle','jsonEditor','flatpickr']); // 'vanilla-context-menu','ctxmenu'
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'calendar-contain';
-			this.e_contain.style.height = '100%';
-			this.e_contain.style.padding = '4px';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			// Init Calendar
-			this.c_calendar = new FullCalendar.Calendar(this.e_contain, {
-				initialView: 'dayGridMonth',
-				// initialDate: '2024-12-08', // #DEBUG
-				locale: 'vi',
-				timeZone: 'Asia/Ho_Chi_Minh',
-				height: 'parent',
-				// Toolbar
-				headerToolbar: {
-					left: 'prev,next today',
-					center: 'title',
-					right: 'addEvent dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-				},
-				// UI Setting
-				firstDay: 1, // Thứ 2 đầu tuần
-				weekNumbers: true, // Hiện số tuần của năm
-				businessHours: false, // Sẫm màu 2 ngày cuối tuần
-				showNonCurrentDates: false, // Sẫm màu các ngày ko thuộc tháng
-				buttonText: { // Phiên dịch
-					today: 'Hôm nay',
-					month: 'Tháng',
-					week: 'Tuần',
-					day: 'Ngày',
-					list: 'Sự kiện'
-				},
-				// Other
-				editable: false,
-				selectable: true,
-				dayMaxEvents: true, // allow "more" link when too many events
-				// Data
-				events: [],
-				// Custom Button
-				customButtons: {
-					addEvent: { text: 'Thêm', click: () => {
-						let curDate = new Date();
-						this.openForm({ id: -1, year: curDate.getFullYear(), name: '', date: mt.utils.convert_DateToStr(curDate), type: 'event' });
-					}},
-				},
-				// Register Event
-				datesSet: async (info) => { // khi đổi tháng, kiểu view, ngày, ...
-					let year = info.view.currentStart.getFullYear();
-					await this.load(year);
-				},
-				eventClick: (info) => this.openForm(info.event.extendedProps),
-				dateClick: (info) => {
-					if (this.t_tmp.clickDate == info.dateStr) {
-						delete this.t_tmp.clickDate;
-						this.openForm({ id: -1, year: info.view.currentStart.getFullYear(), name: '', date: info.dateStr, type: 'event' }); // Dupclick thì thêm sự kiện
-					}
-					else this.t_tmp.clickDate = info.dateStr; // Đánh dấu là nhấn vào ngày này
-				},
-			});
-			this.c_calendar.render();
-
-			// Init popup - tingle
-			this.c_modal = new tingle.modal({
-				footer: false,
-				stickyFooter: false,
-				closeMethods: ['button', 'escape'], // 'overlay'
-				closeLabel: "Đóng",
-				onOpen: function() {
-					// console.log('modal opened');
-				},
-				onClose: function() {
-					// console.log('modal closed');
-				},
-				beforeClose: function() {
-					// Return true to close the modal, false to prevent closing
-					return true;
-				},
-			});
-
-			// Contain Form
-			const elementForm = document.createElement('div');
-			elementForm.style.width = '500px';
-			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
-			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
-
-			// Init form - JsonEditor
-			// mt.lib.jsonEditor.ex.RateRegister();
-			// mt.lib.jsonEditor.ex.TagBoxRegister();
-			this.c_form = new JSONEditor(elementForm, {
-				use_name_attributes: false,
-				theme: 'barebones',
-				iconlib: 'fontawesome5',
-				disable_edit_json: true,
-				disable_properties: true,
-				disable_collapse: true,
-				schema: {
-					title: 'Lịch sự kiện',
-					type: 'object',
-					required: ['name', 'date'],
-					properties: {
-						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
-						'year': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
-						'date': { title: 'Date', type: 'string', format: 'date', readonly: true, options: { flatpickr: { locale: 'vn', altInput: true, altFormat: 'd.m.Y', dateFormat: 'Y-m-d' }}},
-						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0, options: { autocomplete: 'off' } },
-						'type': { title: 'Type', type: 'string', enum: ['normal','meet','birthday','holiday','note'] },
-						'time': { title: 'Time', type: 'string', format: 'time', options: { flatpickr: { locale: 'vn', enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true }}},
-						'location': { title: 'Location', type: 'string', format: 'text', options: { autocomplete: 'off' } },
-						'btn_map': { title: 'Open Map', type: 'string', format: 'button', options: { button: { icon: 'location-dot', action: () => this.btnOpenMap() }}},
-						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
-						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
-					}
-				},
-			});
-		},
-		async load(year) {
-
-			// Nếu đã có data thì bỏ qua
-			if (this.d_events[year] != null)
-				return;
-
-			let urlDB = '/' + this.h_pathDB + year + '.json';
-
-			// Call API
-			let listEvent = await mt.file.loadJson(urlDB);
-
-			// Auto gen
-			if (listEvent.length == 0)
-				listEvent = await this.generate(year);
-
-			// Process
-			for (let i=0; i<listEvent.length; i++) {
-				let event = listEvent[i];
-				
-				// Bổ sung Id
-				event.id = i+1;
-
-				// Bổ sung year
-				event.year = Number.parseInt(event.date.substring(0, 4));
-			}
-
-			// Bind Data
-			this.d_events[year] = listEvent;
-
-			// Set into calendar
-			this.setEvents(listEvent);
-
-			// Log
-			mt.h_debug && console.log('[mt.calendar.load]', { year, listEvent });
-		},
-		async openForm(event) {
-
-			// Clone
-			let formData = JSON.parse(JSON.stringify(event));
-
-			// Bổ sung field để hiển thị
-			if (formData.time == null)
-				formData.time = '00:00';
-			if (formData.type == null)
-				formData.type = 'normal';
-			formData.location = (formData.location == null) ? '' : (formData.location.lat + ', ' + formData.location.lng);
-			
-			// Set form data
-			this.c_form.setValue(formData);
-			
-			// Open Modal
-			this.c_modal.open();
-
-			// Log
-			mt.h_debug && console.log('[mt.calendar.openForm]', { event, formData });
-		},
-		async saveForm() {
-			try {
-
-				// Lấy data form
-				let formData = this.c_form.getValue();
-				let year = formData.year;
-				let id = formData.id;
-
-				// Process form data
-				if (formData.time == '00:00')
-					delete formData.time;
-
-				if (formData.type == 'normal')
-					delete formData.type;
-
-				let locationInput = formData.location;
-				delete formData.location;
-				if (locationInput != null && locationInput.length > 0) { // location từ 'lat, lng' thành { lat: ... , lng: ... }
-					let locPath = locationInput.split(', ');
-					if (locPath.length == 2) {
-						try {
-							let location = {
-								lat: Number.parseFloat(locPath[0]),
-								lng: Number.parseFloat(locPath[1])
-							};
-							formData.location = location;
-						}
-						catch (ex) {} // skip nếu lỗi
-					}
-				}
-				
-				// Lưu và cập nhật UI
-				if (id == -1) { // Add event
-					let newid = this.d_events[year].length;
-					formData.id = newid;
-
-					this.d_events[year].push(formData);
-
-					let style = this.getTypeColor(formData.type);
-					this.c_calendar.addEvent({
-						id: id,
-						title: formData.name,
-						start: formData.date,
-						backgroundColor: style.bgColor,
-						textColor: style.color,
-						borderColor: style.bdColor,
-						extendedProps: formData,
-					});
-				}
-				else { // Update event
-					let oldData = this.d_events[year][id-1];
-					this.d_events[year][id-1] = formData;
-					let event = this.c_calendar.getEventById(id);
-
-					if (formData.name != oldData.name)
-						event.setProp('title', formData.name);
-
-					if (formData.type != oldData.type) {
-						let style = this.getTypeColor(formData.type);
-						event.setProp('backgroundColor', style.bgColor);
-						event.setProp('textColor', style.color);
-						event.setProp('borderColor', style.bdColor);
-					}
-
-					for (let prop in formData) {
-						if (prop == 'id' || prop == 'date')
-							continue;
-						event.setExtendedProp(prop, formData[prop]);
-					}
-				}
-
-				// Save data
-				let urlDB = '/' + this.h_pathDB + year + '.json';
-				let cloneData = JSON.parse(JSON.stringify(this.d_events[year]));
-				for (let event of cloneData) {
-					delete event.id;
-					delete event.year;
-				}
-				await mt.file.saveJson(urlDB, cloneData);
-
-				// Toast
-				mt.show.toast('success', 'Đã lưu lịch.');
-
-				// Close modal
-				this.c_modal.close();
-
-				// Log
-				mt.h_debug && console.log('[mt.calendar.saveForm]', { formData });
-			}
-			catch (ex) {
-				mt.show.toast('error', 'Dữ liệu nhập chưa hợp lệ!');
-				console.error('[mt.calendar.saveForm] Exception:', ex);
-			}
-		},
-		btnOpenMap() {
-		
-			// Lấy data form
-			let formData = this.c_form.getValue();
-			let year = formData.year;
-			let id = formData.id;
-
-			let event = this.d_events[year][id-1];
-
-			if (!event.location) {
-				mt.show.toast('warning', 'Chưa nhập Location');
-				return;
-			}
-
-			let url = `/manager3/?app=map&lat=${event.location.lat}&lng=${event.location.lng}`;
-			window.open(url);
-		},
-		async generate(year) { // Tạo data của năm
-
-			// Generate
-			let urlDB = '/' + this.h_pathDB + 'gen.json';
-
-			// Call API load
-			let listGen = await mt.file.loadJson(urlDB);
-
-			// Gen
-			let listEvent = [];
-			for (let gen of listGen) {
-				let event = null;
-				switch (gen.gen) {
-					case 'yearly':
-						event = { date: year + gen.date.slice(4), name: gen.name };
-						break;
-					case 'yearly-lunar':
-						event = { date: this.convert_Lunar2Solar(year + gen.date.slice(4)), name: gen.name };
-						break;
-					default:
-						continue;
-				}
-				if (gen.type) // Bổ sung type
-					event.type = gen.type;
-				listEvent.push(event); // Thêm vào danh sách
-			}
-
-			// Lưu lại
-			mt.file.saveJson('/' + this.h_pathDB + year + '.json', listEvent);
-
-			// Thông báo
-			// w2alert(`Đã tạo dữ liệu năm ${year}.`);
-			w2utils.notify(`Đã tạo dữ liệu năm ${year}.`, { class: 'custom-class', where: '#preview-box' });
-			
-			// Log
-			mt.h_debug && console.log('[mt.calendar.generate]', { listGen, listEvent });
-
-			// Return
-			return listEvent;
-		},
-		setEvents(listEvent) {
-			let lstData = [];
-			for (let i=0, sz=listEvent.length; i<sz; i++) {
-				let event = listEvent[i];
-				let style = this.getTypeColor(event.type);
-				lstData.push({
-					id: event.id,
-					title: event.name,
-					start: event.date,
-					backgroundColor: style.bgColor,
-					textColor: style.color,
-					borderColor: style.bdColor,
-					extendedProps: event,
-				});
-			}
-			this.c_calendar.addEventSource(lstData);
-		},
-		getTypeColor(type) {
-			let bgColor = '#ffffff', color = '#000000', bdColor = '#ffffff';
-			switch (type) {
-				case 'meet': bgColor ='#3788d8'; color = '#fff'; break;
-				case 'birthday': bgColor ='#9dfca5'; break;
-				case 'holiday': bgColor ='#f19dfc'; break;
-				case 'note': bgColor ='#fcfa9d'; break;
-			}
-			return { bgColor, color, bdColor };
-		},
-		convert_Lunar2Solar(lunarDateStr) {
-			let year = Number.parseInt(lunarDateStr.substring(0, 4));
-			let month = Number.parseInt(lunarDateStr.substring(5, 7));
-			let day = Number.parseInt(lunarDateStr.substring(8, 10));
-			let sonarDate = solarLunar.lunar2solar(year, month, day, false);
-			let funcPad = (num) => (num < 10) ? '0'+num : ''+num;
-			return `${sonarDate.cYear}-${funcPad(sonarDate.cMonth)}-${funcPad(sonarDate.cDay)}`;
-		},
-	},
+	calendar: 'ext',
 	map: {
 
 		/**
@@ -1636,221 +1260,7 @@ let mt = {
 			L.marker([lat, lng]).addTo(this.c_map);
 		},
 	},
-	server: {
-		h_pathDB: '/res/DB/server.json',
-		h_pathNmap: 'D:/Apps/Nmap',
-		d_list: [],
-		d_map: {},
-		c_w2grid: null,
-		m_init: false,
-		e_contain: null,
-
-		async init() {
-
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'server-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
-
-			let renderAction = (row, actions) => {
-				let htmlBtn = '<div style="display:flex;gap:4px;">';
-				htmlBtn += `<button onclick="mt.server.btnRefresh(${row.id})"><i class="fa-solid fa-arrows-rotate"></i></button>`;
-				let act = ',' + actions + ',';
-				// if (act.includes(',build,'))
-				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},true)"><i class="fa-solid fa-hammer"></i></button>`;
-				// if (row.status === false && act.includes(',start,'))
-				// 	htmlBtn += `<button onclick="mt.server.btnSSH(${row.id},false)"><i class="fa-solid fa-play"></i></button>`;
-				if (row.status === true && act.includes(',link,'))
-					htmlBtn += `<button onclick="mt.server.btnLink(${row.id})"><i class="fa-solid fa-link"></i></button>`;
-				return htmlBtn + '</div>';
-			}
-			let renderStatus = (status) => {
-				if (status === undefined)
-					return `...`;
-				else if (status === null)
-					return `<i class="fa-solid fa-spinner fa-lg anim-rotate"></i>`;
-				return `<i class="fa-solid fa-circle-${status === true ? 'check' : 'xmark'} fa-lg"
-					style="color:#${status === true ? '4ade80' : 'f87171'}"></i>`;
-			}
-			let renderTag = (tags) => {
-				let htmlBtn = '<div style="display:flex;gap:4px;">';
-				for (let tag of tags) {
-					htmlBtn += `<button onclick="mt.server.btnTag('${tag}')">${tag}</button>`;
-				}
-				return htmlBtn + '</div>';
-			}
-
-			// Grid
-			this.c_w2grid = new w2grid({
-				name: 'grid-server',
-				recid: 'id',
-				group: 'group',
-				show: {
-					toolbar: true,
-					footer: true,
-					lineNumbers: true,
-					// toolbarAdd: true,
-					// toolbarSave: true,
-				},
-				toolbar: {
-					items: [
-						// { type: 'button', id: 'add', text: 'Add Record', icon: 'w2ui-icon-plus' },
-						// { type: 'break' },
-						// { type: 'button', id: 'showChanges', text: 'Show Changes' },
-						{ type: 'button', id: 'refresh_all', text: 'Refresh All', icon: 'fa-solid fa-arrows-rotate' },
-						{ type: 'button', id: 'share', text: 'Share', icon: 'fa-solid fa-share-from-square' },
-					],
-					onClick: (event) => {
-						if (event.target == 'refresh_all')
-							this.btnRefreshAll();
-						else if (event.target == 'share')
-							this.btnShare();
-					}
-				},
-				columns: [
-					{ field: 'actions', text: 'Actions', size: '120px', render: (row, target) => renderAction(row, target.value) },
-					{ field: 'status', text: 'Status', size: '52px', attr: 'align=center', render: (row, target) => renderStatus(target.value)},
-					{ field: 'name', text: 'Name', size: '300px', resizable: true, sortable: true, searchable: { operator: 'contains' }, editable: { type: 'text' } },
-					{ field: 'url', text: 'URL', size: '128px', sortable: true, resizable: true, editable: { type: 'text' } },
-					{ field: 'tags', text: 'Tags', size: '300px', render: (row, target) => renderTag(target.value) },
-				],
-				liveSearch: true,
-				multiSearch: true,
-				textSearch: 'contains',
-				searches: [
-					{ field: 'name', label: 'Name', type: 'text', operator: 'contains' },
-					{ field: 'tags', label: 'Tags', type: 'text', operator: 'contains' },
-				],
-			});
-			this.c_w2grid.render(this.e_contain);
-
-			// Load data
-			await this.load();
-			
-			// this.c_w2grid.total = this.d_list.length + 100;
-			this.c_w2grid.records = this.d_list;
-			// this.c_w2grid.sort('time', 'desc');
-			this.c_w2grid.refresh();
-
-			// Process Params
-			this.processParams();
-		},
-		async load() {
-
-			this.d_list = await mt.file.loadJson(this.h_pathDB);
-
-			let processNode = (server, id) => {
-
-				// Bổ sung id
-				server.id = id;
-
-				// Lấy host và port
-				if (server.url.includes(':')) {
-					let pathUrl = server.url.split(':');
-					server.host = pathUrl[0];
-					server.port = +pathUrl[1];
-				}
-				else {
-					server.host = server.url;
-					server.port = null;
-				}
-				
-				// Link reference
-				this.d_map[id] = server;
-			}
-
-			let id = 1;
-			for (let server of this.d_list) {
-				processNode(server, id++);
-
-				// Cấu trúc cây w2ui
-				if (server.list == null)
-					continue;
-
-				for (let subserver of server.list) // Bổ sung id
-					processNode(subserver, id++);
-
-				server.w2ui = { children: server.list };
-				delete server.list;
-			}
-		},
-		processParams() {
-			let urlParams = new URLSearchParams(window.location.search);
-			let tag = urlParams.get('tag');
-			if (tag != null) {
-				this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
-				this.btnRefreshAll(); // Tự động check khi có sẵn tag
-			}
-		},
-		async check(host, port) {
-			let cmd = '';
-			if (port != null)
-				cmd = `nmap -p ${port} ${host}`;
-			else
-				cmd = `nmap ${host}`;
-			let result = await mt.api.cmd(cmd, [this.h_pathNmap]);
-			let stdout = result?.stdout || '';
-			// let stderr = result?.stderr || '';
-			
-			mt.h_debug && console.log('[mt.server.check]', { result });
-			
-			return stdout.includes('open');
-		},
-		btnRefreshAll() {
-			this.c_w2grid.selectAll();
-			let ids = this.c_w2grid.getSelection();
-			this.c_w2grid.selectNone();
-
-			for (let id of ids) {
-				this.btnRefresh(id); // No Await
-			}
-		},
-		async btnRefresh(serverId) {
-			this.c_w2grid.set(serverId, { status: null });
-			let server = this.d_map[serverId];
-			this.c_w2grid.set(serverId, { status: await this.check(server.host, server.port) });
-		},
-		async btnShare() {
-
-			// Lấy Port hiện tại
-			let URL = location.origin + location.pathname;
-			if (URL.indexOf('localhost') > -1) {
-
-				// Call API - Get IP
-				let IP = await mt.api.infoIP();
-				URL = URL.replace('localhost', IP);
-			}
-
-			// Thêm params query
-			let paramURL = new URLSearchParams();
-			let appName = w2ui.layout_main_tabs.active;
-			paramURL.set('app', appName);
-			let tags = mt.server.c_w2grid.getSearchData('tags');
-			if (tags != null)
-				paramURL.set('tag', tags.value);
-			URL += '?' + paramURL.toString();
-			if (window.location.hash)
-				URL += decodeURIComponent(window.location.hash);
-
-			// Tự động copy
-			if (window.isSecureContext) {
-				await navigator.clipboard.writeText(URL);
-				mt.show.toast('success', 'Đã copy link chia sẻ');
-			}
-			else {
-				console.log(URL);
-				mt.show.toast('warning', 'Chưa cấp quyền truy cập bộ nhớ đệm! Lấy link trong console.');
-			}
-		},
-		btnLink(serverId) {
-			let server = this.d_map[serverId];
-			window.open('http://' + server.url, '_blank');
-		},
-		btnTag(tag) {
-			this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
-		},
-	},
+	server: 'ext',
 	sticker: 'ext',
 	markdown: {
 
@@ -2296,177 +1706,183 @@ let mt = {
 		e_contain: null,
 		
 		async init() {
+			try {
 
-			// Import Library
-			await mt.lib.import(['nanogallery2','tingle','jsonEditor']);
-			// <link href="/lib/sweetalert2-11.22.4/sweetalert2.css" rel="stylesheet" type="text/css">
-			// <script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js" type="text/javascript"></script>
-			// <script src="/lib/splitjs/split.min.js"></script>
+				// Import Library
+				await mt.lib.import(['nanogallery2','tingle','jsonEditor']);
+				// <link href="/lib/sweetalert2-11.22.4/sweetalert2.css" rel="stylesheet" type="text/css">
+				// <script src="/lib/sweetalert2-11.22.4/sweetalert2.all.min.js" type="text/javascript"></script>
+				// <script src="/lib/splitjs/split.min.js"></script>
 
-			// Add container
-			this.e_contain = document.createElement('div');
-			this.e_contain.id = 'gallery-contain';
-			this.e_contain.style.height = '100%';
-			mt.common.e_contain.appendChild(this.e_contain);
+				// Add container
+				this.e_contain = document.createElement('div');
+				this.e_contain.id = 'gallery-contain';
+				this.e_contain.style.height = '100%';
+				mt.common.e_contain.appendChild(this.e_contain);
 
-			this.e_contain.innerHTML = `
-				<div id="gallery-nanogallery2"></div>
-			`.trim().split('\n').map(v=>v.trim()).join('\n');
+				this.e_contain.innerHTML = `
+					<div id="gallery-nanogallery2"></div>
+				`.trim().split('\n').map(v=>v.trim()).join('\n');
 
-			// Read config
-			this.h_pathWallpaper = await mt.api.config('PATH_WALLPAPER');
+				// Read config
+				this.h_pathWallpaper = await mt.api.config('PATH_WALLPAPER');
 
-			// First load
-			this.d_wallpaper = await mt.file.loadJson(this.h_pathDB);
-			for (let i=0; i<this.d_wallpaper.length; i++) {
-				let img = this.d_wallpaper[i];
-				img.id = i+1; // Bổ sung Id
-			}
+				// First load
+				this.d_wallpaper = await mt.file.loadJson(this.h_pathDB);
+				for (let i=0; i<this.d_wallpaper.length; i++) {
+					let img = this.d_wallpaper[i];
+					img.id = i+1; // Bổ sung Id
+				}
 
-			// Tạo list ảnh cho nanogallery2
-			let listItem = [];
-			for (let i=0; i<this.d_wallpaper.length; i++) {
-				let img = this.d_wallpaper[i];
-				listItem.push({
-					ID: i+1+'',
-					src: img.name,
-					srct: img.name,
-					title: img.name,
-					kind: 'image',
-					// tags: img.tags != null ? img.tags.join(',') : '',
-					customData: Object.assign({
-						name: '',
-						tags: [],
-						rate: 3,
-					}, img),
+				// Tạo list ảnh cho nanogallery2
+				let listItem = [];
+				for (let i=0; i<this.d_wallpaper.length; i++) {
+					let img = this.d_wallpaper[i];
+					listItem.push({
+						ID: i+1+'',
+						src: img.name,
+						srct: img.name,
+						title: img.name,
+						kind: 'image',
+						// tags: img.tags != null ? img.tags.join(',') : '',
+						customData: Object.assign({
+							name: '',
+							tags: [],
+							rate: 3,
+						}, img),
+					});
+				}
+
+				// Init Nano Gallery 2
+				$('#gallery-nanogallery2').nanogallery2({
+
+					// Data
+					itemsBaseURL: `/api/file-read?folder=${this.h_pathWallpaper}&file=`,
+					items: listItem,
+
+					// Gallery
+					galleryDisplayMode: 'fullContent',
+					gallerySorting: 'random',
+					galleryTheme : { 
+						thumbnail: { titleShadow : 'none', titleColor: '#fff', borderColor: '#fff' },
+						navigationBreadcrumb: { background : '#3C4B5B' },
+						navigationFilter: { background : '#003C3F', backgroundSelected: '#2E7C7F', color: '#fff' }
+					},
+
+					// Thumbnail
+					thumbnailWidth: 'auto',
+					thumbnailHeight: 150,
+					thumbnailDisplayTransition: 'scaleDown',
+					thumbnailHoverEffect2: 'scale120',
+					thumbnailToolbarImage: { topLeft:'', topRight: 'custom1', bottomLeft: '', bottomRight: ''},
+
+					// Filter
+					galleryFilterTags: true,
+					galleryFilterTagsMode: 'multiple',
+					// galleryFilterTagsMode: 'multi',
+
+					// Toolbar
+					viewerTools: {
+						topLeft: 'previousButton, pageCounter, nextButton, playPauseButton',
+						topRight: 'custom1, zoomButton, rotateLeft, rotateRight, fullscreenButton, closeButton',
+					},
+					viewerToolbar: {
+						display: true,
+						standard: 'minimizeButton, label',
+						minimized: 'minimizeButton, label, shareButton, shoppingcart, linkOriginalButton, downloadButton, infoButton, ',
+					},
+
+					// Icons
+					icons: {
+						thumbnailCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
+						viewerCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
+					},
+
+					// Event
+					fnThumbnailToolCustAction: (toolCode, item) => {
+						switch (toolCode) {
+							case 'custom1':
+								mt.gallery.openForm(item);
+								break;
+						}
+						mt.h_debug && console.log('[mt.gallery.init.fnThumbnailToolCustAction]', { toolCode, item });
+					},
+					fnImgToolbarCustClick: (toolCode, element, item) => {
+						switch (toolCode) {
+							case 'custom1':
+								mt.gallery.openForm(item);
+								break;
+						}
+						mt.h_debug && console.log('[mt.gallery.init.fnImgToolbarCustClick]', { toolCode, element, item });
+					},
+					// viewerToolbar: {
+					// 	standard:  'minimizeButton, previousButton, pageCounter, nextButton, playPauseButton, fullscreenButton, closeButton',
+					// 	// thêm custom button của bạn
+					// 	custom: '<a class="nGY2ViewerCustomBtn" title="Tải về"><i class="fa fa-download"></i></a>'
+					// },
+					// fnViewerToolbar: ($customElement, item, data) => {
+					// 	$customElement.filter('.nGY2ViewerCustomBtn').on('click', e => {
+					// 		e.preventDefault();
+					// 		alert('Bạn vừa click custom button cho: ' + item.title);
+					// 		// ở đây bạn có thể viết code download, share, like...
+					// 	});
+					// }
+				});
+				
+				// Init popup - tingle
+				this.c_modal = new tingle.modal({
+					footer: false,
+					stickyFooter: false,
+					closeMethods: ['button', 'escape'], // 'overlay'
+					closeLabel: 'Đóng',
+					onOpen: function() {
+						// console.log('modal opened');
+					},
+					onClose: function() {
+						// console.log('modal closed');
+					},
+					beforeClose: function() {
+						// Return true to close the modal, false to prevent closing
+						return true;
+					},
+				});
+
+				// Contain Form
+				const elementForm = document.createElement('div');
+				elementForm.style.width = '500px';
+				// this.c_modal.modal.style.zIndex = 1004; // Lên trước nanogallery2 - viewer là 1001
+				this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
+				this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
+
+				// Init form - JsonEditor
+				mt.lib.jsonEditor.ex.RateRegister();
+				mt.lib.jsonEditor.ex.TagBoxRegister();
+				this.c_form = new JSONEditor(elementForm, {
+					use_name_attributes: false,
+					theme: 'barebones',
+					iconlib: 'fontawesome5',
+					disable_edit_json: true,
+					disable_properties: true,
+					disable_collapse: true,
+					schema: {
+						title: 'Wallpaper',
+						type: 'object',
+						required: ['name', 'tags', 'rate'],
+						properties: {
+							'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
+							'name': { title: 'Name', type: 'string', format: 'text', minLength: 0 },
+							'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
+							'rate': { title: 'Rate', type: 'integer', format: 'rate', default: 3 },
+							'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
+							'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
+						}
+					},
 				});
 			}
-
-			// Init Nano Gallery 2
-			$('#gallery-nanogallery2').nanogallery2({
-
-				// Data
-				itemsBaseURL: `/file/static?folder=${this.h_pathWallpaper}&file=`,
-				items: listItem,
-
-				// Gallery
-				galleryDisplayMode: 'fullContent',
-				gallerySorting: 'random',
-				galleryTheme : { 
-					thumbnail: { titleShadow : 'none', titleColor: '#fff', borderColor: '#fff' },
-					navigationBreadcrumb: { background : '#3C4B5B' },
-					navigationFilter: { background : '#003C3F', backgroundSelected: '#2E7C7F', color: '#fff' }
-				},
-
-				// Thumbnail
-				thumbnailWidth: 'auto',
-				thumbnailHeight: 150,
-				thumbnailDisplayTransition: 'scaleDown',
-				thumbnailHoverEffect2: 'scale120',
-				thumbnailToolbarImage: { topLeft:'', topRight: 'custom1', bottomLeft: '', bottomRight: ''},
-
-				// Filter
-				galleryFilterTags: true,
-				galleryFilterTagsMode: 'multiple',
-				// galleryFilterTagsMode: 'multi',
-
-				// Toolbar
-				viewerTools: {
-					topLeft: 'previousButton, pageCounter, nextButton, playPauseButton',
-					topRight: 'custom1, zoomButton, rotateLeft, rotateRight, fullscreenButton, closeButton',
-				},
-				viewerToolbar: {
-					display: true,
-					standard: 'minimizeButton, label',
-					minimized: 'minimizeButton, label, shareButton, shoppingcart, linkOriginalButton, downloadButton, infoButton, ',
-				},
-
-				// Icons
-				icons: {
-					thumbnailCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
-					viewerCustomTool1: '<i class="fa-regular fa-pen-to-square"></i>',
-				},
-
-				// Event
-				fnThumbnailToolCustAction: (toolCode, item) => {
-					switch (toolCode) {
-						case 'custom1':
-							mt.gallery.openForm(item);
-							break;
-					}
-					mt.h_debug && console.log('[mt.gallery.init.fnThumbnailToolCustAction]', { toolCode, item });
-				},
-				fnImgToolbarCustClick: (toolCode, element, item) => {
-					switch (toolCode) {
-						case 'custom1':
-							mt.gallery.openForm(item);
-							break;
-					}
-					mt.h_debug && console.log('[mt.gallery.init.fnImgToolbarCustClick]', { toolCode, element, item });
-				},
-				// viewerToolbar: {
-				// 	standard:  'minimizeButton, previousButton, pageCounter, nextButton, playPauseButton, fullscreenButton, closeButton',
-				// 	// thêm custom button của bạn
-				// 	custom: '<a class="nGY2ViewerCustomBtn" title="Tải về"><i class="fa fa-download"></i></a>'
-				// },
-				// fnViewerToolbar: ($customElement, item, data) => {
-				// 	$customElement.filter('.nGY2ViewerCustomBtn').on('click', e => {
-				// 		e.preventDefault();
-				// 		alert('Bạn vừa click custom button cho: ' + item.title);
-				// 		// ở đây bạn có thể viết code download, share, like...
-				// 	});
-				// }
-			});
-			
-			// Init popup - tingle
-			this.c_modal = new tingle.modal({
-				footer: false,
-				stickyFooter: false,
-				closeMethods: ['button', 'escape'], // 'overlay'
-				closeLabel: 'Đóng',
-				onOpen: function() {
-					// console.log('modal opened');
-				},
-				onClose: function() {
-					// console.log('modal closed');
-				},
-				beforeClose: function() {
-					// Return true to close the modal, false to prevent closing
-					return true;
-				},
-			});
-
-			// Contain Form
-			const elementForm = document.createElement('div');
-			elementForm.style.width = '500px';
-			// this.c_modal.modal.style.zIndex = 1004; // Lên trước nanogallery2 - viewer là 1001
-			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
-			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
-
-			// Init form - JsonEditor
-			mt.lib.jsonEditor.ex.RateRegister();
-			mt.lib.jsonEditor.ex.TagBoxRegister();
-			this.c_form = new JSONEditor(elementForm, {
-				use_name_attributes: false,
-				theme: 'barebones',
-				iconlib: 'fontawesome5',
-				disable_edit_json: true,
-				disable_properties: true,
-				disable_collapse: true,
-				schema: {
-					title: 'Wallpaper',
-					type: 'object',
-					required: ['name', 'tags', 'rate'],
-					properties: {
-						'id': { type: 'integer', format: 'hidden', options: { titleHidden: true } },
-						'name': { title: 'Name', type: 'string', format: 'text', minLength: 0 },
-						'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
-						'rate': { title: 'Rate', type: 'integer', format: 'rate', default: 3 },
-						'btn_save': { title: 'Save', type: 'string', format: 'button', options: { button: { icon: 'save', action: () => this.saveForm() }}},
-						'btn_cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
-					}
-				},
-			});
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.gallery.init]', ex);
+			}
 		},
 		async openForm(item) {
 

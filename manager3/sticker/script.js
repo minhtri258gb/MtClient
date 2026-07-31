@@ -351,9 +351,9 @@ let mtSticker = {
 		this.e_compareTop = this.e_contain.querySelector('#sticker-compare-top');
 		this.e_compareBottom = this.e_contain.querySelector('#sticker-compare-bottom');
 
-		// Call API - Lấy PATH_CLIENT
+		// Call API - Lấy PATH_PUBLIC
 		if (this.m_clientPath.length == 0)
-			this.m_clientPath = await mt.api.config('PATH_CLIENT');
+			this.m_clientPath = await mt.api.config('PATH_PUBLIC');
 
 		// Init module
 		this.lib.init();

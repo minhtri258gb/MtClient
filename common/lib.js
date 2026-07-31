@@ -69,7 +69,7 @@ var mtLib = {
 		await Promise.all(promise); // Đợi load toàn bộ
 	},
 
-	'ABCJS': { init: false, async load() {
+	'ABCJS': { async load() {
 		let path = '/lib/abcjs/';
 		await Promise.all([
 			mtLib.loadCSS(path+'abcjs-audio.css'),
@@ -78,17 +78,17 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(path+'abcjs-plugin-min.js');
 	}},
-	'bwip': { init: false, async load() {
+	'bwip': { async load() {
 		await mtLib.loadJS('/lib/bwip-js-4.10.1/bwip-js-min.js');
 	}},
-	'c3': { init: false, async load() {
+	'c3': { async load() {
 		let path = '/lib/c3-0.7.20/';
 		await Promise.all([
 			mtLib.loadCSS(path+'c3.min.css'),
 			mtLib.loadJS(path+'c3.min.js'),
 		]);
 	}},
-	'CodeMirror': { init: false, async load() {
+	'CodeMirror': { async load() {
 		let path = '/lib/codemirror5-5.65.18/';
 		await Promise.all([
 			mtLib.loadCSS(path+'lib/codemirror.css'),
@@ -100,23 +100,23 @@ var mtLib = {
 			mtLib.loadJS(path+'addon/fold/foldgutter.js'),
 		]);
 	}},
-	'CodeMirror-md': { init: false, async load() {
+	'CodeMirror-md': { async load() {
 		let path = '/lib/codemirror5-5.65.18/';
 		await Promise.all([
 			mtLib.loadJS(path+'mode/markdown/markdown.js'),
 			mtLib.loadJS(path+'addon/fold/markdown-fold.js'),
 		]);
 	}},
-	'ctxmenu': { init: false, async load() {
+	'ctxmenu': { async load() {
 		await mtLib.loadJS('/lib/ctxmenu-2.1.0/ctxmenu.min.js');
 	}},
-	'd3': { init: false, async load() {
+	'd3': { async load() {
 		await mtLib.loadJS('/lib/d3/d3.v7.min.js');
 	}},
-	'fabricjs': { init: false, async load() {
+	'fabricjs': { async load() {
 		await mtLib.loadJS('/lib/fabricjs-6.7.1/index.min.js');
 	}},
-	'flatpickr': { init: false, async load() {
+	'flatpickr': { async load() {
 		let path = '/lib/flatpickr/';
 		await Promise.all([
 			mtLib.loadCSS(path+'flatpickr.min.css'),
@@ -124,26 +124,26 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(path+'l10n/vn.js');
 	}},
-	'FullCalendar': { init: false, async load() {
+	'FullCalendar': { async load() {
 		await mtLib.loadJS('/lib/fullcalendar-6.1.18/index.global.min.js');
 	}},
-	'function-plot': { init: false, async load() {
+	'function-plot': { async load() {
 		await mtLib.loadJS('/lib/function-plot-1.25.3/function-plot.js');
 	}},
-	'highlightjs': { init: false, async load() {
+	'highlightjs': { async load() {
 		let path = '/lib/highlightjs/';
 		await Promise.all([
 			mtLib.loadCSS(path+'default.min.css'),
 			mtLib.loadJS(path+'highlight.min.js'),
 		]);
 	}},
-	'interact': { init: false, async load() {
+	'interact': { async load() {
 		await mtLib.loadJS('/lib/interactjs-1.10.27/interact.min.js');
 	}},
-	'jsmediatags': { init: false, async load() {
+	'jsmediatags': { async load() {
 		await mtLib.loadJS('/lib/jsmediatags-3.9.7/jsmediatags.min.js');
 	}},
-	'jquery-ui': { init: false, async load() {
+	'jquery-ui': { async load() {
 		let path = '/lib/jquery-ui-1.14.0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'jquery-ui.min.css'),
@@ -152,7 +152,7 @@ var mtLib = {
 			mtLib.loadJS(path+'jquery-ui.min.js'),
 		]);
 	}},
-	'jsonEditor': { init: false, async load() {
+	'jsonEditor': { async load() {
 		let path = '/lib/json-editor-2.15.2/';
 		let pathex = '/lib/mt/json-editor/';
 		await Promise.all([
@@ -161,14 +161,14 @@ var mtLib = {
 		]);
 		await mtLib.loadJS(pathex+'mt-script.js');
 	}},
-	'jstree': { init: false, async load() {
+	'jstree': { async load() {
 		let path = '/lib/jstree-3.3.17/';
 		await Promise.all([
 			mtLib.loadCSS(path+'themes/default/style.min.css'),
 			mtLib.loadJS(path+'jstree.min.js'),
 		]);
 	}},
-	'jzz': { init: false, async load() {
+	'jzz': { async load() {
 		let path = '/lib/jzz/';
 		await mtLib.loadJS(path+'JZZ.js');
 		await Promise.all([
@@ -178,7 +178,7 @@ var mtLib = {
 			mtLib.loadJS(path+'JZZ.input.Kbd.js'),
 		]);
 	}},
-	'leaflet': { init: false, async load() {
+	'leaflet': { async load() {
 		let path = '/lib/leaflet/';
 		let pathex = '/lib/leaflet-ex/';
 		await Promise.all([
@@ -193,10 +193,10 @@ var mtLib = {
 			mtLib.loadJS(pathex+'Leaflet.contextmenu/leaflet.contextmenu.min.js'),
 		]);
 	}},
-	'marked': { init: false, async load() {
+	'marked': { async load() {
 		await mtLib.loadJS('/lib/marked-16.1.2/marked.umd.js');
 	}},
-	'markdownIt': { init: false, async load() {
+	'markdownIt': { async load() {
 		if (window.mermaid == null)
 			throw new Error('Import mermaid trước markdownIt');
 		let path = '/lib/markdown-it/';
@@ -211,35 +211,36 @@ var mtLib = {
 			mtLib.loadJS(path+'markdown-it-multimd-table.min.js'),
 			mtLib.loadJS(path+'markdown-it-sub.min.js'),
 			mtLib.loadJS(path+'markdown-it-sup.min.js'),
+			mtLib.loadJS(path+'markdown-it-task-lists.min.js'),
 			mtLib.loadJS(path+'markdownItAnchor.umd.js'),
 			mtLib.loadJS(path+'markdownItTocDoneRight.umd.js'),
 		]);
 	}},
-	'mathjax': { init: false, async load() {
+	'mathjax': { async load() {
 		let path = '/lib/mathjax-4.1.1/';
 		// await mtLib.loadJS(path+'sre/speech-worker.js');
 		await mtLib.loadJS(path+'tex-mml-chtml.js');
 	}},	
-	'mathjs': { init: false, async load() {
+	'mathjs': { async load() {
 		await mtLib.loadJS('/lib/mathjs-15.1.1/math.js');
 	}},
-	'md5': { init: false, async load() {
+	'md5': { async load() {
 		await mtLib.loadJS('/lib/blueimp-md5/js/md5.min.js');
 	}},
-	'mermaid': { init: false, async load() {
+	'mermaid': { async load() {
 		await mtLib.loadJS('/lib/mermaid-11.12.2/mermaid.min.js');
 	}},
-	'nanogallery2': { init: false, async load() {
+	'nanogallery2': { async load() {
 		let path = '/lib/nanogallery2-3.0.5/';
 		await Promise.all([
 			mtLib.loadCSS(path+'css/nanogallery2.min.css'),
 			mtLib.loadJS(path+'jquery.nanogallery2.min.js'),
 		]);
 	}},
-	'papaparse': { init: false, async load() {
+	'papaparse': { async load() {
 		await mtLib.loadJS('/lib/papaparse-5.5.3/papaparse.min.js');
 	}},
-	'pdfjs': { init: false, async load() {
+	'pdfjs': { async load() {
 		let path = '/lib/pdfjs-5.4.624/build/';
 		await Promise.all([
 			mtLib.loadJS(path+'pdf.mjs'),
@@ -247,7 +248,7 @@ var mtLib = {
 		]);
 		// pdfjsLib.GlobalWorkerOptions.workerSrc = path+'pdf.worker.mjs';
 	}},
-	'pdfjs-viewer': { init: false, async load() {
+	'pdfjs-viewer': { async load() {
 		let path = '/lib/pdfjs-5.4.624/web/';
 		let pathex = '/lib/mt/pdfjs/';
 		await Promise.all([
@@ -256,7 +257,7 @@ var mtLib = {
 			mtLib.loadHTML(pathex+'mt-viewer.html', 'html', this),
 		]);
 	}},
-	'pivottable': { init: false, async load() {
+	'pivottable': { async load() {
 		let path = '/lib/pivottable-2.23.0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'pivot.min.css'),
@@ -273,38 +274,38 @@ var mtLib = {
 			mtLib.loadJS(path+'tips_data.min.js'),
 		]);
 	}},
-	'QrCode': { init: false, async load() {
+	'QrCode': { async load() {
 		let path = '/lib/QrCode/';
 		await Promise.all([
 			mtLib.loadJS(path+'qr-creator.min.js'),
 			mtLib.loadJS(path+'qr-scanner.min.js', 'es', 'QrScanner'),
 		]);
 	}},
-	'SimpleMDE': { init: false, async load() {
+	'SimpleMDE': { async load() {
 		let path = '/lib/simplemde-1.11.2-0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'simplemde.min.css'),
 			mtLib.loadJS(path+'simplemde.min.js'),
 		]);
 	}},
-	'solarLunar': { init: false, async load() {
+	'solarLunar': { async load() {
 		await mtLib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
 	}},
-	'svg': { init: false, async load() {
+	'svg': { async load() {
 		await mtLib.loadJS('/lib/svg/svg.min.js', 'cjs', 'SVG');
 		// await mtLib.loadJS('/lib/svg.js-2.7.1/svg.min.js');
 	}},
-	'svg-pan-zoom': { init: false, async load() {
+	'svg-pan-zoom': { async load() {
 		await mtLib.loadJS('/lib/svg-pan-zoom-3.6.2/svg-pan-zoom.min.js');
 	}},
-	'sweetalert2': { init: false, async load() {
+	'sweetalert2': { async load() {
 		let path = '/lib/sweetalert2-11.22.4/';
 		await Promise.all([
 			mtLib.loadCSS(path+'sweetalert2.css'),
 			mtLib.loadJS(path+'sweetalert2.all.min.js'),
 		]);
 	}},
-	'tabulator': { init: false, async load() {
+	'tabulator': { async load() {
 		let path = '/lib/tabulator-6.3/';
 		await Promise.all([
 			mtLib.loadCSS(path+'css/tabulator.min.css'),
@@ -320,7 +321,7 @@ var mtLib = {
 			return '/lib/tesseract.js-6.0.1/res/';
 		}
 	},
-	'tingle': { init: false, async load() {
+	'tingle': { async load() {
 		let path = '/lib/tingle/';
 		let pathex = '/lib/mt/tingle/';
 		await Promise.all([
@@ -329,34 +330,34 @@ var mtLib = {
 			mtLib.loadCSS(pathex+'mt-style.css'),
 		]);
 	}},
-	'toastify': { init: false, async load() {
+	'toastify': { async load() {
 		let path = '/lib/toastify-js-1.12.0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'toastify.min.css'),
 			mtLib.loadJS(path+'toastify.min.js'),
 		]);
 	}},
-	'tone': { init: false, async load() {
+	'tone': { async load() {
 		await mtLib.loadJS('/lib/tone/Tone.js');
 	}},
-	'vanilla-context-menu': { init: false, async load() {
+	'vanilla-context-menu': { async load() {
 		await mtLib.loadJS('/lib/vanilla-context-menu-1.6.0/vanilla-context-menu.js');
 	}},
-	'visjs': { init: false, async load() {
+	'visjs': { async load() {
 		let path = '/lib/vis-4.21.0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'vis.min.css'),
 			mtLib.loadJS(path+'vis.min.js'),
 		]);
 	}},
-	'xspreadsheet': { init: false, async load() {
+	'xspreadsheet': { async load() {
 		let path = '/lib/xspreadsheet/';
 		await Promise.all([
 			mtLib.loadCSS(path+'xspreadsheet.css'),
 			mtLib.loadJS(path+'xspreadsheet.js'),
 		]);
 	}},
-	'zxing': { init: false, async load() {
+	'zxing': { async load() {
 		await mtLib.loadJS('/lib/zxing-js-0.23.0/umd/index.min.js');
 	}},
 };

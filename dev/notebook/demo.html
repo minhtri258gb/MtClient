@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Code Notebook — Demo nhúng component</title>
+<style>
+  body {
+    margin: 0; padding: 32px; min-height: 100vh;
+    background: #101116; color: #e6e7ec;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p.lead { color: #9096a8; font-size: 13.5px; margin: 0 0 24px; line-height: 1.6; }
+  code { background: #24262f; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+  .note {
+    border: 1px solid #383b48; border-left: 3px solid #f2b134; background: #24262f;
+    border-radius: 8px; padding: 10px 14px; font-size: 12.5px; color: #c7cad4; margin: 18px 0 24px; line-height: 1.6;
+  }
+  code-notebook { max-width: 920px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Code Notebook</h1>
+    <p class="lead">
+      Component <code>&lt;code-notebook&gt;</code> viết bằng vanilla JS (Custom Element + Shadow DOM),
+      có thể nhúng vào bất kỳ file <code>index.html</code> nào chỉ bằng một thẻ <code>&lt;script&gt;</code>.
+      Mỗi cell chọn được ngôn ngữ, gọi API tự custom để thực thi (cmd / js / python / duckdb),
+      và cho phép gắn thêm tool riêng theo từng cell.
+    </p>
+    <div class="note">
+      Demo này dùng một bộ thực thi <b>giả lập ngay trên trình duyệt</b> (xem hàm <code>mockExecute</code> bên dưới)
+      để chạy được mà không cần backend thật. Trong dự án thật, chỉ cần đổi
+      <code>apiUrl: '/api/execute'</code> trỏ tới API của bạn theo đúng hợp đồng nêu trong <code>code-notebook.js</code>.
+    </div>
+
+    <code-notebook id="nb" title="Notebook demo"></code-notebook>
+  </div>
+
+  <script src="code-notebook.js"></script>
+  <script>
+    const nb = document.getElementById('nb');
+
+    // ----- Bộ thực thi giả lập (thay bằng fetch tới API thật của bạn) -----
+    const fakeTables = {
+      employees: {
+        columns: ['id', 'name', 'department'],
+        rows: [[1, 'An Nguyen', 'Backend'], [2, 'Bao Tran', 'Data'], [3, 'Chi Le', 'DevOps']]
+      }
+    };
+
+    async function mockExecute(cell) {
+      await new Promise((r) => setTimeout(r, 250 + Math.random() * 300));
+      const code = cell.code.trim();
+
+      if (cell.language === 'javascript') {
+        const logs = [];
+        const fakeConsole = { log: (...a) => logs.push(a.map(String).join(' ')) };
+        try {
+          const fn = new Function('console', `"use strict";${code}`);
+          fn(fakeConsole);
+          return { success: true, output: logs.join('\n') || '(không có output, dùng console.log để in)' };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+
+      if (cell.language === 'python') {
+        const prints = [...code.matchAll(/print\((.*)\)/g)].map((m) => m[1].replace(/^['"]|['"]$/g, ''));
+        if (prints.length) return { success: true, output: prints.join('\n') };
+        return { success: true, output: '[demo] Python cần backend thật để thực thi đầy đủ. Dùng print(...) để xem output giả lập.' };
+      }
+
+      if (cell.language === 'cmd') {
+        if (/^echo\s+/.test(code)) return { success: true, output: code.replace(/^echo\s+/, '') };
+        if (code === 'pwd') return { success: true, output: '/home/user/project' };
+        if (code === 'date') return { success: true, output: new Date().toString() };
+        return { success: false, error: `[demo] lệnh chưa được giả lập: ${code}` };
+      }
+
+      if (cell.language === 'duckdb') {
+        const m = code.match(/select \* from (\w+)/i);
+        if (m && fakeTables[m[1]]) return { success: true, table: fakeTables[m[1]] };
+        const literal = code.match(/select\s+(\d+)\s+as\s+(\w+)/i);
+        if (literal) return { success: true, table: { columns: [literal[2]], rows: [[literal[1]]] } };
+        return { success: false, error: '[demo] chỉ hỗ trợ "select N as col" hoặc "select * from employees"' };
+      }
+
+      return { success: false, error: 'Ngôn ngữ chưa được hỗ trợ trong bản demo.' };
+    }
+
+    nb.configure({
+      execute: mockExecute, // đổi thành: apiUrl: '/api/execute'  để dùng backend thật
+      initialCells: [
+        { language: 'javascript', code: "const items = [1,2,3];\nconsole.log('tong =', items.reduce((a,b)=>a+b,0));" },
+        { language: 'duckdb', code: 'select * from employees' },
+        { language: 'cmd', code: 'echo build thanh cong' }
+      ],
+      // Tool áp dụng cho MỌI cell
+      tools: [
+        {
+          id: 'copy',
+          label: '⧉',
+          title: 'Sao chép mã của cell',
+          onClick: (cell) => navigator.clipboard.writeText(cell.code)
+        }
+      ],
+      // Tool tùy theo ngôn ngữ của từng cell
+      cellTools: (cell) => {
+        if (cell.language === 'javascript') {
+          return [{
+            id: 'format',
+            label: '⟲',
+            title: 'Định dạng nhanh (thu gọn khoảng trắng thừa)',
+            onClick: (c, api) => {
+              c.code = c.code.split('\n').map((l) => l.trimEnd()).join('\n');
+              api._renderCells();
+            }
+          }];
+        }
+        return [];
+      }
+    });
+
+    // Lắng nghe sự kiện để tích hợp với phần còn lại của trang (vd lưu vào server)
+    nb.addEventListener('nb:change', (e) => console.log('notebook thay đổi:', e.detail));
+    nb.addEventListener('nb:output', (e) => console.log('cell có output mới:', e.detail));
+  </script>
+</body>
+</html>

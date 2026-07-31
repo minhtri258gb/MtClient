@@ -1,15 +1,14 @@
-let mtDocument = {
-	h_isShadow: false,
+let mt = {
+	h_debug: true,
 	h_pathDoc: '', // Link folder on Server
 	e_contain: null,
-	m_init: false,
 	m_currentFile: '', // Current reading
 
 	mgr: {
 		async init() {
 
 			// Read Config
-			mtDocument.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
+			mt.h_pathDoc = await mt.api.config('PATH_DOC');
 		},
 	},
 	tree: {
@@ -40,7 +39,7 @@ let mtDocument = {
 						},
 						dataType: 'json',
 						data: (node) => {
-							let folder = node.original?.path || mtDocument.h_pathDoc; // Lấy path
+							let folder = node.original?.path || mt.h_pathDoc; // Lấy path
 							return { folder };
 						},
 						success: (data) => this.processNode(data),
@@ -58,7 +57,7 @@ let mtDocument = {
 				e.preventDefault();
 				let instance = $.jstree.reference(this);
 				let node = instance.get_node(this);
-				mtDocument.tree.doubleClick(node);
+				mt.tree.doubleClick(node);
 			});
 
 			// Search
@@ -105,13 +104,13 @@ let mtDocument = {
 				let filepath = node.original.path;
 
 				// Lưu path file hiện tại
-				mtDocument.m_currentFile = filepath;
+				mt.m_currentFile = filepath;
 
 				// Call API - read file
 				let content = await mt.api.fileRead('', filepath, 'text');
 
 				// Render
-				mtDocument.content.load(content);
+				mt.content.load(content);
 			}
 		},
 		getType(filename) { // Lấy type tương ứng trên JsTree
@@ -130,7 +129,7 @@ let mtDocument = {
 
 		init() {
 
-			this.e_content = mtDocument.e_contain.querySelector('#document-content');
+			this.e_content = mt.e_contain.querySelector('#document-content');
 
 			let renderAction = (row, actions) => {
 				let htmlBtn = '<div style="display:flex;gap:4px;">';
@@ -172,7 +171,6 @@ let mtDocument = {
 			this.c_markdown.use(markdownitMultimdTable);
 			this.c_markdown.use(markdownitSub);
 			this.c_markdown.use(markdownitSup);
-			this.c_markdown.use(markdownitTaskLists);
 
 			// Init Mermaid
 			mermaid.initialize({ startOnLoad: false });
@@ -184,7 +182,8 @@ let mtDocument = {
 			// let urlGetImg = '/file/read?file=';
 			// let curPath = mt.document.m_currentFile;
 			// let imgPath = curPath.substring(0, curPath.lastIndexOf('.md')) + '/';
-			// content = content.replaceAll('](./', '](' + urlGetImg + imgPath);
+			// debugger
+			// content = content.replace('](./', '](' + urlGetImg + imgPath);
 			// content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, altText, imagePath) => {
 			// 	if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
 			// 		return match; // Không thay đổi nếu là URL
@@ -198,14 +197,10 @@ let mtDocument = {
 			// Insert Table of Content
 			content = '${toc}\n' + content;
 
-			// Convert MD to HTML
+			// Convert HTML
 			const html = this.c_markdown.render(content);
-
-			// Parse Text HTML to DOM
 			const domParser = new DOMParser();
 			const mdDom = domParser.parseFromString(html, 'text/html');
-
-			// Process Table of Content
 			const contentDiv = mdDom.getElementById('mdToC');
 			this.processTOC(contentDiv);
 			const tocHtml = contentDiv.outerHTML;
@@ -226,12 +221,11 @@ let mtDocument = {
 			const elmMdDoc = document.createElement('div'); // Tạo div content
 			elmMdDoc.classList.add('md-doc');
 			elmMdDoc.append(...mdDom.body.childNodes);
-			this.processTreeList(elmMdDoc);
 			elmMdcontain.appendChild(elmMdDoc);
 
 			// Render Mermaid
 			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
-				let el = mtDocument.e_contain.querySelector('#'+svgId);
+				let el = mt.e_contain.querySelector('#'+svgId);
 				let pre = el.parentElement.parentElement;
 				pre.after(el);
 				pre.remove();
@@ -251,63 +245,25 @@ let mtDocument = {
 					if (childOl) { // Nếu có nhánh con
 
 						// Thêm button collapse / expend
-						const toggleBtn = document.createElement('span');
-						toggleBtn.textContent = '⊖';
-						toggleBtn.style.cursor = 'pointer';
-						toggleBtn.style.display = 'inline-block';
-						toggleBtn.style.marginRight = '4px';
+						const btn = document.createElement('button');
+						btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+						btn.style.padding = '0 1px';
+						btn.style.marginLeft = '4px';
 
-						// Chèn button vào đầu li
-						li.prepend(toggleBtn);
-
-						// Xóa text cũ và thêm lại (để tránh trùng lặp)
-						const textNode = li.childNodes[1];
-						if (textNode && textNode.nodeType === 3) {
-							textNode.textContent = text;
-						}
-
-						// Thêm sự kiện toggle
-						toggleBtn.addEventListener('click', (e) => {
-							e.stopPropagation();
-							if (toggleBtn.textContent == '⊖') {
-								toggleBtn.textContent = '⊕';
-
-								// Collapse Animation
-								childOl.style.overflow = 'hidden';
-								const sectionHeight = childOl.scrollHeight;
-								const anim = childOl.animate([
-									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' },
-									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' }
-								], {
-									duration: 300,
-									easing: 'ease-in-out',
-									fill: 'forwards'
-								});
-								anim.onfinish = () => {
-									childOl.style.display = 'none';
-									anim.cancel();
-								};
+						// Event ẩn hiện
+						btn.addEventListener('click', () => {
+							if (childOl.style.display === 'none') {
+								childOl.style.display = 'block';
+								btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
 							}
 							else {
-								toggleBtn.textContent = '⊖';
-
-								// Expand Animation
-								childOl.style.display = '';
-								const sectionHeight = childOl.scrollHeight;
-								const anim = childOl.animate([
-									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' },
-									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' }
-								], {
-									duration: 300,
-									easing: 'ease-in-out',
-									fill: 'forwards'
-								});
-								anim.onfinish = () => {
-									childOl.style.overflow = '';
-									anim.cancel();
-								};
+								childOl.style.display = 'none';
+								btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
 							}
 						});
+
+						// Thêm button vào DOM
+						li.insertBefore(btn, childOl);
 
 						// Đệ quy xử lý nhánh con
 						fooRecursion(childOl);
@@ -319,85 +275,6 @@ let mtDocument = {
 			const childOl = contentDiv.querySelector('ol');
 			if (childOl)
 				fooRecursion(childOl);
-		},
-		processTreeList(elmMdDoc) {
-			// Tìm tất cả các thẻ <li> có chứa thẻ <ul> con
-			elmMdDoc.querySelectorAll('li').forEach(li => {
-
-				const childUl = li.querySelector(':scope > ul');
-				if (childUl) {
-					// Lấy nội dung text của li (bỏ qua child ul)
-					const text = li.childNodes[0]?.textContent?.trim() || '';
-
-					// Tạo button collapse
-					const toggleBtn = document.createElement('span');
-					toggleBtn.textContent = '⊖';
-					toggleBtn.style.cursor = 'pointer';
-					toggleBtn.style.display = 'inline-block';
-					toggleBtn.style.marginRight = '4px';
-
-					// Chèn button vào đầu li
-					li.prepend(toggleBtn);
-
-					// Xóa text cũ và thêm lại (để tránh trùng lặp)
-					const textNode = li.childNodes[1];
-					if (textNode && textNode.nodeType === 3) {
-						textNode.textContent = text;
-					}
-
-					// Thêm sự kiện toggle
-					toggleBtn.addEventListener('click', function(e) {
-						e.stopPropagation();
-						const ul = this.parentElement.querySelector(':scope > ul');
-						if (ul) {
-							if (this.textContent == '⊖') {
-								this.textContent = '⊕';
-
-								// Collapse Animation
-								ul.style.overflow = 'hidden';
-								const sectionHeight = ul.scrollHeight;
-								const anim = ul.animate([
-									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' },
-									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' }
-								], {
-									duration: 300,
-									easing: 'ease-in-out',
-									fill: 'forwards'
-								});
-								anim.onfinish = () => {
-									ul.style.display = 'none';
-									anim.cancel();
-								};
-							}
-							else {
-								this.textContent = '⊖';
-
-								// Expand Animation
-								ul.style.display = '';
-								const sectionHeight = ul.scrollHeight;
-								const anim = ul.animate([
-									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' },
-									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' }
-								], {
-									duration: 300,
-									easing: 'ease-in-out',
-									fill: 'forwards'
-								});
-								anim.onfinish = () => {
-									ul.style.overflow = '';
-									anim.cancel();
-								};
-							}
-						}
-					});
-
-					// Mặc định mở cấp đầu tiên, đóng các cấp con
-					// if (li.closest('li')) {
-					// 	childUl.style.display = 'none';
-					// 	toggleBtn.textContent = '▶ ';
-					// }
-				}
-			});
 		},
 	},
 	event: {
@@ -414,13 +291,13 @@ let mtDocument = {
 				const content = await blob.text();
 
 				// Bỏ path vì drop ko nhận đc filepath
-				mtDocument.m_currentFile = '';
+				mt.m_currentFile = '';
 
 				// Render
-				mtDocument.content.load(content);
+				mt.content.load(content);
 
 				// Log
-				// mt.h_debug && console.log('[mt.document.event.onDrop]', { text });
+				mt.h_debug && console.log('[mt.document.event.onDrop]', { text });
 			}
 			catch (ex) {
 				console.error('[mt.document.onDrop]', ex);
@@ -430,14 +307,11 @@ let mtDocument = {
 
 	async init() {
 
-		// Import library
-		await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
-		await mt.lib.import(['markdownIt', 'highlightjs', 'jstree']);
+		// Bind Global
+		globalThis.mt = this;
 
 		// Add container
-		this.e_contain.id = 'document-contain';
-		this.e_contain.style.height = '100%';
-		this.e_contain.style.display = '';
+		this.e_contain = document.getElementById('layout');
 
 		// Init Module
 		await this.mgr.init();
@@ -458,7 +332,7 @@ let mtDocument = {
 			this.m_currentFile = filepath;
 
 			// Call API - read file
-			let content = await mt.api.fileRead('', filepath, 'text');
+			let content = await mt.file.readFile('text', filepath);
 
 			// Render
 			await this.content.load(content);
@@ -466,10 +340,11 @@ let mtDocument = {
 			// Focus fragment
 			if (window.location.hash) {
 				const targetId = window.location.hash.substring(1);
-				const target = mtDocument.e_contain.querySelector(`[id="${targetId}"]`);
+				const target = mt.e_contain.querySelector('#'+targetId);
 				if (target)
 					target.scrollIntoView({ behavior: 'smooth' });
 			}
+
 		}
 	},
 	async share() {
@@ -479,7 +354,12 @@ let mtDocument = {
 		if (URL.indexOf('localhost') > -1) {
 
 			// Call API - Get IP
-			let IP = await mt.api.infoIP();
+			let response = await fetch('/common/getIPLocal', { method: 'GET' });
+			if (!response.ok)
+				throw { error: true, message: await response.text() };
+
+			let IP = await response.text();
+
 			URL = URL.replace('localhost', IP);
 		}
 
@@ -505,4 +385,4 @@ let mtDocument = {
 		}
 	},
 }
-export default mtDocument;
+document.addEventListener('DOMContentLoaded', () => mt.init());

@@ -134,70 +134,70 @@ var mtFile = {
 	},
 
 	// Json
-	async loadJson(url) {
-		try {
+	// async loadJson(url) {
+	// 	try {
 
-			// Call API
-			let response = await fetch(url, { method: 'GET' });
-			if (!response.ok) {
-				if (response.status == 404)
-					{ } // skip
-				else
-					throw { error: true, message: await response.text() };
-			}
-			else
-				return await response.json() || [];
+	// 		// Call API
+	// 		let response = await fetch(url, { method: 'GET' });
+	// 		if (!response.ok) {
+	// 			if (response.status == 404)
+	// 				{ } // skip
+	// 			else
+	// 				throw { error: true, message: await response.text() };
+	// 		}
+	// 		else
+	// 			return await response.json() || [];
 
-			return [];
-		}
-		catch (ex) {
-			console.error('[mtFile.loadJson] Exception', ex);
-			throw ex;
-		}
-	},
-	async saveJson(filepath, data) {
-		try {
+	// 		return [];
+	// 	}
+	// 	catch (ex) {
+	// 		console.error('[mtFile.loadJson] Exception', ex);
+	// 		throw ex;
+	// 	}
+	// },
+	// async saveJson(filepath, data) {
+	// 	try {
 
-			// Authen
-			if (mt.api.checkAuthn() == false)
-				await mt.api.init();
+	// 		// Authen
+	// 		if (mt.api.checkAuthn() == false)
+	// 			await mt.api.init();
 
-			// Kiểm tra và lấy client path
-			if (this.m_clientPath.length == 0) {
-				let response = await fetch('/file/getClientPath', {
-					method: 'GET',
-					headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-				});
-				if (!response.ok)
-					throw { error: true, message: await response.text() };
+	// 		// Kiểm tra và lấy client path
+	// 		if (this.m_clientPath.length == 0) {
+	// 			let response = await fetch('/file/getClientPath', {
+	// 				method: 'GET',
+	// 				headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
+	// 			});
+	// 			if (!response.ok)
+	// 				throw { error: true, message: await response.text() };
 
-				this.m_clientPath = await response.text();
-			}
+	// 			this.m_clientPath = await response.text();
+	// 		}
 
-			// Call API - Lưu dữ liệu
-			let paramURL = new URLSearchParams();
-			paramURL.set('file', this.m_clientPath + filepath);
-			paramURL.set('force', true);
-			let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'text/plain',
-					'Authorization': 'Bearer ' + mt.api.getToken(),
-				},
-				body: JSON.stringify(data),
-			});
-			if (!responseSave.ok) {
-				let errorMessage = await responseSave.text();
-				// this.toast('error', errorMessage);
-				console.error(errorMessage);
-				return;
-			}
-		}
-		catch (ex) {
-			console.error('[mtFile.saveJson] Exception', ex);
-			throw ex;
-		}
-	},
+	// 		// Call API - Lưu dữ liệu
+	// 		let paramURL = new URLSearchParams();
+	// 		paramURL.set('file', this.m_clientPath + filepath);
+	// 		paramURL.set('force', true);
+	// 		let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'text/plain',
+	// 				'Authorization': 'Bearer ' + mt.api.getToken(),
+	// 			},
+	// 			body: JSON.stringify(data),
+	// 		});
+	// 		if (!responseSave.ok) {
+	// 			let errorMessage = await responseSave.text();
+	// 			// this.toast('error', errorMessage);
+	// 			console.error(errorMessage);
+	// 			return;
+	// 		}
+	// 	}
+	// 	catch (ex) {
+	// 		console.error('[mtFile.saveJson] Exception', ex);
+	// 		throw ex;
+	// 	}
+	// },
 
 	// Convert
 	async blobToBase64(blob, split) { // Blob -> Base64

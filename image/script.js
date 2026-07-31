@@ -9,6 +9,7 @@ import JsonEditorEX from '/lib/mt/json-editor/mt-script.js';
 
 var mt = {
 	h_debug: false,
+	api: mtApi,
 
 	// Module
 	layout: {
@@ -22,18 +23,18 @@ var mt = {
 	mgr: {
 		h_pathWallpaper: '', // Link folder on Server
 		h_pathDB: 'res/DB/image.json', // Link Data Client
-		api: mtApi,
 		m_clientPath: '', // Đường dẫn client
 		d_wallpaper: [], // List Image
 
 		async readConfig() {
 
 			// Call API - read Enviroment
-			let response = await fetch('/common/getConfig?key=PATH_WALLPAPER', { method: 'GET' });
-			if (!response.ok)
-				throw { error: true, msg: await response.text() };
-
-			this.h_pathWallpaper = await response.text();
+			[ this.m_clientPath,
+				this.h_pathWallpaper
+			] = await Promise.all([
+				mt.api.config('PATH_PUBLIC'),
+				mt.api.config('PATH_WALLPAPER')
+			]);
 		},
 		// async registerFolder() {
 		// 	try {
@@ -119,18 +120,6 @@ var mt = {
 			// Authen
 			if (this.api.checkAuthn() == false)
 				await this.api.init();
-
-			// Kiểm tra và lấy client path
-			if (this.m_clientPath.length == 0) {
-				let response = await fetch('/file/getClientPath', {
-					method: 'GET',
-					headers: { 'Authorization': 'Bearer '+this.api.getToken() },
-				});
-				if (!response.ok)
-					throw { error: true, msg: await response.text() };
-
-				this.m_clientPath = await response.text();
-			}
 
 			// Call API - Lưu dữ liệu
 			let paramURL = new URLSearchParams();
@@ -351,7 +340,7 @@ var mt = {
 		globalThis.mt = this;
 
 		// Authen
-		// await this.mgr.api.init();
+		// await this.api.init();
 
 		// Read Config
 		await this.mgr.readConfig();

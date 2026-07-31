@@ -1,5 +1,6 @@
 var mtShow = {
 
+	// Toast
 	async initToast() {
 		await mt.lib.import(['toastify']);
 	},
@@ -30,8 +31,8 @@ var mtShow = {
 			text: `<i class="${icon}" style="width:24px;text-align:center;color:${color}"></i> ${message}`,
 			duration,
 			newWindow: true,
-			gravity: 'bottom',
-			position: 'right',
+			gravity: 'top', // top, bottom
+			position: 'center', // left, center, right
 			close: false,
 			escapeMarkup: false,
 			stopOnFocus: false,
@@ -52,6 +53,7 @@ var mtShow = {
 		}).showToast();
 	},
 
+	// Alert
 	async initAlert() {
 		await mt.lib.import(['sweetalert2']);
 	},
@@ -77,5 +79,48 @@ var mtShow = {
 		});
 		return result.isConfirmed;
 	},
+
+	// Animation
+	animCollapse(element, opts) {
+
+		element.style.overflow = 'hidden';
+
+		const sectionHeight = element.scrollHeight;
+
+		const anim = element.animate([
+			{ maxHeight: sectionHeight + 'px', opacity: 1, ...opts },
+			{ maxHeight: '0px', opacity: 0 }
+		], {
+			duration: 10000,
+			easing: 'ease-in-out',
+			fill: 'forwards'
+		});
+
+		anim.onfinish = () => {
+			element.style.display = 'none';
+			anim.cancel();
+		};
+	},
+	animExpand(element, opts) {
+
+		element.style.display = '';
+
+		const sectionHeight = element.scrollHeight;
+
+		const anim = element.animate([
+			{ maxHeight: '0px', opacity: 0 },
+			{ maxHeight: sectionHeight + 'px', opacity: 1 }
+		], {
+			duration: 10000,
+			easing: 'ease-in-out',
+			fill: 'forwards'
+		});
+
+		anim.onfinish = () => {
+			element.style.overflow = '';
+			anim.cancel();
+		};
+	},
 };
 export default mtShow;
+

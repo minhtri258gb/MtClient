@@ -73,13 +73,7 @@
 				await this.api.login('-1393153393');
 
 				// Read config
-				let resClientPath = await fetch('/file/getClientPath', {
-					method: 'GET',
-					headers: {
-						'Authorization': 'Bearer '+this.api.getToken(),
-					},
-				});
-				this.m_clientPath = await resClientPath.json();
+				this.m_clientPath = await mt.api.config('PATH_PUBLIC');
 
 				// Init
 				this.initUI();
@@ -90,7 +84,7 @@
 				$('#jstree').jstree({
 					core: {
 						data: {
-							url: '/file/jstree',
+							url: '/api/jstree',
 							headers: {
 								'Authorization': 'Bearer '+this.api.getToken(),
 							},

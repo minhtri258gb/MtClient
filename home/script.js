@@ -16,6 +16,7 @@ var mt = {
 	utils: mtUtils,
 
 	h_debug: true,
+	m_pathServer: '',
 
 	apps: [
 		'music', 'manager', 'piano', 'midi',
@@ -54,29 +55,16 @@ var mt = {
 	// Module
 	mgr: {
 		h_pathDB: '/res/DB/home.json',
-		m_clientPath: '',
 
 		async loadConfig() {
 
 			// Call API
-			let resClientPath = await fetch('/file/getClientPath', {
-				method: 'GET',
-				headers: {
-					'Authorization': 'Bearer ' + mt.api.getToken(),
-				},
-			});
-			this.m_clientPath = await resClientPath.text();
+			mt.m_pathServer = await mt.api.config('PATH_SERVER');
 		},
 		async loadFromJson() {
 
-			// Call API
-			let response = await fetch(this.h_pathDB, {
-				method: 'GET',
-			});
-			if (!response.ok)
-				throw { error: true, message: 'Lỗi tải dữ liệu home!', detail: ex };
-
-			let data = await response.json();
+			// Call API - đọc file
+			let data = await mt.api.fileRead(mt.m_pathServer+'/database', 'home.json', 'json');
 			mt.grid.load(data);
 
 			// Log
@@ -85,32 +73,10 @@ var mt = {
 		async saveToJson(data) {
 			try {
 
-				// Kiểm tra và lấy client path
-				if (this.m_clientPath.length == 0) {
-					let response = await fetch('/file/getClientPath', {
-						method: 'GET',
-						headers: { 'Authorization': 'Bearer '+mt.api.getToken() },
-					});
-					if (!response.ok)
-						throw { error: true, message: await response.text() };
-
-					this.m_clientPath = await response.text();
-				}
-
 				// Call API - Lưu dữ liệu
-				let paramURL = new URLSearchParams();
-				paramURL.set('file', this.m_clientPath + this.h_pathDB);
-				paramURL.set('force', true);
-				let responseSave = await fetch('/file/writeText?' + paramURL.toString(), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'text/plain',
-						'Authorization': 'Bearer ' + mt.api.getToken(),
-					},
-					body: JSON.stringify(data),
-				});
-				if (!responseSave.ok)
-					throw { error: true, message: await responseSave.text() };
+				let filepath = `${mt.m_pathPublic}/database/home.json`;
+				let content = JSON.stringify(data);
+				await mt.api.fileWriteText(filepath, content, true);
 			}
 			catch (ex) {
 				console.error('[mt.mgr.saveToJson] Exception', ex);
@@ -461,13 +427,13 @@ var mt = {
 		$('#jstree').jstree({
 			core: {
 				data: {
-					url: '/file/jstree',
+					url: '/api/jstree',
 					headers: {
 						'Authorization': 'Bearer '+this.api.getToken(),
 					},
 					dataType: 'json',
 					data: (node) => {
-						let folder = node.original?.path || mt.mgr.m_clientPath; // Lấy path
+						let folder = node.original?.path || mt.m_pathPublic; // Lấy path
 						return { folder };
 					},
 					success: (data) => this.processNode(data),
@@ -530,7 +496,8 @@ var mt = {
 				icon: '/res/icons/play.png',
 				action: (obj) => {
 					let path = node.original.path;
-					path = path.replaceAll(mt.mgr.m_clientPath, '');
+					path = path.replaceAll('\\', '/');
+					path = path.replaceAll(mt.m_pathPublic, '');
 					window.open(path, '_blank');
 				}
 			};
@@ -564,7 +531,7 @@ var mt = {
 	doubleClick(node) { // Nhấn đúp
 		if (node.type == 'html') {
 			let path = node.original.path;
-			path = path.replaceAll(mt.mgr.m_clientPath, '');
+			path = path.replaceAll(mt.m_pathPublic, '');
 			window.open(path, '_blank');
 		}
 	},

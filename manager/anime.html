@@ -241,16 +241,8 @@
 							await mt.api.init();
 
 						// Kiểm tra và lấy client path
-						if (this.m_clientPath.length == 0) {
-							let response = await fetch('/file/getClientPath', {
-								method: 'GET',
-								headers: { 'Authorization': 'Bearer ' + mt.api.getToken() },
-							});
-							if (!response.ok)
-								throw { error: true, message: await response.text() };
-
-							this.m_clientPath = await response.text();
-						}
+						if (this.m_clientPath.length == 0)
+							this.m_clientPath = await mt.api.config('PATH_PUBLIC');
 
 						// Bỏ id
 						let listData = [];

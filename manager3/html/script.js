@@ -14,8 +14,6 @@ let mtHtml = {
 		// Import Library
 		await mt.lib.import(['CodeMirror']);
 
-		// await mt.common.getClientPath();
-
 		// Add container
 		this.e_contain.id = 'html-contain';
 		this.e_contain.style.height = '100%';

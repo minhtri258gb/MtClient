@@ -356,7 +356,7 @@
 						// Call API - Lưu dữ liệu
 						let filepath = this.h_pathDB + '/' + 'music.json';
 						let content = JSON.stringify(listData)
-						await mt.api.fileWriteText(filepath, true, content)
+						await mt.api.fileWriteText(filepath, content, true)
 					}
 					catch (ex) {
 						console.error('[mt.mgr.saveToJson] Exception', ex);
