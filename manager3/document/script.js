@@ -36,7 +36,7 @@ let mtDocument = {
 					data: {
 						url: '/api/jstree',
 						headers: {
-							'Authorization': 'Bearer ' + mt.api.getToken(),
+							// 'Authorization': 'Bearer ' + mt.api.getToken(),
 						},
 						dataType: 'json',
 						data: (node) => {

@@ -16,6 +16,7 @@ var mt = {
 	utils: mtUtils,
 
 	h_debug: true,
+	m_pathPublic: '',
 	m_pathServer: '',
 
 	apps: [
@@ -59,6 +60,7 @@ var mt = {
 		async loadConfig() {
 
 			// Call API
+			mt.m_pathPublic = await mt.api.config('PATH_PUBLIC');
 			mt.m_pathServer = await mt.api.config('PATH_SERVER');
 		},
 		async loadFromJson() {
@@ -377,7 +379,7 @@ var mt = {
 		await mt.lib.import(['toastify', 'sweetalert2']);
 
 		// Authen
-		await this.api.init();
+		// await this.api.init();
 
 		// Read config
 		await this.mgr.loadConfig();
@@ -429,7 +431,7 @@ var mt = {
 				data: {
 					url: '/api/jstree',
 					headers: {
-						'Authorization': 'Bearer '+this.api.getToken(),
+						// 'Authorization': 'Bearer '+this.api.getToken(),
 					},
 					dataType: 'json',
 					data: (node) => {

@@ -1,22 +1,14 @@
-<div style="display:flex;">
 
-	<!-- Editor -->
-	<div style="flex:1">
+<!-- Toolbar -->
+<button>HTML</button>
+<button>CSS</button>
+<button onclick="mt.html.btnRender();">Render</button>
+<button onclick="mt.html.btnFixStr();">Fix</button>
 
-		<!-- Toolbar -->
-		<div>
-			<button>HTML</button>
-			<button>CSS</button>
-			<button>Render</button>
-		</div>
+<!-- Editor -->
+<textarea id="html-input"></textarea>
 
-		<!-- CodeMirror -->
-		<textarea id="html-input" rows="10" cols="60"></textarea>
-
-	</div>
-
-	<!-- Viewer -->
-	<div style="flex:1">
-		Render
-	</div>
+<!-- Viewer -->
+<div id="html-render" style="margin:4px;border:1px solid #ccc;">
+	Render
 </div>

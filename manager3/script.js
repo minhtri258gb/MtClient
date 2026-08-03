@@ -261,7 +261,19 @@ let mt = {
 
 				// Add container
 				module.e_contain = document.createElement('div');
-				module.e_contain.innerHTML = htmlText; // HTML
+
+				// module.e_contain.innerHTML = htmlText; // HTML
+
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(htmlText, 'text/html');
+				const parserError = doc.querySelector('parsererror');
+				if (parserError) {
+					mt.show.toast('warning', `Parse HTML error: ${parserError.textContent}`);
+					console.warn('[mt.common.loadModule] Parse HTML', parserError.textContent);
+				}
+				while (doc.body.firstChild)
+					module.e_contain.appendChild(doc.body.firstChild);
+
 				this.e_contain.appendChild(module.e_contain);
 			}
 
