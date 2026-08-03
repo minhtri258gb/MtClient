@@ -5,8 +5,7 @@ var mt = {
 	api: mtApi,
 	utils: mtUtils,
 
-	// h_endpoint: 'https://api.jikan.moe/v4/top/anime',
-	h_endpoint: '/database/tabulator',
+	h_endpoint: '/api/tabulator-sqlite',
 	c_table: null,
 	m_database: 'manager',
 	d_row: '', // Row đang lưu
@@ -19,7 +18,7 @@ var mt = {
 		window.mt = mt;
 
 		// Authen
-		await this.api.init();
+		// await this.api.init();
 
 		// Init
 		this.initUI();
@@ -28,7 +27,7 @@ var mt = {
 
 		// Rating Prop
 		let ratingProp = {
-			width: 80, // Old 70
+			width: 80,
 			hozAlign: 'center',
 			vertAlign: 'middle',
 			formatter: (cell, formatterParams, onRendered) => {
@@ -392,11 +391,11 @@ var mt = {
 		MicroModal.close('modal-1');
 
 		// Call API - Exec Database
-		let response = await fetch('/database/query', {
+		let response = await fetch('/api/sqlite-run', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + this.api.getToken(),
+				// 'Authorization': 'Bearer ' + this.api.getToken(),
 			},
 			body: JSON.stringify({
 				database: this.m_database,
