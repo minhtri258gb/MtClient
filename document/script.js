@@ -1,14 +1,24 @@
+import mtApi from '/common/api.js';
+import mtLib from '/common/lib.js';
+import mtFile from '/common/file.js';
+import mtShow from '/common/show.js';
+
 let mt = {
 	h_debug: true,
 	h_pathDoc: '', // Link folder on Server
 	e_contain: null,
 	m_currentFile: '', // Current reading
 
+	api: mtApi,
+	lib: mtLib,
+	file: mtFile,
+	show: mtShow,
+
 	mgr: {
 		async init() {
 
 			// Read Config
-			mt.h_pathDoc = await mt.api.config('PATH_DOC');
+			mt.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
 		},
 	},
 	tree: {
@@ -310,13 +320,17 @@ let mt = {
 		// Bind Global
 		globalThis.mt = this;
 
+		// Import library
+		await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
+		await mt.lib.import(['markdownIt', 'highlightjs', 'jstree']);
+
 		// Add container
 		this.e_contain = document.getElementById('layout');
 
 		// Init Module
 		await this.mgr.init();
-		await this.tree.init();
-		await this.content.init();
+		this.tree.init();
+		this.content.init();
 
 		// Process Params
 		this.processParams();

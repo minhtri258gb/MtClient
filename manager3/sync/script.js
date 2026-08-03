@@ -45,7 +45,7 @@ let mtSync = {
 				// Call API - lấy hostname
 				if (mtSync.m_hostname.length == 0) {
 					let result = await mt.api.cmd('hostname');
-					mtSync.m_hostname = result.stdout.trim();
+					mtSync.m_hostname = result.output.trim();
 				}
 
 				let now = mt.utils.convert_DateToStr(new Date());
@@ -55,7 +55,7 @@ let mtSync = {
 
 				// Call API - Scan folder
 				let path = mtSync[type].m_path;
-				let lst = await mt.file.listFile(path);
+				let lst = await mt.api.fileList(path);
 
 				// Reset List
 				mtSync.m_listLeft = [];
@@ -79,7 +79,7 @@ let mtSync = {
 				}
 
 				// Scan file compare
-				let lstAllFileCompare = await mt.file.listFile(mtSync.m_clientPath + '/res/sync');
+				let lstAllFileCompare = await mt.api.fileList(mtSync.m_clientPath + '/res/sync');
 				let lstFileCompare = [];
 				for (let item of lstAllFileCompare) {
 					let name = item.name;
@@ -128,7 +128,7 @@ let mtSync = {
 				let content = mtSync.m_listLeft.join('\n');
 
 				// Download file
-				let res = await mt.file.writeFileText(fullpath, content, false);
+				let res = await mt.api.fileWriteText(fullpath, content, false);
 
 				// Notify
 				mt.show.toast('success', `Đã lưu "${filename}"`);
