@@ -4,15 +4,16 @@ import mtFile from '/common/file.js';
 import mtShow from '/common/show.js';
 
 let mt = {
-	h_debug: true,
-	h_pathDoc: '', // Link folder on Server
-	e_contain: null,
-	m_currentFile: '', // Current reading
-
+	
 	api: mtApi,
 	lib: mtLib,
 	file: mtFile,
 	show: mtShow,
+
+	h_debug: true,
+	h_pathDoc: '', // Link folder on Server
+	e_contain: null,
+	m_currentFile: '', // Current reading
 
 	mgr: {
 		async init() {
@@ -45,7 +46,7 @@ let mt = {
 					data: {
 						url: '/api/jstree',
 						headers: {
-							'Authorization': 'Bearer ' + mt.api.getToken(),
+							// 'Authorization': 'Bearer ' + mt.api.getToken(),
 						},
 						dataType: 'json',
 						data: (node) => {
@@ -139,7 +140,7 @@ let mt = {
 
 		init() {
 
-			this.e_content = mt.e_contain.querySelector('#document-content');
+			this.e_content = document.getElementById('document-content');
 
 			let renderAction = (row, actions) => {
 				let htmlBtn = '<div style="display:flex;gap:4px;">';
@@ -181,6 +182,7 @@ let mt = {
 			this.c_markdown.use(markdownitMultimdTable);
 			this.c_markdown.use(markdownitSub);
 			this.c_markdown.use(markdownitSup);
+			this.c_markdown.use(markdownitTaskLists);
 
 			// Init Mermaid
 			mermaid.initialize({ startOnLoad: false });
@@ -192,8 +194,7 @@ let mt = {
 			// let urlGetImg = '/file/read?file=';
 			// let curPath = mt.document.m_currentFile;
 			// let imgPath = curPath.substring(0, curPath.lastIndexOf('.md')) + '/';
-			// debugger
-			// content = content.replace('](./', '](' + urlGetImg + imgPath);
+			// content = content.replaceAll('](./', '](' + urlGetImg + imgPath);
 			// content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, altText, imagePath) => {
 			// 	if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
 			// 		return match; // Không thay đổi nếu là URL
@@ -207,10 +208,14 @@ let mt = {
 			// Insert Table of Content
 			content = '${toc}\n' + content;
 
-			// Convert HTML
+			// Convert MD to HTML
 			const html = this.c_markdown.render(content);
+
+			// Parse Text HTML to DOM
 			const domParser = new DOMParser();
 			const mdDom = domParser.parseFromString(html, 'text/html');
+
+			// Process Table of Content
 			const contentDiv = mdDom.getElementById('mdToC');
 			this.processTOC(contentDiv);
 			const tocHtml = contentDiv.outerHTML;
@@ -231,6 +236,7 @@ let mt = {
 			const elmMdDoc = document.createElement('div'); // Tạo div content
 			elmMdDoc.classList.add('md-doc');
 			elmMdDoc.append(...mdDom.body.childNodes);
+			this.processTreeList(elmMdDoc);
 			elmMdcontain.appendChild(elmMdDoc);
 
 			// Render Mermaid
@@ -255,25 +261,63 @@ let mt = {
 					if (childOl) { // Nếu có nhánh con
 
 						// Thêm button collapse / expend
-						const btn = document.createElement('button');
-						btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
-						btn.style.padding = '0 1px';
-						btn.style.marginLeft = '4px';
+						const toggleBtn = document.createElement('span');
+						toggleBtn.textContent = '⊖';
+						toggleBtn.style.cursor = 'pointer';
+						toggleBtn.style.display = 'inline-block';
+						toggleBtn.style.marginRight = '4px';
 
-						// Event ẩn hiện
-						btn.addEventListener('click', () => {
-							if (childOl.style.display === 'none') {
-								childOl.style.display = 'block';
-								btn.innerHTML = '<i class="fa-solid fa-minus"></i>';
+						// Chèn button vào đầu li
+						li.prepend(toggleBtn);
+
+						// Xóa text cũ và thêm lại (để tránh trùng lặp)
+						const textNode = li.childNodes[1];
+						if (textNode && textNode.nodeType === 3) {
+							textNode.textContent = text;
+						}
+
+						// Thêm sự kiện toggle
+						toggleBtn.addEventListener('click', (e) => {
+							e.stopPropagation();
+							if (toggleBtn.textContent == '⊖') {
+								toggleBtn.textContent = '⊕';
+
+								// Collapse Animation
+								childOl.style.overflow = 'hidden';
+								const sectionHeight = childOl.scrollHeight;
+								const anim = childOl.animate([
+									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' },
+									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' }
+								], {
+									duration: 300,
+									easing: 'ease-in-out',
+									fill: 'forwards'
+								});
+								anim.onfinish = () => {
+									childOl.style.display = 'none';
+									anim.cancel();
+								};
 							}
 							else {
-								childOl.style.display = 'none';
-								btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+								toggleBtn.textContent = '⊖';
+
+								// Expand Animation
+								childOl.style.display = '';
+								const sectionHeight = childOl.scrollHeight;
+								const anim = childOl.animate([
+									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' },
+									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' }
+								], {
+									duration: 300,
+									easing: 'ease-in-out',
+									fill: 'forwards'
+								});
+								anim.onfinish = () => {
+									childOl.style.overflow = '';
+									anim.cancel();
+								};
 							}
 						});
-
-						// Thêm button vào DOM
-						li.insertBefore(btn, childOl);
 
 						// Đệ quy xử lý nhánh con
 						fooRecursion(childOl);
@@ -285,6 +329,85 @@ let mt = {
 			const childOl = contentDiv.querySelector('ol');
 			if (childOl)
 				fooRecursion(childOl);
+		},
+		processTreeList(elmMdDoc) {
+			// Tìm tất cả các thẻ <li> có chứa thẻ <ul> con
+			elmMdDoc.querySelectorAll('li').forEach(li => {
+
+				const childUl = li.querySelector(':scope > ul');
+				if (childUl) {
+					// Lấy nội dung text của li (bỏ qua child ul)
+					const text = li.childNodes[0]?.textContent?.trim() || '';
+
+					// Tạo button collapse
+					const toggleBtn = document.createElement('span');
+					toggleBtn.textContent = '⊖';
+					toggleBtn.style.cursor = 'pointer';
+					toggleBtn.style.display = 'inline-block';
+					toggleBtn.style.marginRight = '4px';
+
+					// Chèn button vào đầu li
+					li.prepend(toggleBtn);
+
+					// Xóa text cũ và thêm lại (để tránh trùng lặp)
+					const textNode = li.childNodes[1];
+					if (textNode && textNode.nodeType === 3) {
+						textNode.textContent = text;
+					}
+
+					// Thêm sự kiện toggle
+					toggleBtn.addEventListener('click', function(e) {
+						e.stopPropagation();
+						const ul = this.parentElement.querySelector(':scope > ul');
+						if (ul) {
+							if (this.textContent == '⊖') {
+								this.textContent = '⊕';
+
+								// Collapse Animation
+								ul.style.overflow = 'hidden';
+								const sectionHeight = ul.scrollHeight;
+								const anim = ul.animate([
+									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' },
+									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' }
+								], {
+									duration: 300,
+									easing: 'ease-in-out',
+									fill: 'forwards'
+								});
+								anim.onfinish = () => {
+									ul.style.display = 'none';
+									anim.cancel();
+								};
+							}
+							else {
+								this.textContent = '⊖';
+
+								// Expand Animation
+								ul.style.display = '';
+								const sectionHeight = ul.scrollHeight;
+								const anim = ul.animate([
+									{ maxHeight: '0px', opacity: 0, marginTop: '0', marginBottom: '0' },
+									{ maxHeight: sectionHeight + 'px', opacity: 1, marginTop: '4.8px', marginBottom: '4.8px' }
+								], {
+									duration: 300,
+									easing: 'ease-in-out',
+									fill: 'forwards'
+								});
+								anim.onfinish = () => {
+									ul.style.overflow = '';
+									anim.cancel();
+								};
+							}
+						}
+					});
+
+					// Mặc định mở cấp đầu tiên, đóng các cấp con
+					// if (li.closest('li')) {
+					// 	childUl.style.display = 'none';
+					// 	toggleBtn.textContent = '▶ ';
+					// }
+				}
+			});
 		},
 	},
 	event: {
@@ -346,7 +469,7 @@ let mt = {
 			this.m_currentFile = filepath;
 
 			// Call API - read file
-			let content = await mt.file.readFile('text', filepath);
+			let content = await mt.api.fileRead('', filepath, 'text');
 
 			// Render
 			await this.content.load(content);
@@ -354,11 +477,10 @@ let mt = {
 			// Focus fragment
 			if (window.location.hash) {
 				const targetId = window.location.hash.substring(1);
-				const target = mt.e_contain.querySelector('#'+targetId);
+				const target = mt.e_contain.querySelector(`[id="${targetId}"]`);
 				if (target)
 					target.scrollIntoView({ behavior: 'smooth' });
 			}
-
 		}
 	},
 	async share() {
@@ -368,12 +490,7 @@ let mt = {
 		if (URL.indexOf('localhost') > -1) {
 
 			// Call API - Get IP
-			let response = await fetch('/common/getIPLocal', { method: 'GET' });
-			if (!response.ok)
-				throw { error: true, message: await response.text() };
-
-			let IP = await response.text();
-
+			let IP = await mt.api.infoIP();
 			URL = URL.replace('localhost', IP);
 		}
 
