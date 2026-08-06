@@ -824,7 +824,7 @@ let mtMidi = {
 	async loadABC(filepath) {
 
 		// Call API
-		let content = await mt.api.fileRead('', filepath, 'text');
+		let content = await mt.api.fileRead(filepath, 'text');
 
 		// Set Code
 		this.code.set(content);

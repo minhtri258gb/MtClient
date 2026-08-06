@@ -159,7 +159,7 @@ let mtSync = {
 				// Load file
 				let type = mtSync.e_type.value;
 				let fullpath = mtSync.m_clientPath + '/res/sync/' + file + '.txt';
-				let content = await mt.file.readFile('text', fullpath);
+				let content = await mt.api.fileRead(fullpath, 'text');
 
 				// tạo list
 				let listName = content.trim().split('\n');
@@ -268,14 +268,15 @@ let mtSync = {
 
 				// Tổng hợp lệnh nén
 				let file7Z = `${mtSync.m_clientPath}/res/sync/${mtSync.m_nameRight}.7z`;
-				let cmd = `7z a "${file7Z}"`;
+				let cmd = '7z';
+				let args = ['a', file7Z];
 				for (let name of listZip)
-					cmd += ` "${pathFolder}/${name}"`;
+					args.push(`${pathFolder}/${name}`);
 
-				// Call API - cmd nén
-				let resCmd = await mt.api.cmd(cmd, [mtSync.m_zipPath]);
+				// Call API - cmd nén // cmd, args, cwd, paths
+				let resCmd = await mt.api.cmd(cmd, args, mt.pathPublic, [mtSync.m_zipPath]);
 
-				if (resCmd.stdout.length > 0)
+				if (resCmd.output.length > 0)
 					mt.show.toast('success', `Đã nén "${file7Z}"`);
 
 				// Log

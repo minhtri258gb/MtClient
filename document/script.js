@@ -118,7 +118,7 @@ let mt = {
 				mt.m_currentFile = filepath;
 
 				// Call API - read file
-				let content = await mt.api.fileRead('', filepath, 'text');
+				let content = await mt.api.fileRead(filepath, 'text');
 
 				// Render
 				mt.content.load(content);
@@ -412,6 +412,10 @@ let mt = {
 	},
 	event: {
 
+		register() {
+			window.addEventListener('hashchange', () => this.onHashChange());
+		},
+
 		// Global
 		async onDrop(e) {
 			try {
@@ -436,6 +440,9 @@ let mt = {
 				console.error('[mt.document.onDrop]', ex);
 			}
 		},
+		onHashChange() {
+			setTimeout(() => { history.replaceState(null, null, ' '); }, 10);
+		},
 	},
 
 	async init() {
@@ -455,6 +462,9 @@ let mt = {
 		this.tree.init();
 		this.content.init();
 
+		// Event register
+		this.event.register();
+
 		// Process Params
 		this.processParams();
 	},
@@ -469,7 +479,7 @@ let mt = {
 			this.m_currentFile = filepath;
 
 			// Call API - read file
-			let content = await mt.api.fileRead('', filepath, 'text');
+			let content = await mt.api.fileRead(filepath, 'text');
 
 			// Render
 			await this.content.load(content);

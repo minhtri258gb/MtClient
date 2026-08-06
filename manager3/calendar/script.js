@@ -137,7 +137,7 @@ let mtCalendar = {
 				return;
 
 			// Call API
-			let listEvent = await mt.api.fileRead(mt.m_pathServer+'/database', `calendar/${year}.json`, 'json');
+			let listEvent = await mt.api.fileRead(`${mt.m_pathServer}/database/calendar/${year}.json`, 'json');
 
 			// Auto gen
 			if (listEvent.length == 0)
@@ -305,7 +305,7 @@ let mtCalendar = {
 	async generate(year) { // Tạo data của năm
 
 		// Call API load
-		let listGen = await mt.api.fileRead(mt.m_pathServer+'/database', 'calendar/gen.json', 'json');
+		let listGen = await mt.api.fileRead(mt.m_pathServer+'/database/calendar/gen.json', 'json');
 
 		// Gen
 		let listEvent = [];

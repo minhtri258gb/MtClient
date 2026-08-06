@@ -318,7 +318,7 @@
 					try {
 
 						// Call API
-						let listMusic = await mt.api.fileRead(this.h_pathDB, 'music.json', 'json');
+						let listMusic = await mt.api.fileRead(this.h_pathDB+'/music.json', 'json');
 
 						// Process data
 						for (let i=0, sz=listMusic.length; i<sz; i++) {
@@ -367,7 +367,7 @@
 					try {
 
 						// Call API - Load file
-						this.d_arrayBufferFile = await mt.api.fileRead(this.h_pathMusic, filename + '.mp3', 'arrayBuffer');
+						this.d_arrayBufferFile = await mt.api.fileRead(this.h_pathMusic + '/' + filename + '.mp3', 'arrayBuffer');
 
 						// Giải phóng dữ liệu cũ và mã hóa dữ liệu mới
 						if (this.d_blogUrl.length > 0)

@@ -114,28 +114,21 @@ var mtApi = {
 	},
 
 	// File
-	async fileList(folderpath) {
-
-		let params = new URLSearchParams();
-		params.append('folder', folderpath);
-
-		let response = await fetch('/api/file-list?' + params.toString(), {
-			method: 'GET',
-			// headers: { 'Authorization': 'Bearer ' + this.m_token }
-		});
-
-		return await response.json();
-	},
-	async fileRead(folder, file, type) {
+	async fileList(folder) {
 
 		let params = new URLSearchParams();
 		params.append('folder', folder);
+
+		let response = await fetch('/api/file-list?' + params.toString(), { method: 'GET' });
+
+		return await response.json();
+	},
+	async fileRead(file, type) {
+
+		let params = new URLSearchParams();
 		params.append('file', file);
 
-		let response = await fetch('/api/file-read?' + params.toString(), {
-			method: 'GET',
-			// headers: { 'Authorization': 'Bearer ' + this.m_token }
-		});
+		let response = await fetch('/api/file-read?' + params.toString(), { method: 'GET' });
 
 		if (!response.ok)
 			throw new Error(await response.text());

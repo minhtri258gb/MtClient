@@ -3,7 +3,7 @@
 body {
 	box-sizing: border-box;
 	margin: 0;
-	padding: 16px;
+	padding: 0;
 	height: 100vh;
 }
 div.layoutMain {
@@ -23,46 +23,6 @@ div.layoutCenter {
 	text-align: center;
 }
 /* END Layout */
-
-
-/* BEGIN Grid */
-#packgrid {
-	margin: 16px;
-	background: #EEE;
-	max-width: 1200px;
-}
-/* clear fix */
-#packgrid:after {
-	content: '';
-	display: block;
-	clear: both;
-}
-.pgi {
-	float: left;
-	width: 100px;
-	height: 100px;
-	background: #a5c1e5;
-	border: 2px solid hsla(0, 0%, 0%, 0.5);
-}
-.pgi:hover {
-	background: #98b9e4;
-	cursor: pointer;
-}
-.pgimw { width:  210px; }
-.pgimh { height: 210px; }
-.pgilw { width:  320px; }
-.pgilh { height: 320px; }
-.pgis {
-	width: 320px;
-	height: 320px;
-	background: #ffe48d;
-}
-.pgis:hover {
-	background: #fdde77;
-	cursor: pointer;
-}
-/* END Grid */
-
 
 /* GridStack */
 .grid-stack {
@@ -86,6 +46,7 @@ div.layoutCenter {
 	display: flex;
 	flex-direction: row-reverse;
 	gap: 4px;
+	margin-right: 16px;
 
 	#btnAdd { display: none; }
 	#btnSave { display: none; }

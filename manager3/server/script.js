@@ -104,7 +104,7 @@ let mtServer = {
 	async load() {
 
 		// Call API - read file
-		this.d_list = await mt.api.fileRead(mt.m_pathDB, 'server.json', 'json');
+		this.d_list = await mt.api.fileRead(mt.m_pathDB+'/server.json', 'json');
 
 		let processNode = (server, id) => {
 

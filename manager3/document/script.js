@@ -108,7 +108,7 @@ let mtDocument = {
 				mtDocument.m_currentFile = filepath;
 
 				// Call API - read file
-				let content = await mt.api.fileRead('', filepath, 'text');
+				let content = await mt.api.fileRead(filepath, 'text');
 
 				// Render
 				mtDocument.content.load(content);
@@ -458,7 +458,7 @@ let mtDocument = {
 			this.m_currentFile = filepath;
 
 			// Call API - read file
-			let content = await mt.api.fileRead('', filepath, 'text');
+			let content = await mt.api.fileRead(filepath, 'text');
 
 			// Render
 			await this.content.load(content);
