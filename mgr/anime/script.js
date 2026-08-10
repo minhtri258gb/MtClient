@@ -35,7 +35,7 @@ var mt = {
 				if (value >= 1 && value <= 5)
 					return `<img src="/res/icons/rating${value}.png" />`;
 				else
-					return "N/A";
+					return 'N/A';
 			},
 			editor: 'star',
 			// editor: 'number',
@@ -103,23 +103,23 @@ var mt = {
 				return response;
 			},
 			columns: [
-				{ title: "STT", formatter: 'rownum', width: 40, hozAlign: 'center', vertAlign: 'middle', headerSort: false },
-				{ title: "Image", field: 'img', formatter: 'image', width: 80//, visible: false
+				{ title: 'STT', formatter: 'rownum', width: 40, hozAlign: 'center', vertAlign: 'middle', headerSort: false },
+				{ title: 'Image', field: 'img', formatter: 'image', width: 80//, visible: false
 					, headerSort: false, formatterParams: { height: '100px', width: '70px', class: 'anime-image' }
 					, editor: 'input', editable: false
 				},
-				{ title: "Name", field: 'name', vertAlign: 'middle', headerSort: false, editor: 'input', editable: false },
-				{ title: "Story", field: 'story', ...ratingProp},
-				{ title: "Art", field: 'art', ...ratingProp},
-				{ title: "Sound", field: 'sound', ...ratingProp},
-				{ title: "Fantasy", field: 'fantasy', ...ratingProp},
-				{ title: "Sad", field: 'sad', ...ratingProp},
-				{ title: "Joke", field: 'joke', ...ratingProp},
-				{ title: "Brand", field: 'brand', ...ratingProp},
-				{ title: "Review", field: 'review', ...ratingProp},
-				{ title: "End", field: 'end', width: 80, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
-				{ title: "Character", field: 'character', width: 320, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
-				{ title: "Time", field: 'time', width: 69, vertAlign: 'middle', formatter: (cell) => {
+				{ title: 'Name', field: 'name', vertAlign: 'middle', headerSort: false, editor: 'input', editable: false },
+				{ title: 'Story', field: 'story', ...ratingProp},
+				{ title: 'Art', field: 'art', ...ratingProp},
+				{ title: 'Sound', field: 'sound', ...ratingProp},
+				{ title: 'Fantasy', field: 'fantasy', ...ratingProp},
+				{ title: 'Sad', field: 'sad', ...ratingProp},
+				{ title: 'Joke', field: 'joke', ...ratingProp},
+				{ title: 'Brand', field: 'brand', ...ratingProp},
+				{ title: 'Review', field: 'review', ...ratingProp},
+				{ title: 'End', field: 'end', width: 80, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
+				{ title: 'Character', field: 'character', width: 320, vertAlign: 'middle', headerSort: false, editor: 'input', editable: false},
+				{ title: 'Time', field: 'time', width: 69, vertAlign: 'middle', formatter: (cell) => {
 					let timestamp = cell.getValue();
 					if (timestamp == null)
 						return '';
@@ -259,7 +259,6 @@ var mt = {
 
 		// Update row
 		if (rowData._origin == null) {
-
 
 			// Backup data
 			let origin = Object.assign({}, rowData);

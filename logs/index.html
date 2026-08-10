@@ -19,6 +19,12 @@
 			gap: 8px;
 			margin-bottom: 12px;
 		}
+		select {
+			border-radius: 6px;
+			border: 1px solid #444;
+			background: #2b2b2b;
+			color: #fff;
+		}
 		input {
 			flex: 1;
 			padding: 8px 10px;
@@ -65,6 +71,10 @@
 <body>
 
 	<div class="bar">
+		<select>
+			<option value="1">1</option>
+			<option value="2">2</option>
+		</select>
 		<input id="this.e_pathInput" type="text" placeholder="Đường dẫn file log, vd: D:/log.txt" value="D:/log.txt" />
 		<button onclick="mt.btnConnect()">Xem file</button>
 		<button onclick="mt.btnUnwatch()" class="stop">Dừng</button>

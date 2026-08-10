@@ -1,0 +1,53 @@
+
+/* === Tabulator === */
+#table {
+	background-color: white;
+	border: none;
+
+	.highlight-row-add {
+		background-color: #d4fcff !important;
+		transition: background-color 1s;
+	}
+	.highlight-row-edit {
+		background-color: #fff8be !important;
+		transition: background-color 1s;
+	}
+	.tabulator-header .tabulator-col {
+		background: #f2faff;
+	}
+	.tabulator-row:hover {
+		background-color: #e6f3ff;
+	}
+	.tabulator-row.tabulator-row-even {
+		background-color: #fbfbfb;
+		border-bottom: 1px dotted #f5f5f5;
+	}
+	.tabulator-row.tabulator-row-odd {
+		background-color: #fff;
+		border-bottom: 1px solid #f5f5f5;
+	}
+	.tabulator-row.highlight-row {
+		background-color: #ffe48d;
+	}
+	.tabulator-row .tabulator-cell {
+		border-right: 1px dotted #ccc;
+	}
+}
+.tabulator-menu {
+	border-radius: 6px;
+
+	.tabulator-menu-item {
+		display: flex;
+		gap: 4px;
+	}
+}
+
+
+/* Spinner */
+.anim-rotate {
+	animation: anim-rotate 1s linear infinite;
+}
+@keyframes anim-rotate {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}

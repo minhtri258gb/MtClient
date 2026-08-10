@@ -222,6 +222,14 @@ export class MtTagbox extends HTMLElement {
 		this.dispatch(); // Gửi callback
 	}
 
+	clean() {
+		this._tags = [];
+		for (let elmTag of this._elmTags)
+			elmTag.remove();
+		this._focusIndex = -1; // Unfocus
+		this.dispatch(); // Gửi callback
+	}
+
 	renderAllTags() {
 		this.e_wrap.querySelectorAll('.tag').forEach(el => el.remove());
 		this._elmTags = [];

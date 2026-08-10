@@ -107,6 +107,52 @@ let mt = {
 			if (node.type == 'folder')
 				return options;
 
+			if (node.type == 'md') {
+				options.view = {
+					label: 'View',
+					icon: '/res/icons/eye16.png',
+					action: async (obj) => {
+						let filepath = node.original.path;
+						mt.m_currentFile = filepath; // Lưu path file hiện tại
+						let content = await mt.api.fileRead(filepath, 'text'); // Call API - read file
+						mt.content.load(content); // Render
+					}
+				};
+				options.edit = {
+					label: 'Edit',
+					icon: '/res/icons/edit16.png',
+					action: async (obj) => {
+						mt.show.toast('warning', 'Chưa hoàn thiện chức năng');
+					}
+				};
+				options.share = {
+					label: 'Share',
+					icon: '/res/icons/share.png',
+					action: async (obj) => {
+						let filepath = node.original.path;
+
+						let urlShare = location.origin + location.pathname;
+						if (urlShare.indexOf('localhost') > -1) {
+							let IP = await mt.api.infoIP();
+							urlShare = urlShare.replace('localhost', IP);
+						}
+						let paramsURL = new URLSearchParams();
+						paramsURL.append('path', filepath);
+						urlShare += '?' + paramsURL.toString();
+
+						// Copy Clipboard
+						if (window.isSecureContext) {
+							await navigator.clipboard.writeText(urlShare);
+							mt.show.toast('success', `Đã copy URL`); // Notify
+						}
+						else {
+							console.log(urlShare);
+							mt.show.toast('success', 'Đã print console.');
+						}
+					}
+				};
+			}
+
 			return options;
 		},
 		async doubleClick(node) { // Nhấn đúp
@@ -452,7 +498,7 @@ let mt = {
 
 		// Import library
 		await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
-		await mt.lib.import(['markdownIt', 'highlightjs', 'jstree']);
+		await mt.lib.import(['markdownIt', 'highlightjs', 'jstree','toastify']);
 
 		// Add container
 		this.e_contain = document.getElementById('layout');

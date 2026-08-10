@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Document</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- <link href="/document/favicon.ico" rel="shortcut icon" type="image/png"> -->
+
+	<!-- <script src="/lib/jquery/jquery-3.7.1.min.js"></script> -->
+
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" rel="stylesheet" integrity="sha512-..." crossorigin="anonymous" />
+
+	<!-- <link href="/server/style.css" type="text/css" rel="stylesheet"> -->
+</head>
+<body style="height:100vh;width:100%;margin:0;padding:0;">
+
+	<div style="height:100%;display:flex;flex-direction:column;">
+
+		<!-- Toolbar -->
+		<div style="display:flex;align-items:center;gap:6px;padding:2px 6px;background:#ffffff;flex-wrap:wrap;width:fit-content;">
+
+			<!-- Nút Refresh All -->
+			<button onclick="mt.event.btnTopRefreshAll()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#1a1a18; color:#ffffff; border:none; border-radius:6px; font-size:14px; cursor:pointer;">
+				<i class="fa-solid fa-arrows-rotate" style="font-size:16px;"></i>
+				Refresh All
+			</button>
+
+			<!-- Nút split: New, Save -->
+			<div style="display:flex; border:1px solid #d4d4d0; border-radius:6px; overflow:hidden;">
+				<button onclick="mt.event.btnTopNew()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<i class="fa-solid fa-plus"></i>
+					New
+				</button>
+				<button onclick="mt.event.btnTopSave()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<i class="fa-regular fa-floppy-disk"></i>
+					Save
+				</button>
+				<!-- <button aria-label="Tùy chọn lưu khác" style="display:flex; align-items:center; padding:6px 8px; background:#ffffff; border:none; cursor:pointer; color:#1a1a18;">
+					<i class="ti ti-chevron-down" style="font-size:16px;" aria-hidden="true"></i>
+				</button> -->
+			</div>
+
+			<div style="width:1px; height:22px; background:#d4d4d0;"></div>
+
+			<!-- Nút icon-only -->
+			<!-- <button aria-label="Sao chép" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:#ffffff; border:1px solid #d4d4d0; border-radius:6px; cursor:pointer; color:#1a1a18;">
+				<i class="ti ti-copy" style="font-size:16px;" aria-hidden="true"></i>
+			</button> -->
+
+			<!-- <button aria-label="Xóa" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:#ffffff; border:1px solid #d4d4d0; border-radius:6px; cursor:pointer; color:#a32d2d;">
+				<i class="ti ti-trash" style="font-size:16px;" aria-hidden="true"></i>
+			</button> -->
+
+			<!-- <button aria-label="Làm mới" disabled style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; background:#f1efe8; border:1px solid #e5e5e2; border-radius:6px; cursor:not-allowed; color:#b4b2a9;">
+				<i class="ti ti-refresh" style="font-size:16px;" aria-hidden="true"></i>
+			</button> -->
+
+			<!-- <div style="width:1px; height:22px; background:#d4d4d0;"></div> -->
+
+			<!-- Nút split: Chạy -->
+			<!-- <div style="display:flex; border:1px solid #d4d4d0; border-radius:6px; overflow:hidden;">
+				<button style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<i class="ti ti-player-play" style="font-size:16px;" aria-hidden="true"></i>
+					Chạy
+				</button>
+				<button aria-label="Chọn chế độ chạy" style="display:flex; align-items:center; padding:6px 8px; background:#ffffff; border:none; cursor:pointer; color:#1a1a18;">
+					<i class="ti ti-chevron-down" style="font-size:16px;" aria-hidden="true"></i>
+				</button>
+			</div> -->
+
+			<!-- Filter Tags -->
+			<div style="display:flex;align-items:center;">
+				<span style="display:inline-block;width:32px;">Tags </span>
+				<mt-tagbox id="tagInclude" style="width: calc(100% - 32px);"></mt-tagbox>
+			</div>
+
+		</div>
+
+		<!-- Tabulator -->
+		<div id="table" style="flex:1;border:0;"></div>
+
+	</div>
+
+	<script src="/server/script.js" type="module"></script>
+</body>
+</html>
