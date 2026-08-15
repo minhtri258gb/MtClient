@@ -32,6 +32,12 @@
 	.tabulator-row .tabulator-cell {
 		border-right: 1px dotted #ccc;
 	}
+
+	.row-tag {
+		padding: 0px 3px;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+	}
 }
 .tabulator-menu {
 	border-radius: 6px;

@@ -9,75 +9,17 @@ var mt = {
 	lib: mtLib,
 	show: mtShow,
 
+	h_debug: true,
 	h_isShadow: false,
-	h_pathNmap: 'D:/Apps/Nmap',
 	e_tags: null, // Element filter Tags
-	c_table: null, // Tabulator
 	d_list: [], // Danh sách Server
-	d_map: {}, // Lấy nhanh server theo Id
 	m_pathServer: '', // Đường dẫn Server
 	m_filterTags: [],
 
-	mgr: {
-		async init() {
-
-			// Call API get Config
-			mt.m_pathServer = await mt.api.config('PATH_SERVER');
-
-			// Reference Element
-			mt.e_tags = document.getElementById('tagInclude');
-			mt.e_tags.addEventListener('change', e => mt.event.tagsChange(e));
-		},
-		async load() {
-
-			// Call API - read file
-			mt.d_list = await mt.api.fileRead(mt.m_pathServer+'/database/server.json', 'json');
-
-			let processNode = (server, id) => {
-
-				// Bổ sung id
-				server.id = id;
-				server.status = -2;
-
-				// Lấy host và port
-				if (server.url.includes(':')) {
-					let pathUrl = server.url.split(':');
-					server.host = pathUrl[0];
-					server.port = +pathUrl[1];
-				}
-				else {
-					server.host = server.url;
-					server.port = null;
-				}
-
-				// Link reference
-				mt.d_map[id] = server;
-			}
-
-			let id = 1;
-			for (let server of mt.d_list) {
-				processNode(server, id++);
-
-				// Cấu trúc cây w2ui
-				if (server.list == null)
-					continue;
-
-				for (let subserver of server.list) // Bổ sung id
-					processNode(subserver, id++);
-
-				server.w2ui = { children: server.list };
-				delete server.list;
-			}
-
-			// Load into list
-			mt.c_table.setData(mt.d_list);
-		},
-	},
 	list: {
-		async init() {
+		c_table: null, // Tabulator
 
-			// Import Library
-			await mt.lib.import(['tabulator']);
+		async init() {
 
 			let renderAction = (cell) => {
 				let row = cell.getRow().getData();
@@ -102,56 +44,108 @@ var mt = {
 				let tags = cell.getValue() || '';
 				let htmlBtn = '<div style="display:flex;gap:4px;">';
 				for (let tag of tags) {
-					htmlBtn += `<span onclick="mt.event.btnRowTag('${tag}')">${tag}</span>`;
+					htmlBtn += `<span onclick="mt.event.btnRowTag('${tag}')" class="row-tag">${tag}</span>`;
 					// htmlBtn += `<button onclick="mt.event.btnRowTag('${tag}')">${tag}</button>`;
 				}
 				return htmlBtn + '</div>';
 			}
 
-			mt.c_table = new Tabulator('#table', {
+			this.c_table = new Tabulator('#table', {
 				layout: 'fitData',
 				height: '100%',
 				renderVertical: 'basic', // Tắt virtual DOM
+				movableRows: true, // Drag drop sort
 				data: [],
 				columns: [
 					{ title:'STT', formatter:'rownum', width:40, hozAlign:'center', headerSort:false },
-					{ title:'Actions', field:'actions', width:120, headerSort:false, editable:false
-						, formatter: (cell) => renderAction(cell)
-					},
-					{ title:'Status', field:'status', width:52, hozAlign:'center', vertAlign:'middle', headerSort:false, editable:false
-						, formatter: (cell) => renderStatus(cell)
-					},
+					{ title:'Actions', field:'actions', width:120, headerSort:false, formatter: (cell) => renderAction(cell) },
+					{ title:'Status', field:'status', width:52, hozAlign:'center', vertAlign:'middle', headerSort:false, formatter: (cell) => renderStatus(cell) },
 					{ title:'Name', field:'name', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
 					{ title:'URL', field:'url', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
-					{ title:'Tags', field:'tags', headerSort:false, editor:'input'
-						, editable:false, editorParams: { elementAttributes: { 'placeholder': 'tag1,tag2,tag3' } }
-						, mutator: function(value, data, type, params, component) { // Convert từ string sang array khi edit xong
-							if (typeof value === 'string') { // Nếu là string, convert sang array
-								if (value.length == 0)
-									return [];
-								return value.split(',').map(item => item.trim());
-							}
-							return value;
-						}
-						, accessor: function(value, data, type, params, component) { // Convert từ array sang string để edit
-							if (Array.isArray(value))
-								return value.join(', ');
-							return value;
-            }
-						, formatter: (cell) => renderTag(cell)
-					},
+					{ title:'Tags', field:'tags', headerSort:false, formatter: (cell) => renderTag(cell) },
 				],
-				rowContextMenu: (event, row) => this.rowContextMenu(event, row),
+				rowContextMenu: (event, row) => this.contextMenu(event, row),
 			});
-
-			// Register Event
-			mt.c_table.on('cellEdited', (cell) => mt.event.cellEdited(cell));
-			mt.c_table.on('cellDblClick', (event, cell) => mt.event.cellDblClick(event, cell));
 		},
-		rowContextMenu(event, row) {
+		async load() {
+
+			// Call API - read file
+			mt.d_list = await mt.api.fileRead(mt.m_pathServer+'/database/server.json', 'json');
+
+			let id = 1;
+			for (let server of mt.d_list) {
+
+				// Thêm Id
+				server.id = id++;
+
+				// Trạng thái chưa check
+				server.status = -2;
+
+				// Lấy host và port
+				let splitURL = mt.utils.splitURL(server.url);
+				server.host = splitURL.host;
+				server.port = splitURL.port;
+			}
+
+			// Load into list
+			this.c_table.setData(mt.d_list);
+		},
+		async save() {
+
+			// Authen
+			// if (mt.api.checkAuthn() == false)
+			// 	await mt.api.init();
+
+			// Confirm
+			let isConfirm = await mt.show.alertConfirmPrimary('Lưu lại thai đổi server?', 'Lưu');
+			if (!isConfirm)
+				return;
+
+			// Chuẩn hóa dữ liệu
+			let listData = [];
+			let dataInGrid = this.c_table.getData(); // Lấy thứ tự nếu có sort
+			for (let row of dataInGrid) {
+				let item = mt.d_list[row.id - 1]; // Lấy data gốc
+				let clone = Object.assign({}, item); // Clone
+
+				// Clean
+				delete clone.id;
+				delete clone.host;
+				delete clone.port;
+				delete clone.status;
+				if (!clone.actions || clone.actions.length == 0)
+					delete clone.actions;
+				if (!clone.tags || clone.tags.length == 0)
+					delete clone.tags;
+				if (!clone.log || clone.log.length == 0)
+					delete clone.log;
+
+				listData.push(clone);
+			}
+
+			// Call API - Lưu dữ liệu
+			let filepath = `${mt.m_pathServer}/database/server.json`;
+			let content = JSON.stringify(listData);
+			await mt.api.fileWriteText(filepath, content, true);
+
+			// Tắt highlight
+			let rows = this.c_table.getRows();
+			for (let row of rows)
+				row.getElement().classList.remove('highlight-row-add', 'highlight-row-edit');
+
+			// Log
+			mt.h_debug && console.log('[mt.list.save]', { listData });
+		},
+		contextMenu(event, row) {
 			let actions = [];
 
 			let rowData = row.getData();
+
+			// Sửa
+			actions.push({
+				label: '<img class="menuIcon" src="/res/icons/edit16.png" />Edit',
+				action: (e, row) => mt.event.ctxMenuEdit(row),
+			});
 
 			// Lưu
 			// if (rowData.id == -1 || rowData._origin != null) {
@@ -165,7 +159,7 @@ var mt = {
 			if (rowData._origin != null) {
 				actions.push({
 					label: '<img class="menuIcon" src="/res/icons/revert16.png" />Revert',
-					action: (e, row) => mt.event.btnRevert(row),
+					action: (e, row) => mt.event.ctxMenuRevert(row),
 				});
 			}
 
@@ -195,12 +189,248 @@ var mt = {
 			return actions;
 		},
 	},
-	event: {
-		btnTopRefreshAll() {
+	form: {
+		c_modal: null, // tingle
+		c_form: null, // jsoneditor
+
+		// Method
+		init() {
+
+			// Init Modal - tingle
+			this.c_modal = new tingle.modal({
+				footer: false,
+				stickyFooter: false,
+				closeMethods: ['button', 'escape'], // 'overlay'
+				closeLabel: 'Đóng',
+				onOpen: function() {
+					// console.log('modal opened');
+				},
+				onClose: function() {
+					// console.log('modal closed');
+				},
+				beforeClose: function() {
+					// Return true to close the modal, false to prevent closing
+					return true;
+				},
+			});
+
+			// Contain Form
+			const elementForm = document.createElement('div');
+			elementForm.style.width = '500px';
+			this.c_modal.modalBoxContent.appendChild(elementForm); // Đặt contain form vào modal
+			this.c_modal.modalBox.style.width = 'unset'; // Bỏ width gốc
+
+			// Init Form - jsoneditor
+			mt.lib.jsonEditor.ex.RateRegister();
+			mt.lib.jsonEditor.ex.TagBoxRegister();
+			this.c_form = new JSONEditor(elementForm, {
+				use_name_attributes: false,
+				theme: 'barebones',
+				iconlib: 'fontawesome5',
+				disable_edit_json: true,
+				disable_properties: true,
+				disable_collapse: true,
+				schema: {
+					title: 'Server',
+					type: 'object',
+					required: [],
+					properties: {
+						'id': { type: 'string', format: 'hidden', options: { titleHidden: true } },
+						'name': { title: 'Name', type: 'string', format: 'text' },
+						'url': { title: 'URL', type: 'string', format: 'text' },
+						'actions': { title: 'Actions', type: 'string', format: 'text' },
+						'tags': { title: 'Tags', type: 'array', format: 'tagbox', items: { type: 'string' } },
+						'log': { title: 'Log', type: 'string', format: 'text' },
+						'actions': { title: 'Actions', type: 'string', format: 'text' },
+						'done': { title: 'Done', type: 'string', format: 'button', options: { button: { icon: 'check', action: () => this.done() }}},
+						'cancel': { title: 'Cancel', type: 'string', format: 'button', options: { button: { icon: 'close', action: () => this.c_modal.close() }}},
+					},
+				},
+			});
+		},
+		async open(serverId) {
+
+			let item = null;
+			if (serverId)
+				item = mt.d_list[serverId-1];
+
+			let formData = {
+				id: item?.id || -1,
+				name: item?.name || '',
+				url: item?.url || '',
+				actions: item?.actions || '',
+				tags: item?.tags || [],
+				log: item?.log || '',
+			};
+
+			// Set form data
+			this.c_form.setValue(formData);
+
+			// Open Modal
+			this.c_modal.open();
+
+			// Log
+			mt.h_debug && console.log('[mt.form.open]', { serverId, item, formData });
+		},
+		async done() {
 			try {
+
+				// Get data
+				let formdata = this.c_form.getValue(); // mt.form.c_form.getValue()
+
+				// Validate
+				if (formdata.name.length == 0)
+					throw Error('Chưa nhập tên Server!');
+				if (formdata.url.length == 0)
+					throw Error('Chưa nhập URL Server!');
+
+				// Lấy host và port từ URL
+				let splitURL = mt.utils.splitURL(formdata.url);
+
+				// Process data
+				let item = {
+					id: +formdata.id,
+					name: formdata.name,
+					url: formdata.url,
+					actions: formdata.actions,
+					tags: formdata.tags,
+					log: formdata.log,
+					status: -2,
+					host: splitURL.host,
+					port: splitURL.port,
+				};
+
+				if (item.id === -1) { // Add
+
+					// Add Index
+					item.id = mt.d_list.length + 2; // Chưa push + lệch 1, bắt đầu từ 1 => +2
+
+					// Save to RAM
+					mt.d_list.push(item);
+
+					// Bỏ Filter
+					mt.e_tags.clean(); 
+
+					// Thêm vào tabulator
+					mt.list.c_table.addData([item], true)
+						.then((rows) => {
+							rows[0].getElement().classList.add('highlight-row-add'); // Hightlight
+						});
+					// await mt.list.p_table.addRow(item);
+
+					// // Sắp xếp lại tabulator
+					// mt.list.p_table.setSort('name', 'asc');
+				}
+				else { // Update
+
+					// Save to RAM
+					mt.d_list[item.id - 1] = item;
+
+					// Change Tabulator
+					mt.list.c_table.updateRow(item.id, item)
+						.then((row) => {
+							row.getElement().classList.add('highlight-row-edit'); // Hightlight
+						});
+				}
+
+				// // Save item
+				// await mt.mgr.saveToJson();
+
+				// Close modal
+				this.c_modal.close();
+
+				// Toast
+				// mt.show.toast('success', 'Lưu nhạc thành công.');
+
+				// Log
+				mt.h_debug && console.log('[mt.form.done]', { formdata, item });
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.form.done] Exception:', ex);
+			}
+		},
+		async delete(music) {
+
+			// Confirm Popup
+			let isConfirm = await mt.utils.confirmDanger(`Xác nhận xóa bài ${music.name}?`, 'Xóa');
+			if (!isConfirm)
+				return;
+
+			// Save to RAM
+			mt.mgr.d_musics.splice(music.id-1, 1);
+
+			// Build lại seed để auto play random ko lệch
+			mt.mgr.buildRandomSeed();
+
+			// Xóa khỏi tabulator
+			mt.list.p_table.deleteRow(music.id);
+
+			// Save data
+			await mt.mgr.saveToJson();
+
+			// Notify
+			mt.show.toast('success', `Đã xóa dữ liệu bài ${music.name}`);
+
+			// Log
+			console.log('[mt.form.delete]', { music });
+		},
+		cv_inForm(data) {
+			return {
+				id: data?.id || 0,
+				name: data?.name || '',
+				rate: data?.rate || 3,
+				duration: data?.duration || 0,
+				tags: data?.tags || ['NEW'],
+				decibel: data?.decibel || 100,
+				trackbegin: data?.trackbegin || 0,
+				trackend: data?.trackend || 0,
+				miss: data?.miss || false,
+			};
+		},
+		cv_outForm(data) {
+			return {
+				id: Number.parseInt(data.id), // Convert Int
+				name: data.name,
+				rate: data.rate,
+				duration: data.duration == 0 ? null : data.duration, // Bằng 0 thì null
+				tags: data.tags,
+				decibel: data.decibel,
+				trackbegin: data.trackbegin == 0 ? null : data.trackbegin, // Bằng 0 thì null
+				trackend: data.trackend == 0 ? null : data.trackend, // Bằng 0 thì null
+				miss: data.miss == 'true', // Convert Boolean
+			};
+		},
+	},
+	func: {
+		async check(host, port) {
+			let cmd = 'nmap';
+			let args = [];
+			if (port != null)
+				args = ['-p', port, host];
+			else
+				args = [host];
+			let result = await mt.api.cmd(cmd, args, mt.pathServer);
+			let output = result?.output || '';
+			// let error = result?.error || '';
+
+			mt.h_debug && console.log('[mt.func.check]', { result });
+
+			return output.includes('open') ? 1 : 0;
+		},
+	},
+	event: {
+		async btnTopRefreshAll() {
+			try {
+				
+				// Confirm
+				let isConfirm = await mt.show.alertConfirmPrimary('Kiểm tra toàn bộ server?', 'Quét');
+				if (!isConfirm)
+					return;
+
 				mt.m_action = 'RefreshAll';
 
-				var visibleRows = mt.c_table.getRows('visible');
+				var visibleRows = mt.list.c_table.getRows('visible');
 				for (let objRow of visibleRows)
 					this.btnRowRefresh(objRow.getData().id); // No Await
 			}
@@ -214,138 +444,47 @@ var mt = {
 		},
 		btnTopNew() {
 
+			// Mở Form tạo mới
+			mt.form.open();
+
 			// Bỏ Filter
-			mt.e_tags.clean();
+			// mt.e_tags.clean();
 
 			// Thêm row mới
-			mt.c_table.addData([{ id:-1, status:-2, tags: [] }], true)
-				.then((row) => {
+			// mt.list.c_table.addData([{ id:-1, status:-2, tags: [] }], true)
+			// 	.then((row) => {
 
-					// Hightlight row sau khi thêm mới
-					row[0].getElement().classList.add('highlight-row-add');
-				});
-			// let id = this.c_w2grid.records.length + 1;
-			// let date = mt.utils.convert_DateToStr(new Date());
-			// this.c_w2grid.add({ id, tags: [] });
-			// this.c_w2grid.scrollIntoView(1); // Scroll top
+			// 		// Hightlight row sau khi thêm mới
+			// 		row[0].getElement().classList.add('highlight-row-add');
+			// 	});
 		},
 		btnTopSave() {
-
-			// Lấy dữ liệu của hàng
-			let rowData = row.getData();
-
-			// Cập nhật thời gian
-			if ($('#cbxUpdateTime').is(':checked')) // Nếu có check
-				rowData.time = Math.floor(Date.now() / 1000);
-
-			let sql = '';
-			let action = '';
-			if (rowData.id == -1) {
-				action = 'INSERT';
-
-				let lstKey = [];
-				let lstValue = [];
-				for (let key in rowData) {
-
-					// Bỏ qua qua các trường không cần lưu
-					if (key == 'id' || key == '_origin')
-						continue;
-
-					let value = rowData[key];
-
-					// Nếu kiểu chuỗi và có giá trị thì bọc trong nháy đơn
-					if (typeof value == 'string' && value.length > 0)
-						value = `'${value}'`;
-
-					// Check NULL
-					if (value == null || value == '')
-						value = 'NULL';
-
-					lstKey.push(key);
-					lstValue.push(value);
-				}
-				sql += `INSERT INTO anime (${lstKey.join(', ')})\n`;
-				sql += `VALUES (${lstValue.join(', ')});`;
+			try {
+				mt.list.save();
 			}
-			else if (rowData._origin != null) {
-				action = 'UPDATE';
-
-				let origin = rowData._origin;
-				for (let key in rowData) {
-
-					// Bỏ qua qua các trường không cần lưu
-					if (key == 'id' || key == '_origin')
-						continue;
-
-					let value = rowData[key];
-
-					// Nếu không thay đổi thì bỏ qua
-					if (value === origin[key])
-						continue
-
-					// Nếu kiểu chuỗi và có giá trị thì bọc trong nháy đơn
-					if (typeof value == 'string' && value.length > 0)
-						value = `'${value}'`;
-
-					// Check NULL
-					if (value == null || value == '')
-						value = 'NULL';
-
-					sql += `,\n\t${key} = ${value}`;
-				}
-				sql = 'UPDATE anime\nSET ' + sql.substring(3) + '\nWHERE id = ' + rowData.id + ';';
+			catch (ex) {
+				console.error('[mt.event.btnTopSave]', ex);
+				mt.show.toast('error', ex.message);
 			}
-
-			// Replace SQL
-			// let htmlSQL = Prism.highlight(sql, Prism.languages.sql, 'sql');
-			// let htmlSQL = sql.replace(/\n/g, '<br>');
-			$('#modal-1-title').html(action+ ' SQL');
-
-			let $codeBlock = $('#codeBlock');
-			// $codeBlock.html(htmlSQL);
-			$codeBlock.text(sql);
-
-			// Highlight Code
-			Prism.highlightElement($codeBlock[0]);
-
-			// Show Confirm SQL
-			MicroModal.show('modal-1');
-
-			// Save data var
-			this.d_row = row;
-			this.d_sql = sql;
 		},
 		tagsChange(e) {
 			let lstTags = e.detail.value;
 
 			// Filter List
-			mt.c_table.setFilter((data) => {
+			mt.list.c_table.setFilter((data) => {
 				const includeOk = lstTags.length === 0 || lstTags.some(tag => data.tags.includes(tag));
 				// const includeOk = lstTags.length === 0 || lstTags.some(tag => data.tags.some(dataTag => dataTag.toUpperCase() === tag));
 				// const excludeOk = mt.player.m_filterExc.every(tag => !data.tags.includes(tag));
 				return includeOk; // && excludeOk;
 			});
 		},
-		btnRevert(row) {
-			let rowData = row.getData();
-			let origin = rowData._origin;
-			if (origin != null) {
-
-				// Cập nhật lại data cũ
-				origin._origin = null;
-				row.update(origin);
-
-				// Bỏ Hightlight row
-				row.getElement().classList.remove('highlight-row-edit');
-			}
-		},
 		btnRemove(row) {
 			row.delete();
 		},
 		async btnRowRefresh(serverId) {
-			mt.c_table.updateData([{ id: serverId, status: -1 }]);
-			let server = mt.d_map[serverId];
-			mt.c_table.updateData([{ id: serverId, status: await mt.check(server.host, server.port) }]);
+			mt.list.c_table.updateData([{ id: serverId, status: -1 }]);
+			let server = mt.d_list[serverId-1];
+			mt.list.c_table.updateData([{ id: serverId, status: await mt.func.check(server.host, server.port) }]);
 		},
 		async btnShare() {
 
@@ -380,7 +519,7 @@ var mt = {
 			// }
 		},
 		btnRowLink(serverId) {
-			let server = this.d_map[serverId];
+			let server = mt.d_list[serverId-1];
 			window.open('http://' + server.url, '_blank');
 		},
 		btnRowTag(tag) {
@@ -389,61 +528,38 @@ var mt = {
 			mt.e_tags.addTag(tag);
 			let lstTags = mt.e_tags.value;
 		},
-		menuEdit(row) {
-			let cells = row.getCells();
-			let fieldEdits = ['name','url','tags'];
-			cells.forEach((cell) => {
-
-				// if (fieldEdits.includes(cell.getField()))
-				// 	cell.edit();
-
-				let field = cell.getField();
-				if (fieldEdits.includes(field)) {
-					// Kiểm tra column có editor không
-					let columnDef = cell.getColumn().getDefinition();
-					if (columnDef.editor !== undefined && columnDef.editor !== false) {
-						try {
-							cell.edit(true);
-						} catch(e) {
-							console.warn('Cannot edit cell:', cell.getField(), e);
-						}
-					}
-				}
-			});
+		ctxMenuEdit(row) {
+			let serverId = row.getIndex();
+			mt.form.open(serverId);
 		},
-		cellEdited(cell) { // Sau khi sửa
+		ctxMenuRevert(row) {
+			let rowData = row.getData();
+			let origin = rowData._origin;
+			if (origin != null) {
 
-			let row = cell.getRow(); // Cột đã chỉnh sửa
-			let rowData = row.getData(); // Dữ liệu của hàng
+				// Cập nhật lại data cũ
+				origin._origin = null;
+				row.update(origin);
 
-			// Bỏ qua nếu là thêm mới
-			if (rowData.id == -1)
-				return;
-
-			let oldValue = cell.getOldValue(); // Giá trị trước khi chỉnh sửa
-			let field = cell.getField(); // Tên cột (field)
-			let value = rowData[field];
-
-			// Normalize data
-			if (oldValue == '') oldValue = null;
-			if (value == '') value = null;
-			if (oldValue == value)
-				return; // Xem như chưa thay đổi
-
-			// Update row
-			if (rowData._origin == null) {
-
-				// Backup data
-				let origin = Object.assign({}, rowData);
-				origin[field] = oldValue;
-				rowData._origin = origin;
-
-				// Hightlight row
-				row.getElement().classList.add('highlight-row-edit');
+				// Bỏ Hightlight row
+				row.getElement().classList.remove('highlight-row-edit');
 			}
 		},
-		cellDblClick(event, cell) { // Open Editor
-			cell.edit(true);
+	},
+	utils: {
+		splitURL(url) {
+
+			if (url.startsWith('http://'))
+				url = url.replace('http://', '');
+			else if (url.startsWith('https://'))
+				url = url.replace('https://', '');
+
+			if (url.includes(':')) {
+				let pathUrl = url.split(':');
+				return { host: pathUrl[0], port: +pathUrl[1] };
+			}
+			else
+				return { host: url, port: null };
 		},
 	},
 
@@ -452,16 +568,29 @@ var mt = {
 		// Bind Global
 		window.mt = this;
 
+		// Call API get Config
+		this.m_pathServer = await this.api.config('PATH_SERVER');
+
 		// Import Library
-		await mt.mgr.init();
-		this.lib.component(['Rate','TagBox']); // Ko cần đợi
-		await mt.lib.import(['toastify']);
+		this.lib.component(['TagBox']); // Ko cần đợi | 'Rate'
+		await mt.lib.import([
+			'tabulator', // Datagrid
+			'tingle', // Popup
+			'jsonEditor', // Form
+			'toastify', // Toast
+			'sweetalert2', // Alert
+		]);
+
+		// Reference Element
+		this.e_tags = document.getElementById('tagInclude');
+		this.e_tags.addEventListener('change', e => this.event.tagsChange(e));
 
 		// Init Module
 		await this.list.init();
+		this.form.init();
 
 		// Load data
-		await this.mgr.load();
+		await this.list.load();
 
 		// Load CSS
 		mt.lib.loadCSS('/server/style.css');
@@ -476,21 +605,6 @@ var mt = {
 			// this.c_w2grid.search([{ field: 'tags', value: tag, operator: 'contains' }], 'AND');
 			this.btnRefreshAll(); // Tự động check khi có sẵn tag
 		}
-	},
-	async check(host, port) {
-		let cmd = 'nmap';
-		let args = [];
-		if (port != null)
-			args = ['-p', port, host];
-		else
-			args = [host];
-		let result = await mt.api.cmd(cmd, args, mt.pathServer, [this.h_pathNmap]);
-		let output = result?.output || '';
-		// let error = result?.error || '';
-
-		mt.h_debug && console.log('[mt.server.check]', { result });
-
-		return output.includes('open') ? 1 : 0;
 	},
 }
 document.addEventListener('DOMContentLoaded', () => mt.init());

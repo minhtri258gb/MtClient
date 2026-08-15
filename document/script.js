@@ -4,7 +4,7 @@ import mtFile from '/common/file.js';
 import mtShow from '/common/show.js';
 
 let mt = {
-	
+
 	api: mtApi,
 	lib: mtLib,
 	file: mtFile,
@@ -12,19 +12,13 @@ let mt = {
 
 	h_debug: true,
 	h_pathDoc: '', // Link folder on Server
-	e_contain: null,
 	m_currentFile: '', // Current reading
+	m_content: '', // Nội dung Markdown
+	m_isEdit: false, // Chế độ edit / view
 
-	mgr: {
-		async init() {
-
-			// Read Config
-			mt.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
-		},
-	},
 	tree: {
 		h_config: {
-			lstSkip: ['Account.md','_Convert_MD_2_DOCX_PDF.bat'],
+			lstSkip: ['Account.md','_Convert_MD_2_PDF_typst.bat','_Convert_MD_2_PDF_weasyprint.bat'],
 			lstExt: ['md'],
 			type: {
 				'folder': { },
@@ -39,6 +33,9 @@ let mt = {
 			// Hiện file nhạy cảm
 			if (mt.api.m_username == 'Massan')
 				this.h_config.lstSkip.shift(); // bỏ file account khỏi skip
+
+			// Config
+			$.jstree.defaults.search.show_only_matches = true;
 
 			// JSTree Init
 			$('#document-jstree').jstree({
@@ -164,10 +161,10 @@ let mt = {
 				mt.m_currentFile = filepath;
 
 				// Call API - read file
-				let content = await mt.api.fileRead(filepath, 'text');
+				mt.m_content = await mt.api.fileRead(filepath, 'text');
 
 				// Render
-				mt.content.load(content);
+				mt.content.load(mt.m_content);
 			}
 		},
 		getType(filename) { // Lấy type tương ứng trên JsTree
@@ -287,7 +284,7 @@ let mt = {
 
 			// Render Mermaid
 			mermaid.run({ querySelector: '.language-mermaid', postRenderCallback: (svgId) => {
-				let el = mt.e_contain.querySelector('#'+svgId);
+				let el = document.getElementById(svgId);
 				let pre = el.parentElement.parentElement;
 				pre.after(el);
 				pre.remove();
@@ -456,10 +453,60 @@ let mt = {
 			});
 		},
 	},
+	editor: {
+		m_init: false,
+		e_content: null, // Element content
+		c_editor: null, // CodeMirror
+
+		init() {
+
+			this.m_init = true;
+
+			// Element
+			this.e_content = document.getElementById('document-edit');
+
+			// Init CodeMirror
+			let textarea = document.getElementById('editor-md');
+			this.c_editor = CodeMirror.fromTextArea(textarea, {
+				mode: 'md',
+				lineNumbers: true,
+				lineWrapping: true,
+				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+				foldGutter: true,
+				gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+			});
+			// 'editor-md'
+		},
+	},
 	event: {
 
 		register() {
 			window.addEventListener('hashchange', () => this.onHashChange());
+		},
+
+		// Toolbar
+		btnTopEdit() {
+			try {
+				if (mt.m_isEdit) { // View
+					mt.content.e_content.style.display = '';
+					mt.editor.e_content.style.display = 'none';
+
+				}
+				else { // Edit
+
+					if (!mt.editor.m_init)
+						mt.editor.init();
+
+					mt.content.e_content.style.display = 'none';
+					mt.editor.e_content.style.display = '';
+
+				}
+				mt.m_isEdit = !mt.m_isEdit;
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.event.btnTopEdit]', ex);
+			}
 		},
 
 		// Global
@@ -471,13 +518,13 @@ let mt = {
 					return;
 
 				const blob = blobs[0];
-				const content = await blob.text();
+				mt.m_content = await blob.text();
 
 				// Bỏ path vì drop ko nhận đc filepath
 				mt.m_currentFile = '';
 
 				// Render
-				mt.content.load(content);
+				mt.content.load(mt.m_content);
 
 				// Log
 				mt.h_debug && console.log('[mt.document.event.onDrop]', { text });
@@ -490,6 +537,70 @@ let mt = {
 			setTimeout(() => { history.replaceState(null, null, ' '); }, 10);
 		},
 	},
+	func: {
+		async exportPDF() {
+			try {
+
+				let filepath = mt.m_currentFile;
+				let pos1 = filepath.lastIndexOf('\\');
+				let pos2 = filepath.lastIndexOf('.md');
+				let filename = filepath.substring(pos1+1, pos2);
+
+				// Render PDf
+				// const fontBuffer = await fetch('/res/font/OpenSans-Regular.ttf').then((res) => res.arrayBuffer());
+
+				// Get Target Element
+				let targets = document.getElementsByClassName('md-doc');
+				let target = targets[0];
+
+				// Start Export
+				const blob = await dompdf(target, {
+					pagination: true,
+					format: 'a4',
+					pageConfig: {
+						header: {
+							content: 'Document Header',
+							height: 50,
+							contentFontSize: 12,
+							contentPosition: 'center',
+						},
+						footer: {
+							content: 'Page ${currentPage} / ${totalPages}',
+							height: 50,
+							contentFontSize: 12,
+							contentPosition: 'center',
+						},
+					},
+					// fontConfig: {
+					// 	fontFamily: 'Open Sans',
+					// 	fontBytes: new Uint8Array(fontBuffer),
+					// 	fontStyle: 'normal',
+					// 	fontWeight: 400,
+					// },
+					onProgress(progress) {
+						if (progress.stage === 'countingPages' && progress.totalPages) {
+							mt.h_debug && console.log(`Total pages: ${progress.totalPages}`);
+						}
+						if (progress.stage === 'rendering' && progress.currentPage && progress.totalPages) {
+							mt.h_debug && console.log(`Rendering page ${progress.currentPage}/${progress.totalPages}`);
+						}
+					},
+				});
+
+				// Download PDF
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `${filename}.pdf`;
+				a.click();
+				URL.revokeObjectURL(url);
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.func.exportPDF]', ex);
+			}
+		},
+	},
 
 	async init() {
 
@@ -497,14 +608,14 @@ let mt = {
 		globalThis.mt = this;
 
 		// Import library
+		// mt.lib.component(['FabButton']); // Import Component
 		await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
-		await mt.lib.import(['markdownIt', 'highlightjs', 'jstree','toastify']);
+		await mt.lib.import(['markdownIt','highlightjs','jstree','CodeMirror','toastify','dompdfjs']);
 
-		// Add container
-		this.e_contain = document.getElementById('layout');
+		// Read Config
+		this.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
 
 		// Init Module
-		await this.mgr.init();
 		this.tree.init();
 		this.content.init();
 
@@ -533,7 +644,7 @@ let mt = {
 			// Focus fragment
 			if (window.location.hash) {
 				const targetId = window.location.hash.substring(1);
-				const target = mt.e_contain.querySelector(`[id="${targetId}"]`);
+				const target = document.getElementById(targetId);
 				if (target)
 					target.scrollIntoView({ behavior: 'smooth' });
 			}

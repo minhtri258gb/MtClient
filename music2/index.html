@@ -357,7 +357,7 @@
 						// Call API - Lưu dữ liệu
 						let filepath = this.h_pathDB + '/' + 'music.json';
 						let content = JSON.stringify(listData)
-						await mt.api.fileWriteText(filepath, content, true)
+						await mt.api.fileWriteText(filepath, content, true);
 					}
 					catch (ex) {
 						console.error('[mt.mgr.saveToJson] Exception', ex);
@@ -1940,7 +1940,12 @@
 
 				// Import Library
 				this.lib.component(['Rate','TagBox']); // Ko cần đợi
-				await this.lib.import(['tingle','jsonEditor','jsmediatags','toastify']);
+				await this.lib.import([
+					'tingle', // Popup
+					'jsonEditor', // Form
+					'jsmediatags', // Metadata MP3
+					'toastify', // Toast
+				]);
 
 				// Read Config
 				await this.mgr.loadConfig();

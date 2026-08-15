@@ -113,6 +113,9 @@ var mtLib = {
 	'd3': { async load() {
 		await mtLib.loadJS('/lib/d3/d3.v7.min.js');
 	}},
+	'dompdfjs': { async load() {
+		await mtLib.loadJS('/lib/dompdf.js-2.0.0/dompdf.min.js');
+	}},
 	'fabricjs': { async load() {
 		await mtLib.loadJS('/lib/fabricjs-6.7.1/index.min.js');
 	}},

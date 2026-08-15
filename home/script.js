@@ -484,6 +484,7 @@ var mt = {
 				this.m_widget = null;
 				let formData = this.c_form.getValue();
 				// #TODO
+				mt.show.toast('warning', 'Chức năng chưa hoàn thiện!');
 			}
 			catch (ex) {
 				mt.show.toast('error', ex.message);
