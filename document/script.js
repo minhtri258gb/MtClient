@@ -18,7 +18,7 @@ let mt = {
 
 	tree: {
 		h_config: {
-			lstSkip: ['Account.md','_Convert_MD_2_PDF_typst.bat','_Convert_MD_2_PDF_weasyprint.bat'],
+			lstSkip: ['Account.md','_Convert_MD_2_PDF.bat'],
 			lstExt: ['md'],
 			type: {
 				'folder': { },
@@ -508,6 +508,15 @@ let mt = {
 				console.error('[mt.event.btnTopEdit]', ex);
 			}
 		},
+		async btnTopShare() {
+			try {
+				await mt.func.share();
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.event.btnTopShare]', ex);
+			}
+		},
 
 		// Global
 		async onDrop(e) {
@@ -538,6 +547,38 @@ let mt = {
 		},
 	},
 	func: {
+		async share() {
+
+			// Lấy Port hiện tại
+			let URL = location.origin + location.pathname;
+			if (URL.indexOf('localhost') > -1) {
+
+				// Call API - Get IP
+				if (!mt.m_IP)
+					mt.m_IP = await mt.api.infoIP();
+				URL = URL.replace('localhost', mt.m_IP);
+			}
+
+			// Thêm params query
+			let paramURL = new URLSearchParams();
+			if (mt.m_currentFile != null)
+				paramURL.set('path', mt.m_currentFile);
+			URL += '?' + paramURL.toString();
+
+			// Thêm hash tag
+			if (window.location.hash)
+				URL += decodeURIComponent(window.location.hash);
+
+			// Tự động copy
+			if (window.isSecureContext) {
+				await navigator.clipboard.writeText(URL);
+				mt.show.toast('success', 'Đã sao chép liên kết');
+			}
+			else {
+				console.log(URL);
+				mt.show.toast('success', 'Đã print console.');
+			}
+		},
 		async exportPDF() {
 			try {
 
@@ -648,38 +689,6 @@ let mt = {
 				if (target)
 					target.scrollIntoView({ behavior: 'smooth' });
 			}
-		}
-	},
-	async share() {
-
-		// Lấy Port hiện tại
-		let URL = location.origin + location.pathname;
-		if (URL.indexOf('localhost') > -1) {
-
-			// Call API - Get IP
-			let IP = await mt.api.infoIP();
-			URL = URL.replace('localhost', IP);
-		}
-
-		// Thêm params query
-		let paramURL = new URLSearchParams();
-		paramURL.set('app', 'document');
-		if (this.m_currentFile != null)
-			paramURL.set('path', this.m_currentFile);
-		URL += '?' + paramURL.toString();
-
-		// Thêm hash tag
-		if (window.location.hash)
-			URL += decodeURIComponent(window.location.hash);
-
-		// Tự động copy
-		if (window.isSecureContext) {
-			await navigator.clipboard.writeText(URL);
-			mt.show.toast('success', 'Đã sao chép liên kết');
-		}
-		else {
-			console.log(URL);
-			mt.show.toast('success', 'Đã print console.');
 		}
 	},
 }

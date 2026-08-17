@@ -12,7 +12,10 @@
 	ol { padding-left: 24px; text-decoration: none; }
 }
 .md-doc {
-	flex: 1 1 auto; margin-left: 16px; overflow: auto;
+	flex: 1 1 auto;
+	margin-left: 16px;
+	overflow: auto;
+	display: block;
 	/* a { color: #974908; text-decoration: none; } */
 }
 
@@ -118,6 +121,7 @@
 			font-size: 0.875em;
 			white-space: pre;
 			tab-size: 4;
+			overflow-x: auto;
 		}
 	}
 
