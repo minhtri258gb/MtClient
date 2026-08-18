@@ -2,12 +2,17 @@
 <html lang="vi">
 <head>
 
+	<title>Log</title>
 	<meta charset="UTF-8" />
-	<title>Xem log realtime</title>
+
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" rel="stylesheet" integrity="sha512-..." crossorigin="anonymous" />
 
 	<style>
 		* { box-sizing: border-box; }
 		body {
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
 			font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
 			background: #1e1e1e;
 			color: #ddd;
@@ -54,6 +59,7 @@
 		#status.ok { color: #4ade80; }
 		#status.err { color: #f87171; }
 		#log {
+			flex: 1;
 			background: #111;
 			border: 1px solid #333;
 			border-radius: 6px;
@@ -71,48 +77,123 @@
 <body>
 
 	<div class="bar">
-		<select>
-			<option value="1">1</option>
-			<option value="2">2</option>
-		</select>
-		<input id="this.e_pathInput" type="text" placeholder="Đường dẫn file log, vd: D:/log.txt" value="D:/log.txt" />
-		<button onclick="mt.btnConnect()">Xem file</button>
-		<button onclick="mt.btnUnwatch()" class="stop">Dừng</button>
+		<select id="list-log" onchange="mt.event.selectLog()"></select>
+		<input id="path-input" type="text" placeholder="Đường dẫn file log, vd: D:/log.txt" value="" />
+		<button onclick="mt.btnConnect()">
+			<i class="fa-regular fa-eye"></i>
+			Xem file
+		</button>
+		<button onclick="mt.btnUnwatch()" class="stop">
+			<i class="fa-regular fa-circle-stop"></i>
+			Dừng
+		</button>
 	</div>
 
 	<div id="status">Chưa kết nối</div>
 	<div id="log"></div>
 
 	<script type="module">
+		import mtApi from '/common/api.js';
+		import mtLib from '/common/lib.js';
+		import mtShow from '/common/show.js';
+
 		var mt = {
+			api: mtApi,
+			lib: mtLib,
+			show: mtShow,
+
+			h_debug: true,
+			e_listLog: null, // Select box list file log
 			e_pathInput: null,
 			e_statusEl: null,
 			e_logEl: null,
+			d_path: '', // Đường dẫn folder
+			d_list: [], // Danh sách file log
 			m_ws: null,
+			m_curpath: '',
 
-			init() {
+			event: {
+				selectLog() {
 
-				// Bind Global
-				globalThis.mt = this;
+					// Ghi filepath
+					mt.e_pathInput.value = mt.d_path + '/' + mt.e_listLog.value;
+				},
+			},
 
-				this.e_pathInput = document.getElementById("this.e_pathInput");
-				this.e_statusEl = document.getElementById("status");
-				this.e_logEl = document.getElementById("log");
+			async init() {
+				try {
 
-				this.e_pathInput.addEventListener("keydown", (e) => {
-					if (e.key === "Enter")
-						mt.btnConnect();
-				});
+					// Bind Global
+					globalThis.mt = this;
 
-				this.connect();
+					// Import Library
+					// this.lib.component(['TagBox']); // Ko cần đợi | 'Rate'
+					await mt.lib.import([
+						// 'tabulator', // Datagrid
+						// 'tingle', // Popup
+						// 'jsonEditor', // Form
+						'toastify', // Toast
+						// 'sweetalert2', // Alert
+					]);
+
+					// Reference
+					this.e_listLog = document.getElementById('list-log');
+					this.e_pathInput = document.getElementById('path-input');
+					this.e_statusEl = document.getElementById('status');
+					this.e_logEl = document.getElementById('log');
+
+					this.e_pathInput.addEventListener('keydown', (e) => {
+						if (e.key === 'Enter')
+							this.btnConnect();
+					});
+
+					this.connect();
+
+					await this.load();
+				}
+				catch (ex) {
+					this.show.toast('error', ex.message);
+					console.error('[mt.init]', ex);
+				}
+			},
+			async load() {
+
+				let urlParams = new URLSearchParams(window.location.search);
+				let folderpath = urlParams.get('path');
+				if (folderpath == null)
+					return;
+
+				this.d_path = folderpath.replaceAll('\\', '/');
+
+				// Call API - get list log
+				let lstLog = await this.api.fileList(this.d_path);
+
+				this.d_list = [];
+				for (let file of lstLog) {
+
+					// Add List
+					this.d_list.push(file.name);
+
+					// Add SelectBox
+					const option = document.createElement('option');
+					option.value = file.name;
+					option.text = file.name;
+					this.e_listLog.appendChild(option);
+				}
+
+				// Mặc định chọn file đầu tiên
+				if (this.d_list.length > 0)
+					this.e_pathInput.value = this.d_path + '/' + this.d_list[0];
+
+				// Log
+				mt.h_debug && console.log('[mt.load]', { folderpath, lstLog, listFile: this.d_list });
 			},
 			setStatus(text, kind) {
 				this.e_statusEl.textContent = text;
 				this.e_statusEl.className = kind || "";
 			},
 			appendLine(text) {
-				const atBottom =
-					this.e_logEl.scrollTop + this.e_logEl.clientHeight >= this.e_logEl.scrollHeight - 20;
+				const atBottom = this.e_logEl.scrollTop + this.e_logEl.clientHeight >= this.e_logEl.scrollHeight - 20;
 				const div = document.createElement("div");
 				div.className = "line";
 				div.textContent = text;
@@ -122,40 +203,53 @@
 			connect() {
 				this.m_ws = new WebSocket(`ws://${location.host}/logs`);
 
-				this.m_ws.onopen = () => this.setStatus("Đã kết nối tới server", "ok");
+				this.m_ws.onopen = () => this.setStatus('Đã kết nối tới server', 'ok');
 
-				this.m_ws.onmessage = (event) => {
+				this.m_ws.onmessage = async (event) => {
 					const msg = JSON.parse(event.data);
 
-					if (msg.type === "watching") {
-						this.setStatus(`Đang theo dõi: ${msg.path}`, "ok");
-						this.e_logEl.innerHTML = "";
-					} else if (msg.type === "data") {
-						for (const line of msg.lines) this.appendLine(line);
-					} else if (msg.type === "unwatched") {
-						this.setStatus("Đã dừng theo dõi", "");
-					} else if (msg.type === "error") {
+					if (msg.type === 'watching') {
+						this.setStatus(`Đang theo dõi: ${msg.path}`, 'ok');
+						this.e_logEl.innerHTML = ''; // Reset log
+
+						// Load first content
+						let content = await this.api.fileRead(this.m_curpath, 'text');
+						let lines = content.split('\n');
+						for (let line of lines)
+							this.appendLine(line);
+					}
+					else if (msg.type === 'data') {
+						for (const line of msg.lines)
+							this.appendLine(line);
+					}
+					else if (msg.type === 'unwatched') {
+						this.setStatus('Đã dừng theo dõi', '');
+					}
+					else if (msg.type === 'error') {
 						this.setStatus(`Lỗi: ${msg.message}`, "err");
 					}
 				};
 
 				this.m_ws.onclose = () => {
-					this.setStatus("Mất kết nối, đang thử lại...", "err");
+					this.setStatus('Mất kết nối, đang thử lại...', 'err');
 					setTimeout(() => this.connect(), 1500);
 				};
 
 				this.m_ws.onerror = () => this.m_ws.close();
 			},
 
-			btnConnect() {
+			async btnConnect() {
 				console.log('Connecting...');
-				const path = this.e_pathInput.value.trim();
-				if (!path) return;
+				this.m_curpath = this.e_pathInput.value.trim();
+				if (!this.m_curpath)
+				return;
 				if (!this.m_ws || this.m_ws.readyState !== WebSocket.OPEN) {
-					this.setStatus("Chưa kết nối tới server", "err");
+					this.setStatus('Chưa kết nối tới server', 'err');
 					return;
 				}
-				this.m_ws.send(JSON.stringify({ type: "watch", path }));
+
+				// Watch by socket
+				this.m_ws.send(JSON.stringify({ type: 'watch', path: this.m_curpath }));
 			},
 			btnUnwatch() {
 				console.log('Stopping...');

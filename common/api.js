@@ -121,6 +121,9 @@ var mtApi = {
 
 		let response = await fetch('/api/file-list?' + params.toString(), { method: 'GET' });
 
+		if (!response.ok)
+			throw new Error(await response.text());
+
 		return await response.json();
 	},
 	async fileRead(file, type) {

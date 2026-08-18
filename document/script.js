@@ -293,7 +293,7 @@ let mt = {
 			// Log
 			// mt.h_debug && console.log('[mt.document.btnRead]', { content, html });
 		},
-		processTOC(contentDiv) {
+		processTOC(contentDiv) { // Table of Content
 
 			if (!contentDiv)
 				return;
@@ -373,7 +373,7 @@ let mt = {
 			if (childOl)
 				fooRecursion(childOl);
 		},
-		processTreeList(elmMdDoc) {
+		processTreeList(elmMdDoc) { // Fold tree list
 			// Tìm tất cả các thẻ <li> có chứa thẻ <ul> con
 			elmMdDoc.querySelectorAll('li').forEach(li => {
 

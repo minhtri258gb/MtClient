@@ -1,5 +1,3 @@
-// import { w2ui, w2layout, w2toolbar, w2sidebar, w2grid, w2popup, w2alert, w2utils } from 'w2ui';
-// import { w2grid } from 'w2ui';
 import mtApi from '/common/api.js';
 import mtLib from '/common/lib.js';
 import mtShow from '/common/show.js';
@@ -21,16 +19,6 @@ var mt = {
 
 		async init() {
 
-			let renderAction = (cell) => {
-				let row = cell.getRow().getData();
-				let actions = cell.getValue() || '';
-				let htmlBtn = '<div style="display:flex;gap:4px;">';
-				htmlBtn += `<button onclick="mt.event.btnRowRefresh(${row.id})" style="padding:0;"><i class="fa-solid fa-arrows-rotate"></i></button>`;
-				let act = ',' + actions + ',';
-				if (row.status === 1 && act.includes(',link,'))
-					htmlBtn += `<button onclick="mt.event.btnRowLink(${row.id})"><i class="fa-solid fa-link"></i></button>`;
-				return htmlBtn + '</div>';
-			}
 			let renderStatus = (cell) => {
 				let status = cell.getValue() || '';
 				if (status === -2)
@@ -58,7 +46,7 @@ var mt = {
 				data: [],
 				columns: [
 					{ title:'STT', formatter:'rownum', width:40, hozAlign:'center', headerSort:false },
-					{ title:'Actions', field:'actions', width:120, headerSort:false, formatter: (cell) => renderAction(cell) },
+					{ title:'Actions', field:'actions', width:120, headerSort:false, formatter: (cell) => this.buildRowAction(cell) },
 					{ title:'Status', field:'status', width:52, hozAlign:'center', vertAlign:'middle', headerSort:false, formatter: (cell) => renderStatus(cell) },
 					{ title:'Name', field:'name', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
 					{ title:'URL', field:'url', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
@@ -136,6 +124,25 @@ var mt = {
 			// Log
 			mt.h_debug && console.log('[mt.list.save]', { listData });
 		},
+		buildRowAction(cell) {
+			let row = cell.getRow().getData();
+			let act = ',' + (cell.getValue() || '') + ',';
+
+			let htmlBtn = '<div style="display:flex;gap:4px;">';
+
+			// Refresh
+			htmlBtn += `<button onclick="mt.event.btnRowRefresh(${row.id})" style="padding:0;"><i class="fa-solid fa-arrows-rotate"></i></button>`;
+
+			// Link
+			if (row.status === 1 && act.includes(',link,'))
+				htmlBtn += `<button onclick="mt.event.btnRowLink(${row.id})" style="padding:0;"><i class="fa-solid fa-link"></i></button>`;
+
+			// Log
+			if (row.log && row.log.length > 0)
+				htmlBtn += `<button onclick="mt.event.btnRowLog(${row.id})" style="padding:0;"><i class="fa-solid fa-hourglass-half"></i></button>`;
+
+			return htmlBtn + '</div>';
+		},
 		contextMenu(event, row) {
 			let actions = [];
 
@@ -143,7 +150,7 @@ var mt = {
 
 			// Sửa
 			actions.push({
-				label: '<img class="menuIcon" src="/res/icons/edit16.png" />Edit',
+				label: '<i class="fa-solid fa-pen-to-square menuIcon"></i>Edit',
 				action: (e, row) => mt.event.ctxMenuEdit(row),
 			});
 
@@ -170,6 +177,12 @@ var mt = {
 					action: (e, row) => mt.event.btnRemove(row),
 				});
 			}
+
+			// Sao chép
+			actions.push({
+				label: '<i class="fa-solid fa-copy menuIcon"></i>Clone',
+				action: (e, row) => mt.event.ctxMenuClone(row),
+			});
 
 			// Tạo mới
 			// actions.push({
@@ -294,7 +307,7 @@ var mt = {
 					url: formdata.url,
 					actions: formdata.actions,
 					tags: formdata.tags,
-					log: formdata.log,
+					log: formdata.log.replaceAll('\\', '/'),
 					status: -2,
 					host: splitURL.host,
 					port: splitURL.port,
@@ -303,13 +316,13 @@ var mt = {
 				if (item.id === -1) { // Add
 
 					// Add Index
-					item.id = mt.d_list.length + 2; // Chưa push + lệch 1, bắt đầu từ 1 => +2
+					item.id = mt.d_list.length + 1;
 
 					// Save to RAM
 					mt.d_list.push(item);
 
 					// Bỏ Filter
-					mt.e_tags.clean(); 
+					mt.e_tags.clean();
 
 					// Thêm vào tabulator
 					mt.list.c_table.addData([item], true)
@@ -482,9 +495,22 @@ var mt = {
 			row.delete();
 		},
 		async btnRowRefresh(serverId) {
+
+			// Loading statuc
 			mt.list.c_table.updateData([{ id: serverId, status: -1 }]);
+
 			let server = mt.d_list[serverId-1];
+
+			// Update Status
 			mt.list.c_table.updateData([{ id: serverId, status: await mt.func.check(server.host, server.port) }]);
+
+			// Render lại cột Action
+			const row = mt.list.c_table.getRow(serverId);
+			if (row) {
+				const actionCell = row.getCell("actions");
+				if (actionCell)
+					actionCell.setValue(actionCell.getValue());
+			}
 		},
 		async btnShare() {
 
@@ -520,7 +546,13 @@ var mt = {
 		},
 		btnRowLink(serverId) {
 			let server = mt.d_list[serverId-1];
-			window.open('http://' + server.url, '_blank');
+			window.open(server.url, '_blank');
+		},
+		btnRowLog(serverId) {
+			let server = mt.d_list[serverId-1];
+			let urlParam = new URLSearchParams();
+			urlParam.set('path', server.log);
+			window.open(`/logs?${urlParam.toString()}`, '_blank');
 		},
 		btnRowTag(tag) {
 
@@ -543,6 +575,30 @@ var mt = {
 
 				// Bỏ Hightlight row
 				row.getElement().classList.remove('highlight-row-edit');
+			}
+		},
+		ctxMenuClone(row) {
+			try {
+
+				let rowData = row.getData(); // Lấy data
+				let item = mt.d_list[rowData.id-1];
+
+				let cloneItem = JSON.parse(JSON.stringify(item));
+				cloneItem.id = mt.d_list.length + 1; // New Id
+				mt.d_list.push(cloneItem); // Add list
+
+				// Render List
+				mt.list.c_table.addData([item], true)
+					.then((rows) => {
+						rows[0].getElement().classList.add('highlight-row-add'); // Hightlight
+					});
+
+				// Log
+				mt.h_debug && console.log('[mt.event.ctxMenuClone]', { rowData, item });
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.event.ctxMenuClone]', ex);
 			}
 		},
 	},

@@ -52,6 +52,9 @@ let mt = {
 					{ type: 'button', id: 'page-piano', text: 'Piano', icon: 'fa-solid fa-guitar' },
 					{ type: 'button', id: 'page-dynamic', text: 'Dynamic', icon: 'fa-solid fa-pager' },
 					{ type: 'break' },
+					{ type: 'button', id: 'page-document', text: 'Document', icon: 'fa-solid fa-book-open-reader' },
+					{ type: 'button', id: 'page-server', text: 'Server', icon: 'fa-solid fa-server' },
+					{ type: 'break' },
 					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
 					{ type: 'check', id: 'item3', text: 'Check 2', icon: 'w2ui-icon-check' },
 					{ type: 'break' },
@@ -74,6 +77,8 @@ let mt = {
 						case 'page-home': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Home', '/home'); break;
 						case 'page-music': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Music', '/music2'); break;
 						case 'page-piano': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano'); break;
+						case 'page-document': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Document', '/document'); break;
+						case 'page-server': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Server', '/server'); break;
 						case 'menu': this.btnMenu(!event.object.checked); break;
 						case 'link:link-icon': window.open('https://fontawesome.com/v6/search?ic=free-collection'); break;
 						case 'link:link-w2ui': window.open('https://w2ui.com/web/docs/2.0/'); break;
@@ -93,7 +98,6 @@ let mt = {
 						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-address-book' },
 						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
 						{ id: 'map', text: 'Map', icon: 'fa-solid fa-map-location-dot' },
-						{ id: 'server', text: 'Server', icon: 'fa-solid fa-server' },
 						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
 						{ id: 'sticker', text: 'Sticker', icon: 'fa-regular fa-face-grin-squint-tears' },
 					]},
@@ -1272,7 +1276,6 @@ let mt = {
 			L.marker([lat, lng]).addTo(this.c_map);
 		},
 	},
-	server: 'ext',
 	sticker: 'ext',
 	markdown: {
 

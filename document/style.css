@@ -14,6 +14,7 @@
 .md-doc {
 	flex: 1 1 auto;
 	margin-left: 16px;
+	padding-right: 16px;
 	overflow: auto;
 	display: block;
 	/* a { color: #974908; text-decoration: none; } */
