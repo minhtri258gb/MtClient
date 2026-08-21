@@ -91,4 +91,40 @@
 			"mt.h_debug && console.log('[mt.]', { });",
 		]
 	},
+	"confirm-primary": {
+		"scope": "javascript",
+		"prefix": "confirm-primary",
+		"body": [
+			"// Xác nhận lưu",
+			"let isConfirm = await mt.show.alertConfirmPrimary('', 'Lưu');",
+			"if (!isConfirm)",
+			"\treturn;",
+		]
+	},
+	"confirm-danger": {
+		"scope": "javascript",
+		"prefix": "confirm-danger",
+		"body": [
+			"// Xác nhận Xóa",
+			"let isConfirm = await mt.show.alertConfirmDanger('', 'Xóa');",
+			"if (!isConfirm)",
+			"\treturn;",
+		]
+	},
+	"toast": {
+		"scope": "javascript",
+		"prefix": "toast",
+		"body": [
+			"// Thông báo",
+			"mt.show.toast('success', 'Thành công');",
+		]
+	},
+	"api-file-write": {
+		"scope": "javascript",
+		"prefix": "api-file-write",
+		"body": [
+			"// Call API - File Write",
+			"await mt.api.fileWriteText('D:/file.txt', 'Nội dung', true);",
+		]
+	},
 }

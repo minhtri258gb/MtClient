@@ -107,6 +107,45 @@ var mtLib = {
 			mtLib.loadJS(path+'addon/fold/markdown-fold.js'),
 		]);
 	}},
+	'CodeMirror6': { async load() {
+		let path = '/lib/codemirror-6.0.2/';
+		await mtLib.loadJS(path+'codemirror-6.0.2.cjs');
+		await Promise.all([
+			mtLib.loadJS(path+'autocomplete-6.20.3.cjs'),
+			mtLib.loadJS(path+'codemirror-6.0.2.cjs'),
+			mtLib.loadJS(path+'commands-6.11.0.cjs'),
+			// mtLib.loadJS(path+'lang-angular-0.1.4.cjs'),
+			// mtLib.loadJS(path+'lang-cpp-6.0.3.cjs'),
+			mtLib.loadJS(path+'lang-css-6.3.1.cjs'),
+			// mtLib.loadJS(path+'lang-go-6.0.1.cjs'),
+			mtLib.loadJS(path+'lang-html-6.4.12.cjs'),
+			// mtLib.loadJS(path+'lang-java-6.0.2.cjs'),
+			mtLib.loadJS(path+'lang-javascript-6.2.5.cjs'),
+			// mtLib.loadJS(path+'lang-jinja-6.0.1.cjs'),
+			mtLib.loadJS(path+'lang-json-6.0.2.cjs'),
+			// mtLib.loadJS(path+'lang-less-6.0.2.cjs'),
+			// mtLib.loadJS(path+'lang-lezer-6.0.2.cjs'),
+			// mtLib.loadJS(path+'lang-liquid-6.3.2.cjs'),
+			mtLib.loadJS(path+'lang-markdown-6.5.2.cjs'),
+			// mtLib.loadJS(path+'lang-python-6.2.1.cjs'),
+			// mtLib.loadJS(path+'lang-php-6.0.2.cjs'),
+			// mtLib.loadJS(path+'lang-rust-6.0.2.cjs'),
+			mtLib.loadJS(path+'lang-sass-6.0.2.cjs'),
+			mtLib.loadJS(path+'lang-sql-6.10.0.cjs'),
+			// mtLib.loadJS(path+'language-6.12.4.cjs'),
+			// mtLib.loadJS(path+'language-data-6.5.2.cjs'),
+			// mtLib.loadJS(path+'lang-vue-0.1.3.cjs'),
+			// mtLib.loadJS(path+'lang-wast-6.0.2.cjs'),
+			// mtLib.loadJS(path+'lang-xml-6.1.0.cjs'),
+			// mtLib.loadJS(path+'lang-yaml-6.1.3.cjs'),
+			mtLib.loadJS(path+'lint-6.9.7.cjs'),
+			mtLib.loadJS(path+'merge-6.12.2.cjs'),
+			mtLib.loadJS(path+'search-6.7.1.cjs'),
+			mtLib.loadJS(path+'state-6.7.1.cjs'),
+			mtLib.loadJS(path+'theme-one-dark-6.1.3.cjs'),
+			mtLib.loadJS(path+'view-6.43.9.cjs'),
+		]);
+	}},
 	'ctxmenu': { async load() {
 		await mtLib.loadJS('/lib/ctxmenu-2.1.0/ctxmenu.min.js');
 	}},
@@ -285,6 +324,7 @@ var mtLib = {
 		]);
 	}},
 	'SimpleMDE': { async load() {
+		// https://github.com/sparksuite/simplemde-markdown-editor
 		let path = '/lib/simplemde-1.11.2-0/';
 		await Promise.all([
 			mtLib.loadCSS(path+'simplemde.min.css'),

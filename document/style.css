@@ -184,3 +184,10 @@
 	}
 
 }
+
+#document-edit {
+	.CodeMirror {
+		height: calc(100% - 73px);
+		font-family: 'Consolas', 'Courier New', monospace;
+	}
+}

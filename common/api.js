@@ -159,6 +159,17 @@ var mtApi = {
 		if (!response.ok)
 			throw new Error(await response.text())
 	},
+	async fileRegisterStatic(name, folder) {
+
+		let response = await fetch('/api/file-register-static', {
+			method: 'POST',
+			headers: { 'Content-Type': 'text/plain' },
+			body: JSON.stringify({ name, folder }),
+		});
+
+		if (!response.ok)
+			throw new Error(await response.text())
+	},
 
 	// Get / Set
 	getToken() {

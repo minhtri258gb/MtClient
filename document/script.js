@@ -14,9 +14,165 @@ let mt = {
 	h_pathDoc: '', // Link folder on Server
 	m_currentFile: '', // Current reading
 	m_content: '', // Nội dung Markdown
-	m_isEdit: false, // Chế độ edit / view
 
+	toolbar: {
+		async pdf() {
+			try {
+
+				// Lấy file name để download
+				let filepath = mt.m_currentFile;
+				let pos1 = filepath.lastIndexOf('/');
+				let pos2 = filepath.lastIndexOf('.md');
+				let filename = filepath.substring(pos1+1, pos2);
+
+				// Render PDf
+				// const fontBuffer = await fetch('/res/font/OpenSans-Regular.ttf').then((res) => res.arrayBuffer());
+
+				// Get Target Element
+				let targets = document.getElementsByClassName('md-doc');
+				let target = targets[0];
+
+				// Start Export
+				const blob = await dompdf(target, {
+					pagination: true,
+					format: 'a4',
+					pageConfig: {
+						header: {
+							content: 'Document Header',
+							height: 50,
+							contentFontSize: 12,
+							contentPosition: 'center',
+						},
+						footer: {
+							content: 'Page ${currentPage} / ${totalPages}',
+							height: 50,
+							contentFontSize: 12,
+							contentPosition: 'center',
+						},
+					},
+					// fontConfig: {
+					// 	fontFamily: 'Open Sans',
+					// 	fontBytes: new Uint8Array(fontBuffer),
+					// 	fontStyle: 'normal',
+					// 	fontWeight: 400,
+					// },
+					onProgress(progress) {
+						if (progress.stage === 'countingPages' && progress.totalPages) {
+							mt.h_debug && console.log(`Total pages: ${progress.totalPages}`);
+						}
+						if (progress.stage === 'rendering' && progress.currentPage && progress.totalPages) {
+							mt.h_debug && console.log(`Rendering page ${progress.currentPage}/${progress.totalPages}`);
+						}
+					},
+				});
+
+				// Download PDF
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `${filename}.pdf`;
+				a.click();
+				URL.revokeObjectURL(url);
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.toolbar.pdf]', ex);
+			}
+		},
+		async edit() {
+			try {
+				let state = mt.editor.isShow();
+
+				// Xác nhận Chuyển
+				if (state) {
+					let isConfirm = await mt.show.alertConfirmDanger('Mở file sẽ mất chỉnh sửa hiện tại! có muốn chuyển ko?', 'Chuyển');
+					if (!isConfirm)
+						return; // Ko chuyển
+				}
+
+				await mt.editor.show(!state);
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.toolbar.edit]', ex);
+			}
+		},
+		async save() {
+			try {
+
+				// Nếu chưa mở editor thì bỏ qua
+				if (!mt.editor.isShow())
+					return;
+
+				// Nếu chưa chọn file thì bỏ qua
+				if (mt.m_currentFile.length == 0)
+					return;
+
+				let filename = mt.m_currentFile.substring(mt.m_currentFile.lastIndexOf('/')+1);
+
+				// Xác nhận lưu
+				let isConfirm = await mt.show.alertConfirmPrimary(`Lưu thay đổi "${filename}" ?`, 'Lưu');
+				if (!isConfirm)
+					return;
+
+				let content = mt.editor.val(); // Lấy nội dung editor
+
+				// Call API - File Write
+				await mt.api.fileWriteText(mt.m_currentFile, content, true);
+
+				mt.m_content = content; // Lưu lại RAM
+				await mt.editor.show(false); // Hiện content
+				mt.content.load(content); // Reload content
+
+				mt.show.toast('success', `Lưu thành công "${filename}"`); // Thông báo
+				mt.h_debug && console.log('[mt.toolbar.save]', { content }); // Log
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.toolbar.save]', ex);
+			}
+		},
+		async share() {
+			try {
+
+				// Lấy Port hiện tại
+				let URL = location.origin + location.pathname;
+				if (URL.indexOf('localhost') > -1) {
+
+					// Call API - Get IP
+					if (!mt.m_IP)
+						mt.m_IP = await mt.api.infoIP();
+					URL = URL.replace('localhost', mt.m_IP);
+				}
+
+				// Thêm params query
+				let paramURL = new URLSearchParams();
+				if (mt.m_currentFile != null)
+					paramURL.set('path', mt.m_currentFile);
+				URL += '?' + paramURL.toString();
+
+				// Thêm hash tag
+				if (window.location.hash)
+					URL += decodeURIComponent(window.location.hash);
+
+				// Tự động copy
+				if (window.isSecureContext) {
+					await navigator.clipboard.writeText(URL);
+					mt.show.toast('success', 'Đã sao chép liên kết');
+				}
+				else {
+					console.log(URL);
+					mt.show.toast('success', 'Đã print console.');
+				}
+			}
+			catch (ex) {
+				mt.show.toast('error', ex.message);
+				console.error('[mt.toolbar.share]', ex);
+			}
+		},
+	},
 	tree: {
+		c_tree: null, // Instance JsTree
 		h_config: {
 			lstSkip: ['Account.md','_Convert_MD_2_PDF.bat'],
 			lstExt: ['md'],
@@ -59,6 +215,7 @@ let mt = {
 					items: (node) => this.contextmenu(node)
 				},
 			});
+			this.c_tree = $('#document-jstree').jstree(true);
 
 			// Đăng ký sự kiện Double click
 			$('#document-jstree').on('dblclick', '.jstree-anchor', function(e) {
@@ -101,53 +258,95 @@ let mt = {
 
 			let options = {};
 
-			if (node.type == 'folder')
-				return options;
+			if (node.type == 'folder') { // Folder
 
-			if (node.type == 'md') {
-				options.view = {
-					label: 'View',
-					icon: '/res/icons/eye16.png',
+				options.newFile = {
+					label: 'New File',
+					icon: '/res/icons/add.png',
 					action: async (obj) => {
-						let filepath = node.original.path;
-						mt.m_currentFile = filepath; // Lưu path file hiện tại
-						let content = await mt.api.fileRead(filepath, 'text'); // Call API - read file
-						mt.content.load(content); // Render
+
+						let folderpath = node.original.path
+						folderpath = folderpath.replaceAll('\\', '/');
+
+						// Input name
+						let filename = prompt('Nhập filename');
+						filename += '.md';
+
+						let filepath = folderpath + '/' + filename;
+
+						// Call API - File Write
+						await mt.api.fileWriteText(filepath, '', true);
+
+						mt.m_content = '';
+						mt.m_currentFile = filepath;
+
+						// Reload tree
+						this.c_tree.refresh_node(node.id);
+
+						// Bật editor cho file
+						mt.editor.show(true);
+
+						// Thông báo
+						mt.show.toast('success', `Tạo file "${filename}" thành công.`);
+
+						// Log
+						mt.h_debug && console.log('[mt.tree.contextmenu.newFile]', {
+							node,
+							obj,
+							filepath,
+						});
 					}
 				};
-				options.edit = {
-					label: 'Edit',
-					icon: '/res/icons/edit16.png',
-					action: async (obj) => {
-						mt.show.toast('warning', 'Chưa hoàn thiện chức năng');
-					}
-				};
-				options.share = {
-					label: 'Share',
-					icon: '/res/icons/share.png',
-					action: async (obj) => {
-						let filepath = node.original.path;
+			}
+			else { // File
 
-						let urlShare = location.origin + location.pathname;
-						if (urlShare.indexOf('localhost') > -1) {
-							let IP = await mt.api.infoIP();
-							urlShare = urlShare.replace('localhost', IP);
+				if (node.type == 'md') {
+					options.view = {
+						label: 'View',
+						icon: '/res/icons/eye16.png',
+						action: async (obj) => {
+							let filepath = node.original.path;
+							filepath = filepath.replaceAll('\\', '/');
+							mt.m_currentFile = filepath; // Lưu path file hiện tại
+							let content = await mt.api.fileRead(filepath, 'text'); // Call API - read file
+							mt.content.load(content); // Render
 						}
-						let paramsURL = new URLSearchParams();
-						paramsURL.append('path', filepath);
-						urlShare += '?' + paramsURL.toString();
+					};
+					options.edit = {
+						label: 'Edit',
+						icon: '/res/icons/edit16.png',
+						action: async (obj) => {
+							mt.show.toast('warning', 'Chưa hoàn thiện chức năng');
+						}
+					};
+					options.share = {
+						label: 'Share',
+						icon: '/res/icons/share.png',
+						action: async (obj) => {
+							let filepath = node.original.path;
 
-						// Copy Clipboard
-						if (window.isSecureContext) {
-							await navigator.clipboard.writeText(urlShare);
-							mt.show.toast('success', `Đã copy URL`); // Notify
+							let urlShare = location.origin + location.pathname;
+							if (urlShare.indexOf('localhost') > -1) {
+								let IP = await mt.api.infoIP();
+								urlShare = urlShare.replace('localhost', IP);
+							}
+							let paramsURL = new URLSearchParams();
+							paramsURL.append('path', filepath);
+							urlShare += '?' + paramsURL.toString();
+
+							// Copy Clipboard
+							if (window.isSecureContext) {
+								await navigator.clipboard.writeText(urlShare);
+								mt.show.toast('success', `Đã copy URL`); // Notify
+							}
+							else {
+								console.log(urlShare);
+								mt.show.toast('success', 'Đã print console.');
+							}
 						}
-						else {
-							console.log(urlShare);
-							mt.show.toast('success', 'Đã print console.');
-						}
-					}
-				};
+					};
+				}
+
 			}
 
 			return options;
@@ -155,7 +354,20 @@ let mt = {
 		async doubleClick(node) { // Nhấn đúp
 			if (node.type == 'md') {
 
+				// Chuyển lại giao diện xem nếu đang edit
+				if (mt.editor.isShow()) {
+
+					// Xác nhận chuyển
+					let isConfirm = await mt.show.alertConfirmDanger('Mở file sẽ mất chỉnh sửa hiện tại! có muốn chuyển ko?', 'Chuyển');
+					if (!isConfirm)
+						return; // Ko chuyển
+
+					// Hiện content view
+					mt.editor.show(false);
+				}
+
 				let filepath = node.original.path;
+				filepath = filepath.replaceAll('\\', '/');
 
 				// Lưu path file hiện tại
 				mt.m_currentFile = filepath;
@@ -279,6 +491,7 @@ let mt = {
 			const elmMdDoc = document.createElement('div'); // Tạo div content
 			elmMdDoc.classList.add('md-doc');
 			elmMdDoc.append(...mdDom.body.childNodes);
+			this.processImage(elmMdDoc);
 			this.processTreeList(elmMdDoc);
 			elmMdcontain.appendChild(elmMdDoc);
 
@@ -373,6 +586,18 @@ let mt = {
 			if (childOl)
 				fooRecursion(childOl);
 		},
+		processImage(elmMdDoc) { // Process Path Image
+
+			let posPath = mt.m_currentFile.lastIndexOf('/');
+			let filenameNExt = mt.m_currentFile.substring(posPath + 1).replace('.md', '');
+			let folder = mt.m_currentFile.substring(0, posPath).replace(mt.h_pathDoc, '');
+			let staticImageURL = window.location.origin + '/static/document' + folder + '/images/' + filenameNExt + '/';
+
+			elmMdDoc.querySelectorAll('img').forEach(img => {
+				let fileImageName = img.src.replace(window.location.origin + '/', '');
+				img.src = staticImageURL + fileImageName;
+			});
+		},
 		processTreeList(elmMdDoc) { // Fold tree list
 			// Tìm tất cả các thẻ <li> có chứa thẻ <ul> con
 			elmMdDoc.querySelectorAll('li').forEach(li => {
@@ -455,10 +680,16 @@ let mt = {
 	},
 	editor: {
 		m_init: false,
+		m_isShow: false, // Chế độ edit / view
 		e_content: null, // Element content
 		c_editor: null, // CodeMirror
 
-		init() {
+		async init() {
+
+			await mt.lib.import([
+				'SimpleMDE', // Editor
+				'sweetalert2', // Alert
+			]);
 
 			this.m_init = true;
 
@@ -466,56 +697,89 @@ let mt = {
 			this.e_content = document.getElementById('document-edit');
 
 			// Init CodeMirror
-			let textarea = document.getElementById('editor-md');
-			this.c_editor = CodeMirror.fromTextArea(textarea, {
-				mode: 'md',
-				lineNumbers: true,
-				lineWrapping: true,
-				// extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-				foldGutter: true,
-				gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+			let textareaElm = document.getElementById('editor-md');
+			this.c_editor = new SimpleMDE({
+				element: textareaElm,
+				spellChecker: false,
+				status: false,
+				tabSize: 4,
+				toolbar: [
+					'bold','italic','strikethrough','|',
+					'heading-1','heading-2','heading-3','|',
+					'code','quote','unordered-list','ordered-list','clean-block','|',
+					'link','image','table','horizontal-rule','|',
+					{ name: "mermaid", title: "Insert Mermaid Diagram", className: "fa fa-area-chart", action: (editor) => {
+
+						toggleState = !toggleState; // Đảo trạng thái
+
+						// // Ví dụ: thay đổi nội dung hoặc style theo trạng thái
+						// if (toggleState) {
+						// 		editor.codemirror.setOption("theme", "monokai"); // bật theme tối
+						// 		alert("Toggle ON");
+						// } else {
+						// 		editor.codemirror.setOption("theme", "default"); // tắt
+						// 		alert("Toggle OFF");
+						// }
+
+						// // Cập nhật icon / style của nút trên toolbar
+						// let toolbarButton = editor.toolbarElements.mermaid;
+						// if (!toolbarButton)
+						// 	return;
+
+						// if (toggleState)
+						// 	toolbarButton.classList.add("active");
+						// else
+						// 	toolbarButton.classList.remove("active");
+
+						editor.codemirror.replaceSelection('```mermaid\ngraph TD;\n    A-->B;\n```\n');
+					}},'|',
+					'preview','side-by-side','fullscreen','|',
+					'guide',
+				],
+				// previewRender: (plainText, preview) => {
+				// 	preview.innerHTML = marked.parse(plainText);
+				// 	setTimeout(() => mermaid.run({ querySelector: '.mermaid' }), 0);
+				// 	return preview.innerHTML;
+				// },
 			});
-			// 'editor-md'
+		},
+		isShow() {
+			return this.m_isShow;
+		},
+		async show(toggle) {
+			if (!toggle) { // View
+				mt.content.e_content.style.display = '';
+				this.e_content.style.display = 'none';
+
+				// mt.editor.c_editor.value()
+			}
+			else { // Edit
+
+				if (!this.m_init)
+					await this.init();
+
+				mt.content.e_content.style.display = 'none';
+				this.e_content.style.display = '';
+
+				this.c_editor.value(mt.m_content);
+			}
+			this.m_isShow = !this.m_isShow;
+		},
+		val(content) {
+			if (content)
+				this.c_editor.value(content);
+			else
+				return this.c_editor.value();
 		},
 	},
 	event: {
 
 		register() {
-			window.addEventListener('hashchange', () => this.onHashChange());
-		},
 
-		// Toolbar
-		btnTopEdit() {
-			try {
-				if (mt.m_isEdit) { // View
-					mt.content.e_content.style.display = '';
-					mt.editor.e_content.style.display = 'none';
-
-				}
-				else { // Edit
-
-					if (!mt.editor.m_init)
-						mt.editor.init();
-
-					mt.content.e_content.style.display = 'none';
-					mt.editor.e_content.style.display = '';
-
-				}
-				mt.m_isEdit = !mt.m_isEdit;
-			}
-			catch (ex) {
-				mt.show.toast('error', ex.message);
-				console.error('[mt.event.btnTopEdit]', ex);
-			}
-		},
-		async btnTopShare() {
-			try {
-				await mt.func.share();
-			}
-			catch (ex) {
-				mt.show.toast('error', ex.message);
-				console.error('[mt.event.btnTopShare]', ex);
-			}
+			// Tự động bỏ hashstring khi click table of content
+			window.addEventListener('hashchange', () => {
+				setTimeout(() => { history.replaceState(null, null, ' '); }, 10);
+			});
 		},
 
 		// Global
@@ -542,105 +806,6 @@ let mt = {
 				console.error('[mt.document.onDrop]', ex);
 			}
 		},
-		onHashChange() {
-			setTimeout(() => { history.replaceState(null, null, ' '); }, 10);
-		},
-	},
-	func: {
-		async share() {
-
-			// Lấy Port hiện tại
-			let URL = location.origin + location.pathname;
-			if (URL.indexOf('localhost') > -1) {
-
-				// Call API - Get IP
-				if (!mt.m_IP)
-					mt.m_IP = await mt.api.infoIP();
-				URL = URL.replace('localhost', mt.m_IP);
-			}
-
-			// Thêm params query
-			let paramURL = new URLSearchParams();
-			if (mt.m_currentFile != null)
-				paramURL.set('path', mt.m_currentFile);
-			URL += '?' + paramURL.toString();
-
-			// Thêm hash tag
-			if (window.location.hash)
-				URL += decodeURIComponent(window.location.hash);
-
-			// Tự động copy
-			if (window.isSecureContext) {
-				await navigator.clipboard.writeText(URL);
-				mt.show.toast('success', 'Đã sao chép liên kết');
-			}
-			else {
-				console.log(URL);
-				mt.show.toast('success', 'Đã print console.');
-			}
-		},
-		async exportPDF() {
-			try {
-
-				let filepath = mt.m_currentFile;
-				let pos1 = filepath.lastIndexOf('\\');
-				let pos2 = filepath.lastIndexOf('.md');
-				let filename = filepath.substring(pos1+1, pos2);
-
-				// Render PDf
-				// const fontBuffer = await fetch('/res/font/OpenSans-Regular.ttf').then((res) => res.arrayBuffer());
-
-				// Get Target Element
-				let targets = document.getElementsByClassName('md-doc');
-				let target = targets[0];
-
-				// Start Export
-				const blob = await dompdf(target, {
-					pagination: true,
-					format: 'a4',
-					pageConfig: {
-						header: {
-							content: 'Document Header',
-							height: 50,
-							contentFontSize: 12,
-							contentPosition: 'center',
-						},
-						footer: {
-							content: 'Page ${currentPage} / ${totalPages}',
-							height: 50,
-							contentFontSize: 12,
-							contentPosition: 'center',
-						},
-					},
-					// fontConfig: {
-					// 	fontFamily: 'Open Sans',
-					// 	fontBytes: new Uint8Array(fontBuffer),
-					// 	fontStyle: 'normal',
-					// 	fontWeight: 400,
-					// },
-					onProgress(progress) {
-						if (progress.stage === 'countingPages' && progress.totalPages) {
-							mt.h_debug && console.log(`Total pages: ${progress.totalPages}`);
-						}
-						if (progress.stage === 'rendering' && progress.currentPage && progress.totalPages) {
-							mt.h_debug && console.log(`Rendering page ${progress.currentPage}/${progress.totalPages}`);
-						}
-					},
-				});
-
-				// Download PDF
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `${filename}.pdf`;
-				a.click();
-				URL.revokeObjectURL(url);
-			}
-			catch (ex) {
-				mt.show.toast('error', ex.message);
-				console.error('[mt.func.exportPDF]', ex);
-			}
-		},
 	},
 
 	async init() {
@@ -651,10 +816,19 @@ let mt = {
 		// Import library
 		// mt.lib.component(['FabButton']); // Import Component
 		await mt.lib.import(['mermaid']); // Import mermaid trước markdownIt
-		await mt.lib.import(['markdownIt','highlightjs','jstree','CodeMirror','toastify','dompdfjs']);
+		await mt.lib.import([
+			'markdownIt', // Markdown
+			'highlightjs', // Highlight
+			'jstree', // Tree
+			'toastify', // Toast
+			'dompdfjs', // Convert HTML to PDF
+		]);
 
 		// Read Config
 		this.h_pathDoc = await mt.api.config('PATH_DOCUMENT');
+
+		// Đăng ký static folder
+		this.api.fileRegisterStatic('document', mt.h_pathDoc);
 
 		// Init Module
 		this.tree.init();
@@ -674,6 +848,7 @@ let mt = {
 		if (filepath != null && filepath.length > 0) {
 
 			// Lưu path file hiện tại
+			filepath = filepath.replaceAll('\\', '/');
 			this.m_currentFile = filepath;
 
 			// Call API - read file

@@ -39,22 +39,22 @@
 			<div style="display:flex;align-items:center;gap:6px;padding:2px 6px;background:#ffffff;flex-wrap:wrap;width:calc(100% - 12px);">
 
 				<!-- Nút Download -->
-				<button onclick="mt.func.exportPDF()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1a1a18; color:#ffffff; border:none; border-radius:6px; font-size:14px; cursor:pointer;float:right">
+				<button onclick="mt.toolbar.pdf()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1a1a18; color:#ffffff; border:none; border-radius:6px; font-size:14px; cursor:pointer;float:right">
 					<i class="fa-solid fa-download" style="font-size:16px;"></i>
 					Download PDF
 				</button>
 
 				<!-- Nút split: New, Save -->
 				<div style="display:flex; border:1px solid #d4d4d0; border-radius:6px; overflow:hidden;">
-					<button onclick="mt.event.btnTopEdit()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<button onclick="mt.toolbar.edit()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
 						<i class="fa-solid fa-pen-to-square"></i>
 						Edit
 					</button>
-					<button onclick="mt.event.btnTopSave()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<button onclick="mt.toolbar.save()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
 						<i class="fa-regular fa-floppy-disk"></i>
 						Save
 					</button>
-					<button onclick="mt.event.btnTopShare()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+					<button onclick="mt.toolbar.share()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
 						<i class="fa-solid fa-share"></i>
 						Share
 					</button>

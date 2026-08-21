@@ -123,4 +123,3 @@ var mtShow = {
 	},
 };
 export default mtShow;
-
