@@ -193,6 +193,7 @@ var mt = {
 		doubleClick(node) { // Nhấn đúp
 			if (node.type == 'html') {
 				let path = node.original.path;
+				path = path.replaceAll('\\', '/');
 				path = path.replaceAll(mt.m_pathPublic, '');
 				window.open(path, '_blank');
 			}

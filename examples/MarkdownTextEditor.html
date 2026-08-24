@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>Markdown Text Editor</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+<body>
+
+	<textarea id="markdown-editor"></textarea>
+
+	<script type="module">
+		import mtApi from '/common/api.js';
+		import mtLib from '/common/lib.js';
+		import mtShow from '/common/show.js';
+
+		var mt = {
+			api: mtApi,
+			lib: mtLib,
+			show: mtShow,
+
+			c_editor: null, // Markdown text editor
+
+			async init() {
+				try {
+
+					// Bind
+					globalThis.mt = this;
+
+					// Import Library
+					await mt.lib.import(['markdown-text-editor']);
+
+					this.c_editor = new MarkdownEditor('#markdown-editor');
+				}
+				catch (ex) {
+					console.error(ex);
+				}
+			},
+
+		};
+		document.addEventListener('DOMContentLoaded', mt.init);
+	</script>
+</body>
+</html>

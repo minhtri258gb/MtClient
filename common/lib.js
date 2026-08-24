@@ -155,6 +155,13 @@ var mtLib = {
 	'dompdfjs': { async load() {
 		await mtLib.loadJS('/lib/dompdf.js-2.0.0/dompdf.min.js');
 	}},
+	'EasyMDE': { async load() {
+		let path = '/lib/easymde-2.21.0/';
+		await Promise.all([
+			mtLib.loadCSS(path+'easymde.min.css'),
+			mtLib.loadJS(path+'easymde.min.js'),
+		]);
+	}},
 	'fabricjs': { async load() {
 		await mtLib.loadJS('/lib/fabricjs-6.7.1/index.min.js');
 	}},
@@ -238,6 +245,9 @@ var mtLib = {
 	'marked': { async load() {
 		await mtLib.loadJS('/lib/marked-16.1.2/marked.umd.js');
 	}},
+	'markdown-text-editor': { async load() {
+		await mtLib.loadJS('/lib/markdown-text-editor-1.5.4/markdown-text-editor.umd.js');
+	}},
 	'markdownIt': { async load() {
 		if (window.mermaid == null)
 			throw new Error('Import mermaid trước markdownIt');
@@ -277,6 +287,12 @@ var mtLib = {
 		await Promise.all([
 			mtLib.loadCSS(path+'css/nanogallery2.min.css'),
 			mtLib.loadJS(path+'jquery.nanogallery2.min.js'),
+		]);
+	}},
+	'overtype': { async load() {
+		await Promise.all([
+			mtLib.loadJS('/lib/overtype-2.4.0/overtype.min.js'),
+			mtLib.loadJS('/lib/overtype-2.4.0/overtype-webcomponent.min.js'),
 		]);
 	}},
 	'papaparse': { async load() {
@@ -333,6 +349,9 @@ var mtLib = {
 	}},
 	'solarLunar': { async load() {
 		await mtLib.loadJS('/lib/solarlunar-1.0.0/solarLunar.js');
+	}},
+	'SortableJS': { async load() {
+		await mtLib.loadJS('/lib/sortablejs-1.15.7/Sortable.min.js');
 	}},
 	'svg': { async load() {
 		await mtLib.loadJS('/lib/svg/svg.min.js', 'cjs', 'SVG');

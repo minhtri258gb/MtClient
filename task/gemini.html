@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <!-- 2 thư viện bắt buộc: FontAwesome & SortableJS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #e0e0e0;
+      --primary-color: #4a90e2;
+      --status-green: #2ecc71;
+      --status-yellow: #f1c40f;
+      --status-red: #e74c3c;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      user-select: none;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Form thêm task */
+    .task-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: #fafafa;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .task-form input[type="text"],
+    .task-form input[type="date"] {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .task-form input[name="name"] { flex: 2; min-width: 200px; }
+    .task-form input[name="icon"] { width: 110px; }
+    .task-form input[name="tags"] { width: 130px; }
+    
+    .priority-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn:hover { opacity: 0.9; }
+
+    .backup-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+
+    /* List Container */
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      min-height: 10px;
+    }
+
+    .sub-list {
+      list-style: none;
+      padding-left: 32px;
+      margin: 4px 0 8px 0;
+      min-height: 5px;
+    }
+
+    /* Task Item */
+    .task-item {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 10px;
+      min-height: 38px;
+    }
+
+    /* Checkbox animation */
+    .task-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--primary-color);
+      transition: transform 0.2s ease;
+    }
+
+    .task-checkbox:active {
+      transform: scale(1.2);
+    }
+
+    .task-title-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .task-name {
+      font-size: 14px;
+      transition: color 0.2s, text-decoration 0.2s;
+    }
+
+    .task-item.done .task-name {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    /* Status color tags */
+    .date-badge {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .status-green { background: #e8f8f0; color: var(--status-green); }
+    .status-yellow { background: #fef9e7; color: #d4ac0d; }
+    .status-red { background: #fadbd8; color: var(--status-red); }
+
+    .tag-item {
+      font-size: 11px;
+      background: #eef2f7;
+      color: #555;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #777;
+      width: 20px;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .delete-btn:hover { color: var(--status-red); }
+
+    .drag-handle {
+      cursor: grab;
+      color: #ccc;
+    }
+
+    /* Inline Quick Editor */
+    .inline-editor {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      align-items: center;
+    }
+
+    .inline-editor input {
+      padding: 4px 8px;
+      border: 1px solid var(--primary-color);
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .inline-editor input[name="edit-name"] { flex: 1; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>
+    <span><i class="fa-solid fa-list-check"></i> Task Manager</span>
+    <div class="backup-btns">
+      <button class="btn btn-secondary" onclick="exportJSON()"><i class="fa-solid fa-download"></i> Export</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-upload"></i> Import</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importJSON(event)">
+    </div>
+  </h1>
+
+  <!-- Form tạo Task -->
+  <form class="task-form" id="createForm" onsubmit="handleCreateTask(event)">
+    <input type="text" name="name" placeholder="Tên task..." required>
+    <input type="text" name="icon" placeholder="Icon (vd: fa-solid fa-bug)">
+    <input type="text" name="tags" placeholder="Tags (cách bởi dấu phẩy)">
+    <input type="date" name="expired">
+    <label class="priority-label">
+      <input type="checkbox" name="priority"> Ưu tiên (lên đầu)
+    </label>
+    <button type="submit" class="btn"><i class="fa-solid fa-plus"></i> Thêm</button>
+  </form>
+
+  <!-- Danh sách Task -->
+  <ul class="task-list" id="rootTaskList"></ul>
+</div>
+
+<script>
+  const STORAGE_KEY = 'VANILLA_TASKS_DATA_V1';
+  let tasks = [];
+
+  // Khởi tạo
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAndCleanData();
+    renderTasks();
+    initSortable();
+  });
+
+  // Tải dữ liệu và tự động xóa task hoàn thành từ 2 ngày trước
+  function loadAndCleanData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      try {
+        tasks = JSON.parse(raw);
+      } catch (e) {
+        tasks = [];
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const isOlderThanYesterday = (doneDateStr) => {
+      if (!doneDateStr) return false;
+      const doneDate = new Date(doneDateStr);
+      doneDate.setHours(0, 0, 0, 0);
+      const diffTime = today - doneDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 2;
+    };
+
+    // Lọc loại bỏ hẳn các task/subtask done >= 2 ngày
+    tasks = tasks.filter(task => {
+      if (task.done && isOlderThanYesterday(task.doneAt)) {
+        return false;
+      }
+      if (task.list && task.list.length > 0) {
+        task.list = task.list.filter(sub => !(sub.done && isOlderThanYesterday(sub.doneAt)));
+      }
+      return true;
+    });
+
+    saveData();
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  // Lấy danh sách ngày YYYY-MM-DD
+  function getTodayString() {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  }
+
+  // Thêm Task Root
+  function handleCreateTask(e) {
+    e.preventDefault();
+    const form = e.target;
+    const name = form.name.value.trim();
+    if (!name) return;
+
+    const icon = form.icon.value.trim();
+    const expired = form.expired.value;
+    const tagsStr = form.tags.value.trim();
+    const isPriority = form.priority.checked;
+
+    const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    const newTask = {
+      id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      icon: icon,
+      name: name,
+      expired: expired || '',
+      done: false,
+      doneAt: null,
+      tags: tags,
+      list: [],
+      expanded: true
+    };
+
+    if (isPriority) {
+      tasks.unshift(newTask);
+    } else {
+      tasks.push(newTask);
+    }
+
+    saveData();
+    renderTasks();
+    form.reset();
+  }
+
+  // Render danh sách Task
+  function renderTasks() {
+    const container = document.getElementById('rootTaskList');
+    container.innerHTML = '';
+
+    tasks.forEach(task => {
+      const li = createTaskElement(task, true);
+      container.appendChild(li);
+    });
+
+    initSortable();
+  }
+
+  // Tạo Element cho Task (cả root và child)
+  function createTaskElement(task, isRoot = false, parentId = null) {
+    const li = document.createElement('li');
+    li.className = `task-item ${task.done ? 'done' : ''}`;
+    li.dataset.id = task.id;
+    if (parentId) li.dataset.parentId = parentId;
+
+    const row = document.createElement('div');
+    row.className = 'task-row';
+
+    // Click phải tạo task con (chỉ áp dụng cho Root Task)
+    if (isRoot) {
+      row.oncontextmenu = (e) => {
+        e.preventDefault();
+        createSubTask(task.id);
+      };
+    }
+
+    // Double click bật quick editor inline
+    row.ondblclick = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.closest('button')) return;
+      enableInlineEdit(task, row, isRoot, parentId);
+    };
+
+    // Drag handle
+    const dragHandle = document.createElement('i');
+    dragHandle.className = 'fa-solid fa-grip-vertical drag-handle';
+    row.appendChild(dragHandle);
+
+    // Expand/Collapse Button (chỉ cho root nếu có subtask)
+    if (isRoot) {
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'expand-btn';
+      expandBtn.innerHTML = task.list && task.list.length > 0 
+        ? (task.expanded !== false ? '<i class="fa-solid fa-chevron-down"></i>' : '<i class="fa-solid fa-chevron-right"></i>')
+        : '';
+      expandBtn.onclick = (e) => {
+        e.stopPropagation();
+        task.expanded = !(task.expanded !== false);
+        saveData();
+        renderTasks();
+      };
+      row.appendChild(expandBtn);
+    }
+
+    // Checkbox
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'task-checkbox';
+    checkbox.checked = task.done;
+    checkbox.onchange = () => toggleTaskDone(task.id, parentId, checkbox.checked);
+    row.appendChild(checkbox);
+
+    // Content wrap
+    const contentWrap = document.createElement('div');
+    contentWrap.className = 'task-title-wrap';
+
+    // Icon
+    if (task.icon) {
+      const iconEl = document.createElement('i');
+      iconEl.className = task.icon;
+      contentWrap.appendChild(iconEl);
+    }
+
+    // Name
+    const nameEl = document.createElement('span');
+    nameEl.className = 'task-name';
+    nameEl.textContent = task.name;
+    contentWrap.appendChild(nameEl);
+
+    // Tags
+    if (task.tags && task.tags.length > 0) {
+      task.tags.forEach(t => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'tag-item';
+        tagEl.textContent = t;
+        contentWrap.appendChild(tagEl);
+      });
+    }
+
+    // Date Badge
+    if (task.expired) {
+      const dateEl = document.createElement('span');
+      const statusClass = getDateStatusClass(task.expired);
+      dateEl.className = `date-badge ${statusClass}`;
+      dateEl.textContent = task.expired;
+      contentWrap.appendChild(dateEl);
+    }
+
+    row.appendChild(contentWrap);
+
+    // Delete Button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      deleteTask(task.id, parentId);
+    };
+    row.appendChild(delBtn);
+
+    li.appendChild(row);
+
+    // Render danh sách con (Leaf) nếu có
+    if (isRoot && task.list && task.list.length > 0 && task.expanded !== false) {
+      const subUl = document.createElement('ul');
+      subUl.className = 'sub-list';
+      subUl.dataset.parentId = task.id;
+
+      task.list.forEach(subTask => {
+        const subLi = createTaskElement(subTask, false, task.id);
+        subUl.appendChild(subLi);
+      });
+
+      li.appendChild(subUl);
+    }
+
+    return li;
+  }
+
+  // Tính màu sắc thời hạn: xanh (còn hạn), vàng (hôm nay), đỏ (trễ hạn)
+  function getDateStatusClass(expiredStr) {
+    const todayStr = getTodayString();
+    if (expiredStr < todayStr) return 'status-red';
+    if (expiredStr === todayStr) return 'status-yellow';
+    return 'status-green';
+  }
+
+  // Thêm Task con
+  function createSubTask(parentId) {
+    const parent = tasks.find(t => t.id === parentId);
+    if (!parent) return;
+
+    const subName = prompt(`Tạo task con cho "${parent.name}":`);
+    if (!subName || !subName.trim()) return;
+
+    const subTask = {
+      id: 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      icon: '',
+      name: subName.trim(),
+      expired: '',
+      done: false,
+      doneAt: null,
+      tags: []
+    };
+
+    if (!parent.list) parent.list = [];
+    parent.list.push(subTask);
+    parent.expanded = true;
+
+    // Khi thêm con chưa done, nếu cha đang done thì bỏ check done của cha
+    if (parent.done) {
+      parent.done = false;
+      parent.doneAt = null;
+    }
+
+    saveData();
+    renderTasks();
+  }
+
+  // Chuyển đổi trạng thái Check / Uncheck
+  function toggleTaskDone(taskId, parentId, isChecked) {
+    const todayStr = getTodayString();
+
+    if (!parentId) {
+      // Is Root Task
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.done = isChecked;
+        task.doneAt = isChecked ? todayStr : null;
+
+        // Check/uncheck toàn bộ subtask
+        if (task.list) {
+          task.list.forEach(sub => {
+            sub.done = isChecked;
+            sub.doneAt = isChecked ? todayStr : null;
+          });
+        }
+      }
+    } else {
+      // Is Leaf Subtask
+      const parent = tasks.find(t => t.id === parentId);
+      if (parent && parent.list) {
+        const sub = parent.list.find(s => s.id === taskId);
+        if (sub) {
+          sub.done = isChecked;
+          sub.doneAt = isChecked ? todayStr : null;
+
+          // Tự động check done task cha nếu TOÀN BỘ task con đã completed
+          const allSubsDone = parent.list.every(s => s.done);
+          if (allSubsDone) {
+            parent.done = true;
+            parent.doneAt = todayStr;
+          } else {
+            parent.done = false;
+            parent.doneAt = null;
+          }
+        }
+      }
+    }
+
+    saveData();
+    renderTasks();
+  }
+
+  // Inline Quick Editor (Sửa tên, ngày, tags)
+  function enableInlineEdit(task, rowEl, isRoot, parentId) {
+    const currentName = task.name;
+    const currentExpired = task.expired || '';
+    const currentTags = (task.tags || []).join(', ');
+
+    rowEl.innerHTML = '';
+    const editor = document.createElement('div');
+    editor.className = 'inline-editor';
+
+    editor.innerHTML = `
+      <input type="text" name="edit-name" value="${currentName}" placeholder="Tên task" autofocus>
+      <input type="text" name="edit-tags" value="${currentTags}" placeholder="Tags (dấu phẩy)">
+      <input type="date" name="edit-expired" value="${currentExpired}">
+      <button class="btn" style="padding:4px 8px; font-size:12px;">Lưu</button>
+    `;
+
+    const saveEdit = () => {
+      const newName = editor.querySelector('[name="edit-name"]').value.trim();
+      const newTagsStr = editor.querySelector('[name="edit-tags"]').value.trim();
+      const newExpired = editor.querySelector('[name="edit-expired"]').value;
+
+      if (!newName) return;
+
+      task.name = newName;
+      task.expired = newExpired;
+      task.tags = newTagsStr ? newTagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+      saveData();
+      renderTasks();
+    };
+
+    editor.querySelector('button').onclick = (e) => {
+      e.stopPropagation();
+      saveEdit();
+    };
+
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveEdit();
+    });
+
+    rowEl.appendChild(editor);
+  }
+
+  // Xóa Task thủ công
+  function deleteTask(taskId, parentId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa task này không?')) return;
+
+    if (!parentId) {
+      tasks = tasks.filter(t => t.id !== taskId);
+    } else {
+      const parent = tasks.find(t => t.id === parentId);
+      if (parent && parent.list) {
+        parent.list = parent.list.filter(s => s.id !== taskId);
+        
+        // Cập nhật lại trạng thái cha nếu con còn lại đều đã done
+        if (parent.list.length > 0 && parent.list.every(s => s.done)) {
+          parent.done = true;
+          parent.doneAt = getTodayString();
+        }
+      }
+    }
+
+    saveData();
+    renderTasks();
+  }
+
+  // Khởi tạo kéo thả SortableJS
+  function initSortable() {
+    // Sắp xếp các Root Task
+    const rootEl = document.getElementById('rootTaskList');
+    new Sortable(rootEl, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: (evt) => {
+        const movedItem = tasks.splice(evt.oldIndex, 1)[0];
+        tasks.splice(evt.newIndex, 0, movedItem);
+        saveData();
+      }
+    });
+
+    // Sắp xếp các Leaf Task cùng cấp trong từng Sub-list
+    document.querySelectorAll('.sub-list').forEach(subEl => {
+      const parentId = subEl.dataset.parentId;
+      new Sortable(subEl, {
+        handle: '.drag-handle',
+        animation: 150,
+        onEnd: (evt) => {
+          const parent = tasks.find(t => t.id === parentId);
+          if (parent && parent.list) {
+            const movedItem = parent.list.splice(evt.oldIndex, 1)[0];
+            parent.list.splice(evt.newIndex, 0, movedItem);
+            saveData();
+          }
+        }
+      });
+    });
+  }
+
+  // Export JSON Backup
+  function exportJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `tasks_backup_${getTodayString()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  // Import JSON Backup
+  function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData)) {
+          tasks = importedData;
+          saveData();
+          loadAndCleanData();
+          renderTasks();
+          alert('Import dữ liệu thành công!');
+        } else {
+          alert('File JSON không đúng định dạng!');
+        }
+      } catch (err) {
+        alert('Có lỗi xảy ra khi đọc file JSON!');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+</script>
+
+</body>
+</html>

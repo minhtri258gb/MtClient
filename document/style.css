@@ -175,6 +175,8 @@
 	img {
 		max-width: 100%;
 		border-radius: 6px;
+		border: 1px solid #ccc;
+		height: 320px;
 	}
 
 	/* ===== Responsive ===== */

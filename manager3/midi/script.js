@@ -522,7 +522,7 @@ let mtMidi = {
 						},
 						dataType: 'json',
 						data: (node) => {
-							let folder = node.original?.path || mt.m_clientPath + this.h_abcPath; // Lấy path
+							let folder = node.original?.path || mt.m_pathPublic + this.h_abcPath; // Lấy path
 							return { folder };
 						},
 						success: (data) => this.processNode(data),

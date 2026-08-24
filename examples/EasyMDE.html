@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<title>EasyMDE</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+		body {
+			height: 100vh;
+			margin: 0;
+		}
+		#editor {
+			height: 100%;
+		}
+	</style>
+</head>
+<body>
+
+	<textarea id="editor"></textarea>
+
+	<script type="module">
+		import mtApi from '/common/api.js';
+		import mtLib from '/common/lib.js';
+		import mtShow from '/common/show.js';
+
+		var mt = {
+			api: mtApi,
+			lib: mtLib,
+			show: mtShow,
+
+			c_editor: null, // EasyMDE
+
+			async init() {
+				try {
+
+					// Bind
+					globalThis.mt = this;
+
+					// Import Library
+					await mt.lib.import(['EasyMDE']);
+
+					let elmTextarea = document.getElementById('editor');
+					this.c_editor = new EasyMDE({element: elmTextarea});
+
+				}
+				catch (ex) {
+					console.error(ex);
+				}
+			},
+
+		};
+		document.addEventListener('DOMContentLoaded', mt.init);
+	</script>
+</body>
+</html>

@@ -94,18 +94,18 @@ let mt = {
 				nodes: [
 					{ id: 'manager', text: 'Manager', group: true, expanded: true, nodes: [
 						{ id: 'explorer', text: 'Explorer', icon: 'fa-solid fa-folder-tree' },
-						{ id: 'document', text: 'Document', icon: 'fa-solid fa-book' },
 						{ id: 'contact', text: 'Contact', icon: 'fa-solid fa-address-book' },
 						{ id: 'calendar', text: 'Calendar', icon: 'fa-solid fa-calendar-days' },
 						{ id: 'map', text: 'Map', icon: 'fa-solid fa-map-location-dot' },
 						{ id: 'account', text: 'Account', icon: 'fa-solid fa-key' },
-						{ id: 'sticker', text: 'Sticker', icon: 'fa-regular fa-face-grin-squint-tears' },
 					]},
 					{ id: 'entertainment', text: 'Entertainment', group: true, expanded: true, nodes: [
 						{ id: 'anime', text: 'Anime', icon: 'fa-brands fa-gratipay' },
 						{ id: 'game', text: 'Game', icon: 'fa-solid fa-gamepad' },
 						{ id: 'movie', text: 'Movie', icon: 'fa-solid fa-film' },
 						{ id: 'manga', text: 'Manga', icon: 'fa-solid fa-book-open' },
+						{ id: 'sticker', text: 'Sticker', icon: 'fa-regular fa-face-grin-squint-tears' },
+						{ id: 'program', text: 'Program', icon: 'fa-solid fa-square-binary' },
 					]},
 					{ id: 'editor', text: 'Editor', group: true, expanded: true, nodes: [
 						{ id: 'markdown', text: 'Markdown', icon: 'fa-brands fa-markdown' },
@@ -840,7 +840,7 @@ let mt = {
 				e.preventDefault();
 				let instance = $.jstree.reference(this);
 				let node = instance.get_node(this);
-				mt.doubleClick(node);
+				mt.explorer.doubleClick(node);
 			});
 
 			// Search
@@ -885,7 +885,8 @@ let mt = {
 					icon: '/res/icons/play.png',
 					action: (obj) => {
 						let path = node.original.path;
-						path = path.replaceAll(mt.m_pathPublic, '');
+						path = path.replaceAll('\\', '/');
+						path = path.replace(mt.m_pathPublic, '');
 						window.open(path, '_blank');
 					}
 				};
@@ -919,6 +920,7 @@ let mt = {
 		doubleClick(node) { // Nhấn đúp
 			if (node.type == 'html') {
 				let path = node.original.path;
+				path = path.replaceAll('\\', '/');
 				path = path.replaceAll(mt.m_pathPublic, '');
 				window.open(path, '_blank');
 			}
@@ -935,7 +937,6 @@ let mt = {
 			return 'file';
 		},
 	},
-	document: 'ext',
 	contact: {
 		h_pathDB: '/res/DB/contact.json',
 		d_list: [], // Danh sách liên lạc

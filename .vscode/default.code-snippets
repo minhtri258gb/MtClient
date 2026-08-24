@@ -127,4 +127,12 @@
 			"await mt.api.fileWriteText('D:/file.txt', 'Nội dung', true);",
 		]
 	},
+	"lib": {
+		"scope": "javascript",
+		"prefix": "lib",
+		"body": [
+			"// Import Library",
+			"await mt.lib.import(['toastify', 'sweetalert2']);",
+		]
+	},
 }

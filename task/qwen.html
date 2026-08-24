@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button.secondary {
+            background: #95a5a6;
+        }
+
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fafafa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
+            cursor: grab;
+        }
+
+        .task-row:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+
+        .task-row.dragging {
+            opacity: 0.5;
+            background: #e8f4f8;
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3498db;
+            transition: transform 0.2s;
+        }
+
+        .task-checkbox:checked {
+            transform: scale(1.1);
+        }
+
+        .task-icon {
+            color: #7f8c8d;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .task-name {
+            flex: 1;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .task-name.done {
+            text-decoration: line-through;
+            color: #95a5a6;
+        }
+
+        .task-expired {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .expired-green {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .expired-yellow {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .expired-red {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .expired-none {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 6px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 3px;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #7f8c8d;
+            font-size: 12px;
+            min-width: 20px;
+        }
+
+        .expand-btn:hover {
+            color: #3498db;
+        }
+
+        .child-list {
+            margin-left: 30px;
+            margin-top: 8px;
+        }
+
+        .inline-editor {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .inline-editor input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            z-index: 1000;
+            min-width: 180px;
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .context-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .modal h3 {
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-tasks"></i> Task Manager</h1>
+        
+        <div class="toolbar">
+            <button onclick="app.addRootTask('top')">
+                <i class="fas fa-plus"></i> Thêm task (trên)
+            </button>
+            <button onclick="app.addRootTask('bottom')">
+                <i class="fas fa-plus"></i> Thêm task (dưới)
+            </button>
+            <button class="secondary" onclick="app.exportData()">
+                <i class="fas fa-download"></i> Export JSON
+            </button>
+            <button class="secondary" onclick="document.getElementById('importFile').click()">
+                <i class="fas fa-upload"></i> Import JSON
+            </button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="app.importData(event)">
+        </div>
+
+        <ul id="taskList" class="task-list"></ul>
+        
+        <div id="emptyState" class="empty-state hidden">
+            <i class="fas fa-clipboard-list"></i>
+            <p>Chưa có task nào. Hãy thêm task mới!</p>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu hidden">
+        <div class="context-menu-item" onclick="app.addChildTask()">
+            <i class="fas fa-plus"></i> Thêm task con
+        </div>
+        <div class="context-menu-item" onclick="app.editTaskFromContext()">
+            <i class="fas fa-edit"></i> Sửa task
+        </div>
+        <div class="context-menu-item" onclick="app.deleteTaskFromContext()">
+            <i class="fas fa-trash"></i> Xóa task
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3><i class="fas fa-exclamation-triangle"></i> Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa task này? Tất cả task con cũng sẽ bị xóa.</p>
+            <div class="modal-buttons">
+                <button class="secondary" onclick="app.closeDeleteModal()">Hủy</button>
+                <button class="danger" onclick="app.confirmDelete()">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            tasks: [],
+            contextMenuTaskId: null,
+            deleteTaskId: null,
+            sortableInstances: {},
+
+            init() {
+                this.loadFromLocalStorage();
+                this.render();
+                
+                // Close context menu on click outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.context-menu')) {
+                        this.hideContextMenu();
+                    }
+                });
+
+                // Keyboard shortcut: Escape to close modals
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideContextMenu();
+                        this.closeDeleteModal();
+                    }
+                });
+            },
+
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+            },
+
+            loadFromLocalStorage() {
+                try {
+                    const data = localStorage.getItem('tasks');
+                    if (data) {
+                        this.tasks = JSON.parse(data);
+                        this.cleanupOldTasks();
+                    }
+                } catch (e) {
+                    console.error('Error loading from localStorage:', e);
+                    this.tasks = [];
+                }
+            },
+
+            saveToLocalStorage() {
+                try {
+                    localStorage.setItem('tasks', JSON.stringify(this.tasks));
+                } catch (e) {
+                    console.error('Error saving to localStorage:', e);
+                    alert('Không thể lưu dữ liệu. localStorage có thể đã đầy.');
+                }
+            },
+
+            cleanupOldTasks() {
+                const twoDaysAgo = dayjs().subtract(2, 'day').startOf('day');
+                
+                const cleanTask = (task) => {
+                    // Remove completed children that are >= 2 days old
+                    if (task.list && task.list.length > 0) {
+                        task.list = task.list.filter(child => {
+                            if (child.done && child.completedAt) {
+                                return dayjs(child.completedAt).isAfter(twoDaysAgo);
+                            }
+                            return true;
+                        });
+                        
+                        // Recursively clean
+                        task.list.forEach(cleanTask);
+                    }
+                    
+                    return task;
+                };
+
+                // Filter root tasks
+                this.tasks = this.tasks.filter(task => {
+                    if (task.done && task.completedAt) {
+                        return dayjs(task.completedAt).isAfter(twoDaysAgo);
+                    }
+                    return true;
+                }).map(cleanTask);
+
+                this.saveToLocalStorage();
+            },
+
+            addRootTask(position = 'top') {
+                const newTask = {
+                    id: this.generateId(),
+                    icon: '',
+                    name: 'Task mới',
+                    expired: null,
+                    done: false,
+                    completedAt: null,
+                    tags: [],
+                    collapsed: false,
+                    list: []
+                };
+
+                if (position === 'top') {
+                    this.tasks.unshift(newTask);
+                } else {
+                    this.tasks.push(newTask);
+                }
+
+                this.saveToLocalStorage();
+                this.render();
+                
+                // Auto focus on the new task name for editing
+                setTimeout(() => {
+                    const taskElement = document.querySelector(`[data-task-id="${newTask.id}"] .task-name`);
+                    if (taskElement) {
+                        this.startInlineEdit(taskElement, newTask.id, null);
+                    }
+                }, 100);
+            },
+
+            addChildTask(parentId) {
+                const parent = this.findTask(parentId || this.contextMenuTaskId);
+                if (!parent) return;
+
+                const newChild = {
+                    id: this.generateId(),
+                    icon: '',
+                    name: 'Task con mới',
+                    expired: null,
+                    done: false,
+                    completedAt: null,
+                    tags: [],
+                    collapsed: false,
+                    list: []
+                };
+
+                parent.list.push(newChild);
+                parent.collapsed = false; // Auto expand when adding child
+                
+                this.saveToLocalStorage();
+                this.render();
+                this.hideContextMenu();
+
+                setTimeout(() => {
+                    const childElement = document.querySelector(`[data-task-id="${newChild.id}"] .task-name`);
+                    if (childElement) {
+                        this.startInlineEdit(childElement, newChild.id, parentId);
+                    }
+                }, 100);
+            },
+
+            findTask(id, tasks = this.tasks) {
+                for (const task of tasks) {
+                    if (task.id === id) return task;
+                    if (task.list && task.list.length > 0) {
+                        const found = this.findTask(id, task.list);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            },
+
+            findParentTask(childId, tasks = this.tasks, parent = null) {
+                for (const task of tasks) {
+                    if (task.list && task.list.some(child => child.id === childId)) {
+                        return task;
+                    }
+                    if (task.list && task.list.length > 0) {
+                        const found = this.findParentTask(childId, task.list, task);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            },
+
+            toggleDone(taskId, isChild = false, parentId = null) {
+                const task = this.findTask(taskId);
+                if (!task) return;
+
+                task.done = !task.done;
+                task.completedAt = task.done ? dayjs().toISOString() : null;
+
+                // If marking as done, check if all siblings are done
+                if (task.done && !isChild) {
+                    // Check if this is a parent task with children
+                    if (task.list && task.list.length > 0) {
+                        const allChildrenDone = task.list.every(child => child.done);
+                        if (!allChildrenDone) {
+                            // Don't auto-check parent if not all children are done
+                            // But we just marked it done, so that's fine
+                        }
+                    }
+                }
+
+                // If this is a child task, check if all siblings are done
+                if (isChild && parentId) {
+                    const parent = this.findTask(parentId);
+                    if (parent && parent.list) {
+                        const allDone = parent.list.every(child => child.done);
+                        if (allDone && !parent.done) {
+                            parent.done = true;
+                            parent.completedAt = dayjs().toISOString();
+                        } else if (!allDone && parent.done) {
+                            parent.done = false;
+                            parent.completedAt = null;
+                        }
+                    }
+                }
+
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            toggleCollapse(taskId) {
+                const task = this.findTask(taskId);
+                if (task) {
+                    task.collapsed = !task.collapsed;
+                    this.saveToLocalStorage();
+                    this.render();
+                }
+            },
+
+            startInlineEdit(element, taskId, parentId) {
+                const task = this.findTask(taskId);
+                if (!task) return;
+
+                const row = element.closest('.task-row');
+                const originalContent = row.innerHTML;
+
+                // Create inline editor
+                const editorDiv = document.createElement('div');
+                editorDiv.className = 'inline-editor';
+                
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = task.name;
+                nameInput.placeholder = 'Tên task';
+                
+                const iconInput = document.createElement('input');
+                iconInput.type = 'text';
+                iconInput.value = task.icon || '';
+                iconInput.placeholder = 'Icon (fa-solid fa-check)';
+                iconInput.style.maxWidth = '150px';
+                
+                const expiredInput = document.createElement('input');
+                expiredInput.type = 'date';
+                expiredInput.value = task.expired || '';
+                
+                const tagsInput = document.createElement('input');
+                tagsInput.type = 'text';
+                tagsInput.value = task.tags.join(', ');
+                tagsInput.placeholder = 'Tags (comma separated)';
+                tagsInput.style.maxWidth = '150px';
+
+                editorDiv.appendChild(nameInput);
+                editorDiv.appendChild(iconInput);
+                editorDiv.appendChild(expiredInput);
+                editorDiv.appendChild(tagsInput);
+
+                row.innerHTML = '';
+                row.appendChild(editorDiv);
+
+                nameInput.focus();
+                nameInput.select();
+
+                const saveEdit = () => {
+                    task.name = nameInput.value.trim() || 'Task';
+                    task.icon = iconInput.value.trim();
+                    task.expired = expiredInput.value || null;
+                    task.tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+                    
+                    this.saveToLocalStorage();
+                    this.render();
+                };
+
+                const cancelEdit = () => {
+                    row.innerHTML = originalContent;
+                };
+
+                nameInput.addEventListener('blur', saveEdit);
+                nameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        saveEdit();
+                    } else if (e.key === 'Escape') {
+                        cancelEdit();
+                    }
+                });
+
+                iconInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') nameInput.focus();
+                });
+                
+                expiredInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') tagsInput.focus();
+                });
+                
+                tagsInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') saveEdit();
+                    if (e.key === 'Escape') cancelEdit();
+                });
+            },
+
+            showContextMenu(e, taskId) {
+                e.preventDefault();
+                this.contextMenuTaskId = taskId;
+                
+                const menu = document.getElementById('contextMenu');
+                menu.style.left = e.pageX + 'px';
+                menu.style.top = e.pageY + 'px';
+                menu.classList.remove('hidden');
+            },
+
+            hideContextMenu() {
+                document.getElementById('contextMenu').classList.add('hidden');
+                this.contextMenuTaskId = null;
+            },
+
+            editTaskFromContext() {
+                if (this.contextMenuTaskId) {
+                    const element = document.querySelector(`[data-task-id="${this.contextMenuTaskId}"] .task-name`);
+                    if (element) {
+                        const parent = this.findParentTask(this.contextMenuTaskId);
+                        this.startInlineEdit(element, this.contextMenuTaskId, parent ? parent.id : null);
+                    }
+                }
+                this.hideContextMenu();
+            },
+
+            deleteTaskFromContext() {
+                this.deleteTaskId = this.contextMenuTaskId;
+                document.getElementById('deleteModal').classList.remove('hidden');
+                this.hideContextMenu();
+            },
+
+            closeDeleteModal() {
+                document.getElementById('deleteModal').classList.add('hidden');
+                this.deleteTaskId = null;
+            },
+
+            confirmDelete() {
+                if (this.deleteTaskId) {
+                    this.deleteTask(this.deleteTaskId);
+                    this.closeDeleteModal();
+                }
+            },
+
+            deleteTask(taskId) {
+                const deleteFromList = (tasks) => {
+                    const index = tasks.findIndex(t => t.id === taskId);
+                    if (index !== -1) {
+                        tasks.splice(index, 1);
+                        return true;
+                    }
+                    
+                    for (const task of tasks) {
+                        if (task.list && task.list.length > 0) {
+                            if (deleteFromList(task.list)) return true;
+                        }
+                    }
+                    return false;
+                };
+
+                deleteFromList(this.tasks);
+                this.saveToLocalStorage();
+                this.render();
+            },
+
+            getExpiredClass(task) {
+                if (task.done) return 'expired-none';
+                if (!task.expired) return 'expired-none';
+                
+                const today = dayjs().startOf('day');
+                const expired = dayjs(task.expired);
+                
+                if (expired.isBefore(today)) return 'expired-red';
+                if (expired.isSame(today)) return 'expired-yellow';
+                return 'expired-green';
+            },
+
+            formatExpiredDate(task) {
+                if (!task.expired) return 'Không hạn';
+                if (task.done) return 'Hoàn thành';
+                
+                const today = dayjs().startOf('day');
+                const expired = dayjs(task.expired);
+                const diff = expired.diff(today, 'day');
+                
+                if (diff < 0) return `Trễ ${Math.abs(diff)} ngày`;
+                if (diff === 0) return 'Hôm nay';
+                if (diff === 1) return 'Ngày mai';
+                return dayjs(task.expired).format('DD/MM/YYYY');
+            },
+
+            render() {
+                const taskList = document.getElementById('taskList');
+                const emptyState = document.getElementById('emptyState');
+                
+                // Filter tasks: show incomplete + completed yesterday only
+                const today = dayjs().startOf('day');
+                const yesterday = today.subtract(1, 'day');
+                const twoDaysAgo = today.subtract(2, 'day');
+                
+                const shouldShowTask = (task) => {
+                    if (!task.done) return true;
+                    if (!task.completedAt) return true;
+                    
+                    const completedDate = dayjs(task.completedAt).startOf('day');
+                    return completedDate.isAfter(twoDaysAgo);
+                };
+
+                const visibleTasks = this.tasks.filter(shouldShowTask);
+                
+                if (visibleTasks.length === 0) {
+                    taskList.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                // Clear existing sortables
+                Object.values(this.sortableInstances).forEach(instance => {
+                    if (instance) instance.destroy();
+                });
+                this.sortableInstances = {};
+
+                taskList.innerHTML = '';
+                this.renderTaskList(visibleTasks, taskList, null);
+            },
+
+            renderTaskList(tasks, container, parentId) {
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'task-item';
+                    li.dataset.taskId = task.id;
+                    
+                    const hasChildren = task.list && task.list.length > 0;
+                    const expiredClass = this.getExpiredClass(task);
+                    
+                    // Build task row
+                    const row = document.createElement('div');
+                    row.className = 'task-row';
+                    
+                    // Expand/collapse button
+                    if (hasChildren) {
+                        const expandBtn = document.createElement('button');
+                        expandBtn.className = 'expand-btn';
+                        expandBtn.innerHTML = task.collapsed ? 
+                            '<i class="fas fa-chevron-right"></i>' : 
+                            '<i class="fas fa-chevron-down"></i>';
+                        expandBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            this.toggleCollapse(task.id);
+                        };
+                        row.appendChild(expandBtn);
+                    } else {
+                        const spacer = document.createElement('span');
+                        spacer.style.minWidth = '20px';
+                        row.appendChild(spacer);
+                    }
+                    
+                    // Checkbox
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'task-checkbox';
+                    checkbox.checked = task.done;
+                    checkbox.onchange = () => {
+                        const parent = parentId ? this.findTask(parentId) : null;
+                        this.toggleDone(task.id, !!parent, parent ? parent.id : null);
+                    };
+                    row.appendChild(checkbox);
+                    
+                    // Icon
+                    if (task.icon) {
+                        const iconSpan = document.createElement('span');
+                        iconSpan.className = 'task-icon';
+                        iconSpan.innerHTML = `<i class="${task.icon}"></i>`;
+                        row.appendChild(iconSpan);
+                    }
+                    
+                    // Name
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'task-name' + (task.done ? ' done' : '');
+                    nameSpan.textContent = task.name;
+                    nameSpan.ondblclick = () => {
+                        this.startInlineEdit(nameSpan, task.id, parentId);
+                    };
+                    row.appendChild(nameSpan);
+                    
+                    // Expired date
+                    const expiredSpan = document.createElement('span');
+                    expiredSpan.className = `task-expired ${expiredClass}`;
+                    expiredSpan.textContent = this.formatExpiredDate(task);
+                    row.appendChild(expiredSpan);
+                    
+                    // Tags
+                    if (task.tags && task.tags.length > 0) {
+                        const tagsDiv = document.createElement('div');
+                        tagsDiv.className = 'task-tags';
+                        task.tags.forEach(tag => {
+                            const tagSpan = document.createElement('span');
+                            tagSpan.className = 'tag';
+                            tagSpan.textContent = tag;
+                            tagsDiv.appendChild(tagSpan);
+                        });
+                        row.appendChild(tagsDiv);
+                    }
+                    
+                    // Context menu
+                    row.oncontextmenu = (e) => {
+                        this.showContextMenu(e, task.id);
+                    };
+                    
+                    li.appendChild(row);
+                    
+                    // Render children if not collapsed
+                    if (hasChildren && !task.collapsed) {
+                        const childUl = document.createElement('ul');
+                        childUl.className = 'task-list child-list';
+                        childUl.dataset.parentId = task.id;
+                        
+                        // Filter children
+                        const visibleChildren = task.list.filter(child => {
+                            if (!child.done) return true;
+                            if (!child.completedAt) return true;
+                            const completedDate = dayjs(child.completedAt).startOf('day');
+                            const twoDaysAgo = dayjs().startOf('day').subtract(2, 'day');
+                            return completedDate.isAfter(twoDaysAgo);
+                        });
+                        
+                        this.renderTaskList(visibleChildren, childUl, task.id);
+                        li.appendChild(childUl);
+                    }
+                    
+                    container.appendChild(li);
+                });
+
+                // Initialize SortableJS for this level
+                const sortableId = parentId ? `sortable-${parentId}` : 'sortable-root';
+                this.sortableInstances[sortableId] = Sortable.create(container, {
+                    group: parentId ? `group-${parentId}` : 'root-group',
+                    animation: 150,
+                    handle: '.task-row',
+                    ghostClass: 'dragging',
+                    onEnd: (evt) => {
+                        this.handleDragEnd(evt, parentId);
+                    }
+                });
+            },
+
+            handleDragEnd(evt, parentId) {
+                const { oldIndex, newIndex, from, to } = evt;
+                
+                if (oldIndex === newIndex) return;
+                
+                if (parentId) {
+                    // Reorder children
+                    const parent = this.findTask(parentId);
+                    if (parent && parent.list) {
+                        const [movedItem] = parent.list.splice(oldIndex, 1);
+                        parent.list.splice(newIndex, 0, movedItem);
+                    }
+                } else {
+                    // Reorder root tasks
+                    const [movedItem] = this.tasks.splice(oldIndex, 1);
+                    this.tasks.splice(newIndex, 0, movedItem);
+                }
+                
+                this.saveToLocalStorage();
+            },
+
+            exportData() {
+                const dataStr = JSON.stringify(this.tasks, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tasks-backup-${dayjs().format('YYYY-MM-DD')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+
+            importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (Array.isArray(data)) {
+                            if (confirm('Import sẽ ghi đè toàn bộ task hiện tại. Bạn có chắc chắn?')) {
+                                this.tasks = data;
+                                this.saveToLocalStorage();
+                                this.render();
+                                alert('Import thành công!');
+                            }
+                        } else {
+                            alert('File JSON không hợp lệ!');
+                        }
+                    } catch (err) {
+                        alert('Lỗi khi đọc file: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset file input
+                event.target.value = '';
+            }
+        };
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
