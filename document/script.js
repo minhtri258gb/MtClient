@@ -494,6 +494,7 @@ let mt = {
 			elmMdDoc.append(...mdDom.body.childNodes);
 			this.processImage(elmMdDoc);
 			this.processTreeList(elmMdDoc);
+			this.processCodeBlock(elmMdDoc);
 			elmMdcontain.appendChild(elmMdDoc);
 
 			// Render Mermaid
@@ -597,6 +598,7 @@ let mt = {
 			elmMdDoc.querySelectorAll('img').forEach(img => {
 				let fileImageName = img.src.replace(window.location.origin + '/', '');
 				img.src = mt.m_urlStaticImage + fileImageName;
+				mt.lightbox.bind(img);
 			});
 		},
 		processTreeList(elmMdDoc) { // Fold tree list
@@ -676,6 +678,68 @@ let mt = {
 					// 	toggleBtn.textContent = '▶ ';
 					// }
 				}
+			});
+		},
+		processCodeBlock(elmMdDoc) { // Copy clipboard
+			elmMdDoc.querySelectorAll('blockquote').forEach((blockquote, index) => {
+
+				// Kiểm tra nếu blockquote đã có nút copy thì bỏ qua
+				if (blockquote.querySelector('.copy-btn'))
+					return;
+
+				// Tạo container cho blockquote và nút copy
+				const wrapper = document.createElement('div');
+				wrapper.className = 'blockquote-wrapper';
+				wrapper.style.position = 'relative';
+				wrapper.style.margin = '1em 0';
+
+				// Tạo nút copy
+				const copyBtn = document.createElement('button');
+				copyBtn.className = 'copy-btn';
+				copyBtn.innerHTML = '📋';
+				copyBtn.style.position = 'absolute';
+				copyBtn.style.top = '6px';
+				copyBtn.style.right = '6px';
+				copyBtn.style.padding = '0px 2px';
+				copyBtn.style.backgroundColor = '#4a5568';
+				copyBtn.style.borderStyle = 'none';
+				copyBtn.style.borderRadius = '4px';
+				copyBtn.style.cursor = 'pointer';
+				copyBtn.style.fontSize = '18px';
+				copyBtn.style.zIndex = '10';
+				copyBtn.style.opacity = '0.7';
+				copyBtn.style.transition = 'opacity 0.2s';
+
+				// Thêm hiệu ứng hover
+				copyBtn.addEventListener('mouseenter', () => { copyBtn.style.opacity = '1'; });
+				copyBtn.addEventListener('mouseleave', () => { copyBtn.style.opacity = '0.7'; });
+
+				// Xử lý sự kiện copy
+				copyBtn.addEventListener('click', async function(e) {
+					e.stopPropagation();
+
+					try {
+						// Lấy nội dung text từ blockquote
+						const textContent = blockquote.textContent;
+						await navigator.clipboard.writeText(textContent);
+						this.innerHTML = '✅';
+					} catch (err) {
+						console.error('Copy failed:', err);
+						this.innerHTML = '❌';
+					}
+
+					// Reset lại nút sau 2 giây
+					setTimeout(() => { this.innerHTML = '📋'; }, 2000);
+				});
+
+				// Thay thế blockquote bằng wrapper và di chuyển blockquote vào wrapper
+				blockquote.parentNode.insertBefore(wrapper, blockquote);
+				wrapper.appendChild(blockquote);
+				wrapper.appendChild(copyBtn);
+
+				// Điều chỉnh style cho blockquote
+				blockquote.style.margin = '0';
+				blockquote.style.paddingRight = '80px'; // Tạo khoảng trống cho nút
 			});
 		},
 	},
@@ -938,7 +1002,85 @@ let mt = {
 				return this.c_editor.value();
 		},
 	},
-	popup: {
+	lightbox: {
+		e_overlay: null,
+		e_imgElement: null,
+		e_closeBtn: null,
+
+		init() {
+
+			// Tạo overlay
+			this.e_overlay = document.createElement('div');
+			this.e_overlay.style.cssText = `
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: #535353e6;
+				z-index: 9999;
+				justify-content: center;
+				align-items: center;
+				cursor: pointer;
+			`;
+
+			// Tạo ảnh trong lightbox
+			this.e_imgElement = document.createElement('img');
+			this.e_imgElement.style.cssText = `
+				max-width: 90%;
+				max-height: 90%;
+				object-fit: contain;
+				cursor: default;
+			`;
+			this.e_imgElement.addEventListener('click', (e) => e.stopPropagation());
+
+			// Tạo nút đóng
+			this.e_closeBtn = document.createElement('button');
+			this.e_closeBtn.innerHTML = '&times;';
+			this.e_closeBtn.style.cssText = `
+				position: absolute;
+				top: 20px;
+				right: 30px;
+				font-size: 40px;
+				color: white;
+				background: none;
+				border: none;
+				cursor: pointer;
+				z-index: 10000;
+			`;
+
+			this.e_overlay.appendChild(this.e_imgElement);
+			this.e_overlay.appendChild(this.e_closeBtn);
+			document.body.appendChild(this.e_overlay);
+
+			// Sự kiện đóng lightbox
+			this.e_overlay.addEventListener('click', () => this.close());
+			this.e_closeBtn.addEventListener('click', () => this.close());
+
+			// Đóng bằng phím ESC
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape')
+					this.close();
+			});
+		},
+		open(src) {
+			this.e_imgElement.src = src;
+			this.e_overlay.style.display = 'flex';
+			document.body.style.overflow = 'hidden';
+		},
+		close() {
+			this.e_overlay.style.display = 'none';
+			this.e_imgElement.src = '';
+			document.body.style.overflow = '';
+		},
+		bind(elmImg) {
+			elmImg.style.cursor = 'pointer';
+			elmImg.addEventListener('click', () => {
+				const src = elmImg.dataset.full || elmImg.src;
+				this.open(src);
+			});
+		},
 		// #TODO
 	},
 	event: {
@@ -1002,6 +1144,7 @@ let mt = {
 		// Init Module
 		this.tree.init();
 		this.content.init();
+		this.lightbox.init();
 
 		// Event register
 		this.event.register();
