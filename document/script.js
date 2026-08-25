@@ -1006,8 +1006,15 @@ let mt = {
 		e_overlay: null,
 		e_imgElement: null,
 		e_closeBtn: null,
+		c_panzoom: null, // Lib panzoom
+		m_init: false,
 
-		init() {
+		async init() {
+
+			this.m_init = true;
+
+			// Import library
+			await mt.lib.import(['panzoom']);
 
 			// Tạo overlay
 			this.e_overlay = document.createElement('div');
@@ -1068,20 +1075,29 @@ let mt = {
 			this.e_imgElement.src = src;
 			this.e_overlay.style.display = 'flex';
 			document.body.style.overflow = 'hidden';
+
+			// Init panzom
+			this.c_panzoom = panzoom(this.e_imgElement);
 		},
 		close() {
 			this.e_overlay.style.display = 'none';
 			this.e_imgElement.src = '';
 			document.body.style.overflow = '';
+
+			// Destroy panzom
+			this.c_panzoom.dispose();
 		},
 		bind(elmImg) {
+
+			if (!this.m_init)
+				this.init(); // no await
+
 			elmImg.style.cursor = 'pointer';
 			elmImg.addEventListener('click', () => {
 				const src = elmImg.dataset.full || elmImg.src;
 				this.open(src);
 			});
 		},
-		// #TODO
 	},
 	event: {
 
@@ -1144,7 +1160,6 @@ let mt = {
 		// Init Module
 		this.tree.init();
 		this.content.init();
-		this.lightbox.init();
 
 		// Event register
 		this.event.register();

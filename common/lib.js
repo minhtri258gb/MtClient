@@ -295,6 +295,9 @@ var mtLib = {
 			mtLib.loadJS('/lib/overtype-2.4.0/overtype-webcomponent.min.js'),
 		]);
 	}},
+	'panzoom': { async load() {
+		await mtLib.loadJS('/lib/panzoom-9.4.4/panzoom.min.js');
+	}},
 	'papaparse': { async load() {
 		await mtLib.loadJS('/lib/papaparse-5.5.3/papaparse.min.js');
 	}},
