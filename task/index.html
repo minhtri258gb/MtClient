@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Task</title>
+
+	<link href="/lib/fontawesome-6.7.2/css/all.min.css" rel="stylesheet" integrity="sha512-..." crossorigin="anonymous" />
+
+	<style>
+		:root {
+			--bg: #eef1f4;
+			--panel: #ffffff;
+			--line: #dde2e8;
+			--ink: #1f2937;
+			--ink-dim: #6b7280;
+			--accent: #0f766e;
+			--accent-dim: #0f766e22;
+			--ok: #16a34a;
+			--ok-bg: #16a34a1a;
+			--warn: #d97706;
+			--warn-bg: #d977061a;
+			--bad: #dc2626;
+			--bad-bg: #dc26261a;
+			--radius: 6px;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		}
+		* { box-sizing:border-box; }
+		body {
+			margin:0; background:var(--bg); color:var(--ink);
+			min-width:780px; padding:28px 32px 80px;
+		}
+		h1 {
+			font-size:19px; font-weight:700; letter-spacing:.2px; margin:0 0 2px;
+			display:flex; align-items:baseline; gap:10px;
+		}
+		h1 .count { font-size:12px; font-weight:500; color:var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.subtitle { font-size:12.5px; color:var(--ink-dim); margin:0 0 20px; }
+
+		.panel {
+			background:var(--panel); border:1px solid var(--line); border-radius:8px;
+			padding:14px 16px; margin-bottom:14px;
+		}
+
+		.add-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+		.add-form input[type=text], .add-form input[type=date] {
+			border:1px solid var(--line); border-radius:var(--radius); padding:7px 10px;
+			font-size:13.5px; background:#fbfcfd; color:var(--ink);
+		}
+		.add-form input[type=text]:focus, .add-form input[type=date]:focus { outline:2px solid var(--accent-dim); border-color:var(--accent); }
+		#new-task-icon { width:120px; }
+		#new-task-name { flex:1 1 220px; min-width:180px; }
+		#new-task-date { width:150px; }
+		#new-task-tags { width:180px; }
+		.chk-label { display:flex; align-items:center; gap:5px; font-size:12.5px; color:var(--ink-dim); white-space:nowrap; user-select:none; }
+		.btn {
+			border:1px solid var(--accent); background:var(--accent); color:#fff; border-radius:var(--radius);
+			padding:7px 14px; font-size:13.5px; font-weight:600; cursor:pointer;
+		}
+		.btn:hover { background:#0c5f59; }
+		.btn.secondary { background:transparent; color:var(--accent); }
+		.btn.secondary:hover { background:var(--accent-dim); }
+		.btn.ghost { background:transparent; color:var(--ink-dim); border-color:var(--line); font-weight:500; }
+		.btn.ghost:hover { background:#f2f4f6; }
+		.btn.small { padding:4px 10px; font-size:12px; }
+
+		.toolbar { display:flex; gap:8px; justify-content:flex-end; }
+
+		.filter-panel { display:flex; flex-direction:column; gap:10px; }
+		.filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+		#filter-search {
+			flex:1 1 220px; min-width:200px; border:1px solid var(--line); border-radius:var(--radius);
+			padding:7px 10px; font-size:13.5px; background:#fbfcfd; color:var(--ink);
+		}
+		#filter-search:focus { outline:2px solid var(--accent-dim); border-color:var(--accent); }
+		.time-chip {
+			border:1px solid var(--line); background:#fff; border-radius:99px; padding:5px 12px;
+			font-size:12px; cursor:pointer; color:var(--ink-dim); font-weight:600;
+		}
+		.time-chip:hover { background:#f4f6f7; }
+		.time-chip[data-key="overdue"].active { background:var(--bad-bg); border-color:var(--bad); color:var(--bad); }
+		.time-chip[data-key="today"].active { background:var(--warn-bg); border-color:var(--warn); color:var(--warn); }
+		.time-chip[data-key="ok"].active { background:var(--ok-bg); border-color:var(--ok); color:var(--ok); }
+		.time-chip[data-key="none"].active { background:#eceff1; border-color:#9aa3ac; color:#4b5563; }
+		.active-tag-chips { display:flex; gap:6px; flex-wrap:wrap; }
+		.active-tag-chip {
+			display:flex; align-items:center; gap:6px; background:var(--accent); color:#fff;
+			border-radius:99px; padding:3px 6px 3px 11px; font-size:11.5px; font-weight:600;
+		}
+		.active-tag-chip button {
+			border:none; background:rgba(255,255,255,.25); color:#fff; border-radius:50%;
+			width:16px; height:16px; font-size:10px; cursor:pointer; line-height:1;
+		}
+		.active-tag-chip button:hover { background:rgba(255,255,255,.45); }
+		.filter-result-count{ font-size:12px; color:var(--ink-dim); }
+		.tag-pill { cursor:pointer; }
+		.tag-pill.active { background:var(--accent); color:#fff; }
+
+		.project-badge{
+			font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:5px; cursor:pointer;
+			white-space:nowrap; flex-shrink:0; letter-spacing:.3px;
+		}
+		.project-badge.active{ outline:2px solid rgba(0,0,0,.35); }
+		.project-badge.placeholder{ background:transparent; color:#c3c9d1; border:1px dashed #d7dce1; font-weight:500; }
+		.active-project-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+		.active-project-chip{
+			display:flex; align-items:center; gap:6px; border-radius:99px; padding:3px 6px 3px 11px;
+			font-size:11.5px; font-weight:700;
+		}
+		.active-project-chip button {
+			border:none; background:rgba(0,0,0,.15); color:inherit; border-radius:50%;
+			width:16px; height:16px; font-size:10px; cursor:pointer; line-height:1;
+		}
+		.active-project-chip button:hover { background:rgba(0,0,0,.3); }
+
+		ul.task-list { list-style:none; margin:0; padding:0; }
+		ul.child-list { margin:2px 0 6px 30px; padding-left:14px; border-left:2px solid var(--line); }
+		li.empty-state{ padding:26px 10px; text-align:center; color:var(--ink-dim); font-size:13.5px; }
+
+		li.task-item { margin-bottom:3px; }
+		.task-row {
+			display:flex; align-items:center; gap:8px; background:var(--panel);
+			border:1px solid var(--line); border-radius:var(--radius); padding:7px 9px;
+		}
+		.child-list .task-row { background:#fafbfc; }
+		.task-row.done { opacity:.6; }
+		.drag-handle { cursor:grab; color:#c3c9d1; font-size:12px; padding:0 2px; }
+		.drag-handle:active { cursor:grabbing; }
+		.drag-handle.disabled { cursor:not-allowed; opacity:.4; }
+
+		.chevron-btn {
+			width:18px; height:18px; display:flex; align-items:center; justify-content:center;
+			border:none; background:none; color:var(--ink-dim); cursor:pointer; font-size:11px; border-radius:4px;
+		}
+		.chevron-btn:hover { background:#f0f2f4; }
+		.chevron-spacer { width:18px; }
+
+		.chk-wrap { display:flex; align-items:center; }
+		.task-checkbox { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+		.task-checkbox.pop { animation:pop .28s ease; }
+		@keyframes pop { 0%{transform:scale(1);} 45%{transform:scale(1.5);} 100%{transform:scale(1);} }
+
+		.task-icon { width:16px; text-align:center; color:var(--accent); font-size:13px; flex-shrink:0; }
+		.task-icon.placeholder { color:#c3c9d1; font-size:10px; }
+
+		.task-name { flex:1 1 auto; font-size:13.5px; cursor:text; min-width:60px; }
+		.task-row.done .task-name { text-decoration:line-through; color:var(--ink-dim); transition:all .2s ease; }
+
+		.task-tags { display:flex; gap:4px; flex-wrap:wrap; cursor:text; max-width:220px; }
+		.tag-pill { background:#eef2f4; color:var(--ink-dim); font-size:10.5px; padding:2px 7px; border-radius:99px; white-space:nowrap; }
+		.tags-empty { color:#c3c9d1; font-size:11.5px; cursor:text; }
+
+		.due-badge { font-size:11.5px; padding:2px 8px; border-radius:99px; cursor:text; white-space:nowrap; font-variant-numeric:tabular-nums; }
+		.due-ok { color:var(--ok); background:var(--ok-bg); }
+		.due-today { color:var(--warn); background:var(--warn-bg); font-weight:700; }
+		.due-overdue { color:var(--bad); background:var(--bad-bg); font-weight:700; }
+		.due-none { color:#b6bcc4; background:transparent; }
+		.task-row.done .due-badge { background:transparent !important; color:var(--ink-dim) !important; font-weight:400 !important; }
+
+		.icon-btn { border:none; background:none; color:var(--ink-dim); cursor:pointer; font-size:13px; padding:4px 6px; border-radius:4px; }
+		.icon-btn:hover { background:#f4e4e2; color:var(--bad); }
+
+		.inline-edit { border:1px solid var(--accent); border-radius:4px; padding:3px 6px; font-size:13px; font-family:inherit; }
+
+		.add-child-form { margin-top:4px; }
+		.add-child-form .task-row { background:#f5f8f8; border-style:dashed; flex-wrap:wrap; }
+		.add-child-form input[type=text], .add-child-form input[type=date] {
+			border:1px solid var(--line); border-radius:4px; padding:5px 8px; font-size:12.5px; background:#fff;
+		}
+
+		/* Content Menu */
+		#context-menu {
+			display:none; position:fixed; z-index:50; background:#fff; border:1px solid var(--line);
+			border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,.12); min-width:170px; overflow:hidden;
+		}
+		#context-menu i { margin-right: 4px; }
+		#context-menu button {
+			display:block; width:100%; text-align:left; border:none; background:none; padding:9px 13px;
+			font-size:13px; cursor:pointer; color:var(--ink);
+		}
+		#context-menu button:hover { background:#f0f4f4; color:var(--accent); }
+		#context-menu button.ctxmenu-danger:hover { background:#f4f0f0; color:var(--bad); }
+
+		/* Sortable */
+		.sortable-ghost { opacity:.35; }
+		.sortable-chosen .task-row { box-shadow:0 0 0 2px var(--accent-dim); }
+	</style>
+</head>
+<body>
+
+	<h1>Task <span class="count" id="header-count"></span></h1>
+	<p class="subtitle">Click phải vào task để thêm task con · Double-click vào tên / hạn / tag / dự án để sửa nhanh · Click vào mã dự án để lọc nhanh</p>
+
+	<div class="panel">
+		<div class="add-form">
+			<input type="text" id="new-task-icon" placeholder='fa-solid fa-star'>
+			<input type="text" id="new-task-project" placeholder="Code: ..." style="width:110px">
+			<input type="text" id="new-task-name" placeholder="Name: ...">
+			<input type="date" id="new-task-date">
+			<input type="text" id="new-task-tags" placeholder="Tags: new, support, ...">
+			<label class="chk-label"><input type="checkbox" id="new-task-top"> Ưu tiên</label>
+			<button class="btn" onclick="mt.addRootTask()"><i class="fa-solid fa-plus"></i> Thêm</button>
+		</div>
+	</div>
+
+	<div class="toolbar">
+		<button class="btn ghost small" onclick="mt.exportJSON()"><i class="fa-solid fa-download"></i> Tải backup JSON</button>
+		<button class="btn ghost small" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-upload"></i> Nhập JSON</button>
+		<input type="file" id="import-file" accept="application/json" style="display:none" onchange="mt.importJSON(this.files[0]); this.value='';">
+	</div>
+
+	<div class="panel filter-panel">
+		<div class="filter-row">
+			<input type="text" id="filter-search" placeholder="Tìm theo tên hoặc tag…" oninput="mt.filterText = this.value; mt.render();">
+			<button class="time-chip" data-key="overdue" onclick="mt.utils.toggleTimeFilter('overdue')">Trễ hạn</button>
+			<button class="time-chip" data-key="today" onclick="mt.utils.toggleTimeFilter('today')">Hôm nay</button>
+			<button class="time-chip" data-key="ok" onclick="mt.utils.toggleTimeFilter('ok')">Còn hạn</button>
+			<button class="time-chip" data-key="none" onclick="mt.utils.toggleTimeFilter('none')">Không hạn</button>
+			<button class="btn ghost small" onclick="mt.utils.clearFilters()"><i class="fa-solid fa-xmark"></i> Xóa lọc</button>
+			<span class="filter-result-count" id="filter-result-count"></span>
+		</div>
+		<div class="active-tag-chips" id="active-tag-chips"></div>
+		<div class="active-project-chips" id="active-project-chips"></div>
+	</div>
+
+	<ul class="task-list" id="root-list"></ul>
+
+	<div id="context-menu">
+		<button onclick="mt.ctxMenu.btnAddSubTask()"><i class="fa-solid fa-plus"></i> Thêm task con</button>
+		<button onclick="mt.ctxMenu.btnDelTask()" class="ctxmenu-danger"><i class="fa-solid fa-trash"></i> Xóa task</button>
+	</div>
+
+	<script type="module">
+		import mtApi from '/common/api.js';
+		import mtLib from '/common/lib.js';
+		import mtShow from '/common/show.js';
+
+		var mt = {
+			api: mtApi,
+			lib: mtLib,
+			show: mtShow,
+
+			h_debug: true,
+			h_STORAGE_KEY: 'vtask_app_data_v1',
+			h_cleanDoneTaskDay: 7,    // Số ngày dọn task sau khi hoàn thành
+			e_rootList: null,         // Div 
+			c_sortable: {},           // Map Instance sortable
+			d_tasks: [],              // Danh sách task
+			d_mapTasks: [],           // Map task để tìm kiếm nhanh theo Id
+			m_editing: null,          // {id, field}
+			m_addingChildTo: null,    // rootId or null
+			m_filterText: '',         // search theo tên/tag
+			m_filterTags: new Set(),  // tag đang được chọn để lọc (OR)
+			m_filterTime: new Set(),  // 'overdue' | 'today' | 'ok' | 'none' (OR)
+			m_filterProjects: new Set(), // mã dự án đang được chọn để lọc (OR)
+
+			async init() {
+
+				// Bind Global
+				globalThis.mt = this;
+
+				// Import Library
+				await mt.lib.import(['SortableJS']);
+
+				this.ctxMenu.init();
+
+				// Register Event
+				document.addEventListener('click', () => this.ctxMenu.hide());
+
+				this.loadData();
+				this.render();
+			},
+
+			utils: {
+				genId() {
+					return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+				},
+				pad() {
+					return (n) => n < 10 ? '0'+n : ''+n;
+				},
+				todayStr() {
+					const d = new Date();
+					return `${d.getFullYear()}-${this.pad(d.getMonth()+1)}-${this.pad(d.getDate())}`;
+				},
+				daysBetween(dateStr) {
+					if (!dateStr)
+						return -1;
+					const d = new Date(dateStr + 'T00:00:00');
+					const t = new Date(this.todayStr() + 'T00:00:00');
+					return Math.round((t - d) / 86400000);
+				},
+				formatDisplayDate(iso) {
+					if (!iso)
+						return '';
+					const [y,m,d] = iso.split('-');
+					return `${d}/${m}/${y}`;
+				},
+				dueClass(iso) {
+					if (!iso)
+						return 'due-none';
+					const t = this.todayStr();
+					if (iso < t)
+						return 'due-overdue';
+					if (iso === t)
+						return 'due-today';
+					return 'due-ok';
+				},
+				cleanProjectCode(raw) {
+					return (raw || '').trim().replace(/^\[+|\]+$/g, '').trim();
+				},
+				colorForCode(code) {
+					let hash = 0;
+					for (let i=0; i<code.length; i++) {
+						hash = code.charCodeAt(i) + ((hash<<5)-hash);
+						hash |= 0;
+					}
+					const hue = Math.abs(hash) % 360;
+					return { bg: `hsl(${hue},72%,90%)`, fg: `hsl(${hue},60%,30%)` };
+				},
+				normalizeStr(s) {
+					return (s || '').toString().toLowerCase()
+						.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+						.replace(/đ/g, 'd').replace(/Đ/g, 'd');
+				},
+				filtersActive() {
+					return mt.m_filterText.trim() !== '' || mt.m_filterTags.size > 0 || mt.m_filterTime.size > 0 || mt.m_filterProjects.size > 0;
+				},
+				taskMatchesFilters(task) {
+					if (mt.m_filterText.trim() !== '') {
+						const q = this.normalizeStr(mt.m_filterText);
+						const nameHit = this.normalizeStr(task.name).includes(q);
+						const tagHit = (task.tags || []).some(t => this.normalizeStr(t).includes(q));
+						const projectHit = task.project ? this.normalizeStr(task.project).includes(q) : false;
+						if (!nameHit && !tagHit && !projectHit)
+							return false;
+					}
+					if (mt.m_filterTags.size > 0) {
+						const hit = (task.tags || []).some(t => mt.m_filterTags.has(t));
+						if (!hit) return false;
+					}
+					if (mt.m_filterProjects.size > 0) {
+						if (!task.project || !mt.m_filterProjects.has(task.project))
+							return false;
+					}
+					if (mt.m_filterTime.size > 0) {
+						const key = this.dueClass(task.expired).replace('due-', '');
+						if (!mt.m_filterTime.has(key))
+							return false;
+					}
+					return true;
+				},
+				toggleTagFilter(tag) {
+					mt.m_filterTags.has(tag) ? mt.m_filterTags.delete(tag) : mt.m_filterTags.add(tag);
+					mt.render();
+				},
+				toggleProjectFilter(code) {
+					mt.m_filterProjects.has(code) ? mt.m_filterProjects.delete(code) : mt.m_filterProjects.add(code);
+					mt.render();
+				},
+				toggleTimeFilter(key) {
+					mt.m_filterTime.has(key) ? mt.m_filterTime.delete(key) : mt.m_filterTime.add(key);
+					mt.render();
+				},
+				clearFilters() {
+					mt.m_filterText = '';
+					mt.m_filterTags.clear();
+					mt.m_filterTime.clear();
+					mt.m_filterProjects.clear();
+					document.getElementById('filter-search').value = '';
+					mt.render();
+				},
+			},
+
+			/* ---------- storage ---------- */
+			purge() { // Dọn task đã hoàn thành lâu
+				this.d_tasks = this.d_tasks.filter(root => !(root.done && this.utils.daysBetween(root.completedAt) >= this.h_cleanDoneTaskDay));
+				let dequy = (task) => {
+					if (task.list && task.list.length > 0) {
+						task.list = task.list.filter(c => !(c.done && this.utils.daysBetween(c.completedAt) >= this.h_cleanDoneTaskDay));
+						task.list.forEach(item => dequy(item));
+					}
+				};
+				this.d_tasks.forEach(task => dequy(task));
+			},
+			saveData() {
+				localStorage.setItem(this.h_STORAGE_KEY, JSON.stringify(this.d_tasks));
+			},
+			loadData() {
+				try {
+					const raw = localStorage.getItem(this.h_STORAGE_KEY);
+					this.d_tasks = raw ? JSON.parse(raw) : [];
+
+					this.d_mapTasks = {};
+					this.buildMapTask(this.d_tasks, null);
+
+					// Chỉ dọn khi load, hạn chế chạy nhiều lần
+					this.purge();
+				}
+				catch(e) {
+					this.d_tasks = [];
+					this.d_mapTasks = {};
+				}
+				this.saveData();
+			},
+			buildMapTask(listTask, parent) { // Đệ quy build map để truy xuất nhanh
+				for (let task of listTask) {
+					let id = task.id;
+					this.d_mapTasks[id] = { task, parent }
+					if (task.list)
+						this.buildMapTask(task.list, task);
+				}
+			},
+			exportJSON() {
+				const blob = new Blob([JSON.stringify(this.d_tasks, null, 2)], {type:'application/json'});
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url; a.download = `tasks-backup-${this.utils.todayStr()}.json`;
+				a.click();
+				URL.revokeObjectURL(url);
+			},
+			importJSON(file) {
+				if (!file)
+					return;
+				const reader = new FileReader();
+				reader.onload = e => {
+					try {
+						const data = JSON.parse(e.target.result);
+						if (!Array.isArray(data))
+							throw new Error('invalid');
+						if (!confirm('Nhập dữ liệu sẽ THAY THẾ toàn bộ task hiện tại. Tiếp tục?'))
+							return;
+						this.d_tasks = data;
+						this.d_mapTasks = {};
+						this.buildMapTask(this.d_tasks, null);
+						this.saveData();
+						this.render();
+					}
+					catch(err) {
+						alert('File JSON không hợp lệ.');
+					}
+				};
+				reader.readAsText(file);
+			},
+
+			/* ---------- mutations ---------- */
+			recomputeParent(parent) {
+
+				if (!parent.list || parent.list.length === 0)
+					return;
+
+				const allDone = parent.list.every(c => c.done);
+				if (allDone && !parent.done) {
+					parent.done = true;
+					parent.completedAt = this.utils.todayStr();
+				}
+				else if (!allDone && parent.done) {
+					parent.done = false;
+					parent.completedAt = null;
+				}
+			},
+			toggleDone(id, checkboxEl) {
+
+				// Tìm task bằng id
+				const found = this.d_mapTasks[id];
+				if (!found)
+					return;
+
+				// Sort task done
+				if (checkboxEl.checked) {
+					let sortable = this.c_sortable[found.parent ? found.parent.id : 'root'];
+
+					let listTask = found.parent ? found.parent.list : this.d_tasks;
+					let posCurrent = -1, posTarget = -1;
+					for (let i=0; i<listTask.length; i++) {
+						let t = listTask[i];
+						if (t.id == id)
+							posCurrent = i;
+						if (!t.done)
+							posTarget = i;
+					}
+
+					// Nếu khác vị trí thì thực hiện sort
+					if (posCurrent != posTarget) {
+
+						// Sort in data
+						const [item] = listTask.splice(posCurrent, 1);
+						listTask.splice(posTarget, 0, item);
+
+						// Animation sort
+						let listId = sortable.toArray();
+						let newIndex = [], newList = [];
+						for (let i = 0; i < listId.length; i++) {
+							let tmpid = listId[i];
+							if (i === posCurrent)
+								continue;
+							newIndex.push(tmpid);
+							if (i === posTarget)
+								newIndex.push(id);
+						}
+						sortable.sort(newIndex, true);
+					}
+				}
+
+				// Xử lý chính
+				const { task, parent } = found;
+				if (task.list && task.list.length > 0) {
+
+					// Nếu check cha thì check toàn bộ con
+					const newState = !task.done;
+					task.list.forEach(c => {
+						c.done = newState;
+						c.completedAt = newState ? this.utils.todayStr() : null;
+					});
+					task.done = newState;
+					task.completedAt = newState ? this.utils.todayStr() : null;
+				}
+				else { // Nếu check con thì kiểm tra cha
+					task.done = !task.done;
+					task.completedAt = task.done ? this.utils.todayStr() : null;
+					if (parent)
+						this.recomputeParent(parent);
+				}
+
+				// Cập nhật UI - Checkbox
+				if (checkboxEl) {
+					checkboxEl.classList.add('pop');
+					checkboxEl.addEventListener('animationend', () => checkboxEl.classList.remove('pop'), {once:true});
+				}
+
+				// Cập nhật UI - rerender Row Task
+				const elmLiTaskRow = document.querySelector(`li[data-id="${id}"]`);
+				const elmDivTaskRow = elmLiTaskRow.querySelector('.task-row');
+				if (checkboxEl.checked)
+					elmDivTaskRow.classList.add('done');
+				else
+					elmDivTaskRow.classList.remove('done');
+
+				// Lưu
+				this.saveData();
+			},
+			deleteTask(id) {
+
+				const found = this.d_mapTasks[id];
+				if (!found)
+					return;
+
+				if (!confirm(`Xóa task "${found.task.name}"?`))
+					return;
+
+				if (found.parent) {
+					found.parent.list = found.parent.list.filter(c => c.id !== id);
+					this.recomputeParent(found.parent);
+				}
+				else {
+					this.d_tasks = this.d_tasks.filter(t => t.id !== id);
+					delete this.d_mapTasks[id]; // Bỏ link
+				}
+
+				// Lưu Storage
+				this.saveData();
+
+				// Cập nhật UI - Xóa Task
+				const elmLiTaskRow = document.querySelector(`li[data-id="${id}"]`);
+				this.show.animRemove(elmLiTaskRow); // Remove Elm
+			},
+			toggleCollapse(id) {
+
+				const found = this.d_mapTasks[id];
+				if (!found)
+					return;
+
+				// Mark in data
+				found.task.collapsed = !found.task.collapsed;
+
+				// Update UI
+				const elmUlListTask = document.querySelector(`ul[data-parent-id="${id}"]`);
+				if (elmUlListTask) {
+					this.show.animFold(elmUlListTask, found.task.collapsed, {
+						margin: ['2px', '6px'],
+					});
+				}
+				else {
+					// Trường hợp collapse sẵn, load lên lại, render ban đầu sẽ ko có DOM
+					this.render(); // #TODO optimize
+				}
+			},
+			addRootTask() {
+				const nameInput = document.getElementById('new-task-name');
+				const name = nameInput.value.trim();
+				if (!name) {
+					mt.show.toast('warning', 'Vui lòng nhập tên Task!');
+					return;
+				}
+				const icon = document.getElementById('new-task-icon').value.trim() || null;
+				const project = this.utils.cleanProjectCode(document.getElementById('new-task-project').value) || null;
+				const dateVal = document.getElementById('new-task-date').value || null;
+				const tags = document.getElementById('new-task-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+				const toTop = document.getElementById('new-task-top').checked;
+
+				const task = {
+					id: this.utils.genId(),
+					icon,
+					project,
+					name,
+					expired: dateVal,
+					done: false,
+					completedAt: null,
+					tags,
+					list:[],
+					collapsed: false,
+				};
+
+				toTop ? this.d_tasks.unshift(task) : this.d_tasks.push(task);
+				this.d_mapTasks[task.id] = { task, parent: null }; // Link map
+
+				nameInput.value = '';
+				document.getElementById('new-task-icon').value = '';
+				document.getElementById('new-task-project').value = '';
+				document.getElementById('new-task-date').value = '';
+				document.getElementById('new-task-tags').value = '';
+				document.getElementById('new-task-top').checked = false;
+
+				this.saveData();
+
+				this.render();
+			},
+			addChildTask(rootId, toTop) {
+
+				// Tìm task
+				const found = this.d_mapTasks[rootId];
+				if (!found)
+					return;
+				const root = found.task;
+
+				const nameInput = document.getElementById(`child-name-${rootId}`);
+				const name = nameInput.value.trim();
+				if (!name)
+					return;
+
+				const icon = document.getElementById(`child-icon-${rootId}`).value.trim() || null;
+				const project = this.utils.cleanProjectCode(document.getElementById(`child-project-${rootId}`).value) || null;
+				const dateVal = document.getElementById(`child-date-${rootId}`).value || null;
+				const tags = document.getElementById(`child-tags-${rootId}`).value.split(',').map(s=>s.trim()).filter(Boolean);
+				const child = { id: this.utils.genId(), icon, project, name, expired: dateVal, done:false, completedAt:null, tags };
+				if (!root.list)
+					root.list = [];
+
+				toTop ? root.list.unshift(child) : root.list.push(child);
+				this.d_mapTasks[child.id] = { task: child, parent: root };
+
+				this.recomputeParent(root);
+				root.collapsed = false;
+				this.m_addingChildTo = null;
+				this.saveData();
+				this.render();
+			},
+			cancelAddChild() {
+				this.m_addingChildTo = null;
+				this.render();
+			},
+
+			/* ---------- quick inline edit ---------- */
+			startEdit(id, field) {
+				this.m_editing = { id, field };
+				this.render();
+			},
+			commitEdit(input, task, field) {
+				const val = input.value;
+				if (field === 'name')
+					task.name = val;
+				else if (field === 'date')
+					task.expired = val || null;
+				else if (field === 'tags')
+					task.tags = val.split(',').map(s=>s.trim()).filter(Boolean);
+				else if (field === 'icon')
+					task.icon = val.trim() || null;
+				else if (field === 'project')
+					task.project = this.utils.cleanProjectCode(val) || null;
+				this.m_editing = null;
+				this.saveData();
+				this.render();
+			},
+			bindEditInput(input, task, field) {
+				input.dataset.editId = task.id;
+				input.dataset.editField = field;
+				input.addEventListener('keydown', e => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						input.blur();
+					}
+					else if (e.key === 'Escape') {
+						e.preventDefault();
+						this.m_editing = null;
+						this.render();
+					}
+				});
+				input.addEventListener('blur', () => {
+					if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === field) {
+						this.commitEdit(input, task, field);
+					}
+				});
+			},
+
+			/* ---------- context menu ---------- */
+			ctxMenu: {
+				e_ctxMenu: null, // Div Content Menu
+				m_targetId: null, // Element Contenxt Menu Target
+
+				init() {
+
+					// Reference
+					this.e_ctxMenu = document.getElementById('context-menu');
+				},
+				show(x, y, rootId) {
+					this.m_targetId = rootId;
+					this.e_ctxMenu.style.left = x + 'px';
+					this.e_ctxMenu.style.top = y + 'px';
+					this.e_ctxMenu.style.display = 'block';
+				},
+				hide() {
+					this.e_ctxMenu.style.display = 'none';
+				},
+				btnAddSubTask() {
+					const id = this.m_targetId;
+					this.hide();
+
+					const found = mt.d_mapTasks[id];
+					if (found)
+						found.task.collapsed = false;
+
+					mt.m_addingChildTo = id;
+
+					mt.render();
+
+					setTimeout(() => {
+						const el = document.getElementById(`child-name-${id}`);
+						if (el)
+							el.focus();
+					}, 0);
+				},
+				btnDelTask() {
+					const id = this.m_targetId;
+					this.hide();
+					mt.deleteTask(id);
+				},
+			},
+
+			/* ---------- rendering ---------- */
+			buildTaskRow(task, isRoot, opts) {
+				opts = opts || {};
+				const forceExpand = !!opts.forceExpand;
+				const overrideChildren = opts.overrideChildren || null;
+				const effectiveCollapsed = forceExpand ? false : task.collapsed;
+
+				const li = document.createElement('li');
+				li.className = 'task-item';
+				li.dataset.id = task.id;
+
+				const row = document.createElement('div');
+				row.className = 'task-row' + (task.done ? ' done' : '');
+
+				// drag handle
+				const handle = document.createElement('span');
+				handle.className = 'drag-handle' + (this.utils.filtersActive() ? ' disabled' : '');
+				handle.title = this.utils.filtersActive() ? 'Xóa lọc để kéo thả sắp xếp' : 'Kéo để sắp xếp';
+				handle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
+				row.appendChild(handle);
+
+				// chevron
+				if (task.list && task.list.length > 0) {
+					const chev = document.createElement('button');
+					chev.className = 'chevron-btn';
+					chev.innerHTML = effectiveCollapsed ? '<i class="fa-solid fa-chevron-right"></i>' : '<i class="fa-solid fa-chevron-down"></i>';
+					chev.onclick = () => this.toggleCollapse(task.id);
+					row.appendChild(chev);
+				}
+				else {
+					const sp = document.createElement('span'); sp.className = 'chevron-spacer';
+					row.appendChild(sp);
+				}
+
+				// checkbox
+				const chkWrap = document.createElement('span'); chkWrap.className = 'chk-wrap';
+				const chk = document.createElement('input');
+				chk.type = 'checkbox'; chk.className = 'task-checkbox'; chk.checked = task.done;
+				chk.onclick = () => this.toggleDone(task.id, chk);
+				chkWrap.appendChild(chk);
+				row.appendChild(chkWrap);
+
+				// project badge
+				if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === 'project') {
+					const input = document.createElement('input');
+					input.type = 'text'; input.className = 'inline-edit'; input.style.width = '80px';
+					input.value = task.project || ''; input.placeholder = 'LA';
+					this.bindEditInput(input, task, 'project');
+					row.appendChild(input);
+				}
+				else {
+					const pBadge = document.createElement('span');
+					pBadge.title = 'Double-click để đổi dự án · Click để lọc theo dự án';
+					if (task.project) {
+						const colors = this.utils.colorForCode(task.project);
+						pBadge.className = 'project-badge' + (this.m_filterProjects.has(task.project) ? ' active' : '');
+						pBadge.style.background = colors.bg;
+						pBadge.style.color = colors.fg;
+						pBadge.textContent = `[${task.project}]`;
+						pBadge.onclick = (e) => { e.stopPropagation(); this.utils.toggleProjectFilter(task.project); };
+					} else {
+						pBadge.className = 'project-badge placeholder';
+						pBadge.textContent = '+ dự án';
+					}
+					pBadge.ondblclick = (e) => { e.stopPropagation(); this.startEdit(task.id, 'project'); };
+					row.appendChild(pBadge);
+				}
+
+				// icon
+				if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === 'icon') {
+					const input = document.createElement('input');
+					input.type = 'text'; input.className = 'inline-edit'; input.style.width = '110px';
+					input.value = task.icon || ''; input.placeholder = 'fa-solid fa-star';
+					this.bindEditInput(input, task, 'icon');
+					row.appendChild(input);
+				}
+				else {
+					const iconSpan = document.createElement('span');
+					iconSpan.title = 'Double-click để đổi icon';
+					if (task.icon) { iconSpan.className = 'task-icon'; iconSpan.innerHTML = `<i class="${task.icon}"></i>`; }
+					else { iconSpan.className = 'task-icon placeholder'; iconSpan.innerHTML = '<i class="fa-regular fa-circle"></i>'; }
+					iconSpan.ondblclick = () => this.startEdit(task.id, 'icon');
+					row.appendChild(iconSpan);
+				}
+
+				// name
+				if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === 'name') {
+					const input = document.createElement('input');
+					input.type = 'text'; input.className = 'inline-edit'; input.style.flex = '1';
+					input.value = task.name;
+					this.bindEditInput(input, task, 'name');
+					row.appendChild(input);
+				}
+				else {
+					const nameSpan = document.createElement('span');
+					nameSpan.className = 'task-name';
+					nameSpan.textContent = task.name;
+					nameSpan.ondblclick = () => this.startEdit(task.id, 'name');
+					row.appendChild(nameSpan);
+				}
+
+				// tags
+				if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === 'tags') {
+					const input = document.createElement('input');
+					input.type = 'text'; input.className = 'inline-edit'; input.style.width = '160px';
+					input.value = task.tags.join(', '); input.placeholder = 'tag1, tag2';
+					this.bindEditInput(input, task, 'tags');
+					row.appendChild(input);
+				}
+				else {
+					const tagsWrap = document.createElement('span');
+					tagsWrap.className = 'task-tags';
+					tagsWrap.ondblclick = () => this.startEdit(task.id, 'tags');
+					if (task.tags && task.tags.length) {
+						task.tags.forEach(t => {
+							const pill = document.createElement('span');
+							pill.className = 'tag-pill' + (this.m_filterTags.has(t) ? ' active' : '');
+							pill.textContent = t;
+							pill.title = 'Click để lọc theo tag này';
+							pill.onclick = (e) => { e.stopPropagation(); this.utils.toggleTagFilter(t); };
+							pill.ondblclick = (e) => { e.stopPropagation(); };
+							tagsWrap.appendChild(pill);
+						});
+					}
+					else {
+						const ph = document.createElement('span'); ph.className = 'tags-empty'; ph.textContent = '+ tag';
+						tagsWrap.appendChild(ph);
+					}
+					row.appendChild(tagsWrap);
+				}
+
+				// due date
+				if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === 'date') {
+					const input = document.createElement('input');
+					input.type = 'date'; input.className = 'inline-edit';
+					input.value = task.expired || '';
+					this.bindEditInput(input, task, 'date');
+					row.appendChild(input);
+				}
+				else {
+					const dueSpan = document.createElement('span');
+					dueSpan.className = 'due-badge ' + this.utils.dueClass(task.expired);
+					dueSpan.textContent = task.expired ? this.utils.formatDisplayDate(task.expired) : 'Không hạn';
+					dueSpan.ondblclick = () => this.startEdit(task.id, 'date');
+					row.appendChild(dueSpan);
+				}
+
+				// delete
+				const delBtn = document.createElement('button');
+				delBtn.className = 'icon-btn'; delBtn.title = 'Xóa task';
+				delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+				delBtn.onclick = () => this.deleteTask(task.id);
+				row.appendChild(delBtn);
+
+				li.appendChild(row);
+
+				// context menu
+				row.addEventListener('contextmenu', e => {
+					e.preventDefault();
+					e.stopPropagation();
+					this.ctxMenu.show(e.clientX, e.clientY, task.id);
+				});
+
+				// children
+				const childrenToRender = overrideChildren !== null ? overrideChildren : (task.list || []);
+				const showChildren = (childrenToRender.length > 0 && !effectiveCollapsed) || this.m_addingChildTo === task.id;
+				if (showChildren) {
+					const childUl = document.createElement('ul');
+					childUl.className = 'task-list child-list';
+					childUl.dataset.parentId = task.id;
+
+					// Tạo sorable nếu ko bật filter
+					if (!this.utils.filtersActive()) {
+						this.c_sortable[task.id] = Sortable.create(childUl, {
+							animation: 150,
+							handle: '.drag-handle',
+							filter: '.add-child-form',
+							onEnd: () => this.reorderChildFromDOM(childUl)
+						});;
+					}
+
+					childrenToRender.forEach(child => childUl.appendChild(this.buildTaskRow(child, false)));
+					if (this.m_addingChildTo === task.id) {
+						childUl.appendChild(this.buildAddChildForm(task.id));
+					}
+					li.appendChild(childUl);
+				}
+
+				return li;
+			},
+			buildAddChildForm(rootId) {
+				const li = document.createElement('li');
+				li.className = 'add-child-form';
+				const row = document.createElement('div');
+				row.className = 'task-row';
+
+				const icon = document.createElement('input');
+				icon.type = 'text'; icon.id = `child-icon-${rootId}`; icon.placeholder = 'icon'; icon.style.width = '90px';
+				const project = document.createElement('input');
+				project.type = 'text'; project.id = `child-project-${rootId}`; project.placeholder = 'Mã dự án'; project.style.width = '90px';
+				const name = document.createElement('input');
+				name.type = 'text'; name.id = `child-name-${rootId}`; name.placeholder = 'Tên task con…'; name.style.flex = '1';
+				const date = document.createElement('input');
+				date.type = 'date'; date.id = `child-date-${rootId}`; date.style.width = '135px';
+				const tags = document.createElement('input');
+				tags.type = 'text'; tags.id = `child-tags-${rootId}`; tags.placeholder = 'tags'; tags.style.width = '130px';
+
+				const topLabel = document.createElement('label');
+				topLabel.className = 'chk-label';
+				const topChk = document.createElement('input');
+				topChk.type = 'checkbox'; topChk.id = `child-top-${rootId}`;
+				topLabel.appendChild(topChk);
+				topLabel.append(' Lên đầu');
+
+				const addBtn = document.createElement('button');
+				addBtn.className = 'btn small';
+				addBtn.textContent = 'Thêm';
+				addBtn.onclick = () => this.addChildTask(rootId, topChk.checked);
+
+				const cancelBtn = document.createElement('button');
+				cancelBtn.className = 'btn ghost small';
+				cancelBtn.textContent = 'Hủy';
+				cancelBtn.onclick = () => this.cancelAddChild();
+
+				name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.addChildTask(rootId, topChk.checked); } });
+
+				[icon, project, name, date, tags, topLabel, addBtn, cancelBtn].forEach(el => row.appendChild(el));
+				li.appendChild(row);
+				return li;
+			},
+			updateHeaderCount() {
+				let total = 0, done = 0;
+
+				this.d_tasks.forEach(r => {
+					total++;
+					if (r.done)
+						done++;
+
+					// (r.list||[]).forEach(c => {
+					// 	total++;
+					// 	if (c.done)
+					// 		done++;
+					// });
+				});
+
+				document.getElementById('header-count').textContent = total ? `${done}/${total} hoàn thành` : '';
+			},
+			updateFilterUI() {
+				document.querySelectorAll('.time-chip').forEach(btn => {
+					btn.classList.toggle('active', this.m_filterTime.has(btn.dataset.key));
+				});
+				const chipsWrap = document.getElementById('active-tag-chips');
+				chipsWrap.innerHTML = '';
+				this.m_filterTags.forEach(tag => {
+					const chip = document.createElement('span');
+					chip.className = 'active-tag-chip';
+					const label = document.createElement('span'); label.textContent = tag;
+					const x = document.createElement('button'); x.textContent = '×';
+					x.onclick = () => this.utils.toggleTagFilter(tag);
+					chip.appendChild(label); chip.appendChild(x);
+					chipsWrap.appendChild(chip);
+				});
+				const projectChipsWrap = document.getElementById('active-project-chips');
+				projectChipsWrap.innerHTML = '';
+				this.m_filterProjects.forEach(code => {
+					const colors = this.utils.colorForCode(code);
+					const chip = document.createElement('span');
+					chip.className = 'active-project-chip';
+					chip.style.background = colors.bg; chip.style.color = colors.fg;
+					const label = document.createElement('span'); label.textContent = `[${code}]`;
+					const x = document.createElement('button'); x.textContent = '×';
+					x.onclick = () => this.utils.toggleProjectFilter(code);
+					chip.appendChild(label); chip.appendChild(x);
+					projectChipsWrap.appendChild(chip);
+				});
+				const countEl = document.getElementById('filter-result-count');
+				if (this.utils.filtersActive()) {
+					let count = 0;
+					this.d_tasks.forEach(root => {
+
+						if (this.utils.taskMatchesFilters(root))
+							count++;
+
+						(root.list || []).forEach(c => {
+							if (this.utils.taskMatchesFilters(c))
+								count++;
+						});
+					});
+					countEl.textContent = `${count} kết quả phù hợp`;
+				}
+				else {
+					countEl.textContent = '';
+				}
+			},
+			render() { // Xây dựng DOM
+
+				const rootUl = document.getElementById('root-list');
+				rootUl.innerHTML = '';
+
+				// Filter
+				const active = this.utils.filtersActive();
+				let visibleRoots = [];
+
+				if (!active) {
+					this.d_tasks.forEach(t => visibleRoots.push({ task: t, forceExpand: false, overrideChildren: null }));
+				}
+				else {
+					this.d_tasks.forEach(root => {
+						const rootMatches = this.utils.taskMatchesFilters(root);
+						const matchingChildren = (root.list || []).filter(this.utils.taskMatchesFilters);
+						if (!rootMatches && matchingChildren.length === 0)
+							return;
+						if (rootMatches)
+							visibleRoots.push({ task: root, forceExpand: false, overrideChildren: null });
+						else
+							visibleRoots.push({ task: root, forceExpand: true, overrideChildren: matchingChildren });
+					});
+				}
+
+				if (visibleRoots.length === 0) {
+					const empty = document.createElement('li');
+					empty.className = 'empty-state';
+					empty.textContent = active ? 'Không tìm thấy task phù hợp với bộ lọc.' : 'Chưa có task nào. Thêm task mới ở trên.';
+					rootUl.appendChild(empty);
+				}
+				else {
+
+					// Tạo sorable tổng nếu ko có filter
+					if (!active) {
+						this.c_sortable = {};
+						this.c_sortable.root = this.c_sortable.root = Sortable.create(rootUl, {
+							animation: 150,
+							handle: '.drag-handle',
+							filter: '.add-child-form, .empty-state',
+							onEnd: () => this.reorderRootFromDOM(rootUl)
+						});
+					}
+
+					// Render các task xem được
+					visibleRoots.forEach(v => rootUl.appendChild(
+						this.buildTaskRow(v.task, true, { forceExpand: v.forceExpand, overrideChildren: v.overrideChildren })
+					));
+				}
+
+				// this.initSortable();
+				this.updateHeaderCount();
+				this.updateFilterUI();
+
+				if (this.m_editing) {
+					const sel = `[data-edit-id="${this.m_editing.id}"][data-edit-field="${this.m_editing.field}"]`;
+					const input = document.querySelector(sel);
+					if (input) {
+						input.focus();
+						if (input.select)
+							input.select();
+					}
+				}
+			},
+			renderFilter() { // Ẩn hiện DOM
+
+			},
+
+			/* ---------- drag & drop ---------- */
+			reorderRootFromDOM(ul) {
+				const ids = Array.from(ul.children).filter(li => li.dataset && li.dataset.id).map(li => li.dataset.id);
+				this.d_tasks = ids.map(id => this.d_tasks.find(t => t.id === id)).filter(Boolean);
+				this.saveData();
+			},
+			reorderChildFromDOM(ul) {
+				const parentId = ul.dataset.parentId;
+				const found = this.d_mapTasks[parentId];
+				if (!found)
+					return;
+				const parent = found.task;
+				const ids = Array.from(ul.children).filter(li => li.dataset && li.dataset.id).map(li => li.dataset.id);
+				parent.list = ids.map(id => parent.list.find(c => c.id === id)).filter(Boolean);
+				this.saveData();
+			},
+
+		};
+		document.addEventListener('DOMContentLoaded', () => mt.init());
+	</script>
+</body>
+</html>

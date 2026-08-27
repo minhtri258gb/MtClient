@@ -35,7 +35,6 @@ let mt = {
 
 			// Init
 			await this.api.init();
-			await this.show.initToast();
 
 			// processParams
 			this.processParams();

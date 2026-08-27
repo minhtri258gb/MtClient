@@ -2384,7 +2384,6 @@ let mt = {
 		// Init
 		await this.event.init();
 		// await this.api.init();
-		await this.show.initToast();
 
 		// Init
 		this.common.init();

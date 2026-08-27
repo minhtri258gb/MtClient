@@ -1,10 +1,15 @@
 var mtShow = {
+	m_initToast: false, // toastify
+	m_initAlert: false, // sweetalert2
 
 	// Toast
-	async initToast() {
-		await mt.lib.import(['toastify']);
-	},
-	toast(type, message) {
+	async toast(type, message) {
+
+		if (!this.m_initToast) {
+			this.m_initToast = true;
+			await mt.lib.import(['toastify']);
+		}
+
 		let icon = '', color = '', duration = 5000;
 
 		switch (type) {
@@ -54,10 +59,13 @@ var mtShow = {
 	},
 
 	// Alert
-	async initAlert() {
-		await mt.lib.import(['sweetalert2']);
-	},
 	async alertConfirmPrimary(message, action) {
+
+		if (!this.m_initAlert) {
+			this.m_initAlert = true;
+			await mt.lib.import(['sweetalert2']);
+		}
+
 		let result = await Swal.fire({
 			title: message,
 			icon: 'info',
@@ -69,6 +77,12 @@ var mtShow = {
 		return result.isConfirmed;
 	},
 	async alertConfirmDanger(message, action) {
+
+		if (!this.m_initAlert) {
+			this.m_initAlert = true;
+			await mt.lib.import(['sweetalert2']);
+		}
+
 		let result = await Swal.fire({
 			title: message,
 			icon: 'warning',
@@ -121,5 +135,117 @@ var mtShow = {
 			anim.cancel();
 		};
 	},
+	animRemove(elm, opts) {
+		if (!elm || !elm.parentNode)
+			return;
+
+		let duration = opts?.duration || 300;
+
+		const currentHeight = elm.scrollHeight;
+		const computedStyle = getComputedStyle(elm);
+
+		const marginTop = computedStyle.marginTop;
+		const marginBottom = computedStyle.marginBottom;
+
+		const animation = elm.animate([
+			{
+				height: currentHeight + 'px',
+				opacity: 1,
+				marginTop: marginTop,
+				marginBottom: marginBottom
+			},
+			{
+				height: '0px',
+				opacity: 0,
+				marginTop: '0px',
+				marginBottom: '0px'
+			}
+		], {
+			duration: duration,
+			easing: 'ease-out',
+			fill: 'forwards'
+		});
+
+		animation.onfinish = () => elm.parentNode.removeChild(elm);
+	},
+	animFold(elm, isFolded, options = {}) {
+
+		let duration = options.duration || 300;
+		let easing = options.easing || 'ease-out';
+		let marginTop = '0px', marginBottom = '0px';
+		if (options.margin && options.margin.length > 0) {
+			marginTop = options.margin[0];
+			marginBottom = options.margin.length >= 2 ? options.margin[1] : options.margin[0];
+		}
+
+		if (isFolded) {
+			// Đang unfold → fold lại
+			const currentHeight = elm.scrollHeight;
+			elm.style.overflow = 'hidden';
+
+			const animation = elm.animate([
+				{
+					maxHeight: currentHeight + 'px',
+					opacity: 1,
+					marginTop: marginTop,
+					marginBottom: marginBottom
+				},
+				{
+					maxHeight: '0px',
+					opacity: 0,
+					marginTop: '0px',
+					marginBottom: '0px'
+				}
+			], {
+				duration: duration,
+				easing: easing,
+				fill: 'forwards'
+			});
+
+			return new Promise(resolve => animation.onfinish = () => resolve());
+		}
+		else {
+
+			// Đang fold → unfold ra
+			elm.style.overflow = 'hidden';
+			elm.style.maxHeight = '0px';
+			elm.style.opacity = '0';
+			elm.style.marginTop = '0px';
+			elm.style.marginBottom = '0px';
+
+			void elm.offsetHeight; // Force reflow
+
+			const fullHeight = elm.scrollHeight + 'px';
+
+			const animation = elm.animate([
+				{
+					maxHeight: '0px',
+					opacity: 0,
+					marginTop: '0px',
+					marginBottom: '0px'
+				},
+				{
+					maxHeight: fullHeight + 'px',
+					opacity: 1,
+					marginTop: marginTop,
+					marginBottom: marginBottom
+				}
+			], {
+				duration: duration,
+				easing: easing,
+				fill: 'forwards'
+			});
+
+			return new Promise(resolve => {
+				animation.onfinish = () => {
+					// Reset styles sau khi animation hoàn tất
+					elm.style.maxHeight = 'none';
+					elm.style.overflow = '';
+					elm.style.transition = '';
+					resolve();
+				};
+			});
+		}
+	}
 };
 export default mtShow;

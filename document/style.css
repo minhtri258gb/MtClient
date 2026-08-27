@@ -192,4 +192,10 @@
 		height: calc(100% - 73px);
 		font-family: 'Consolas', 'Courier New', monospace;
 	}
+
+	/* Render whitespace */
+	.cm-tab::before {
+		content: '→';
+		color: #999;
+	}
 }
