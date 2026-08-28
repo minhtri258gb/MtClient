@@ -79,7 +79,8 @@
 			"\t",
 			"}",
 			"catch (ex) {",
-			"\tconsole.log('[mt.]', ex);",
+			"\tconsole.log(ex);",
+			"\tmt.show.toast('error', ex.message);",
 			"}",
 		]
 	},
