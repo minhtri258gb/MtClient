@@ -225,7 +225,7 @@ var mtShow = {
 					marginBottom: '0px'
 				},
 				{
-					maxHeight: fullHeight + 'px',
+					maxHeight: fullHeight,
 					opacity: 1,
 					marginTop: marginTop,
 					marginBottom: marginBottom

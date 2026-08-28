@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flowchart Studio — Kéo thả &amp; Mermaid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg-app:#12151b;
+    --bg-panel:#181c24;
+    --bg-panel-2:#1e232c;
+    --bg-canvas:#0d1015;
+    --border:#2a303c;
+    --border-soft:#232833;
+    --text:#e7eaf1;
+    --text-muted:#8a92a6;
+    --text-faint:#5b6274;
+    --accent:#57e6c9;
+    --accent-dim:#2c8f7d;
+    --accent-2:#7c9eff;
+    --danger:#ff6b7a;
+    --radius:8px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg-app); color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  header.topbar{
+    display:flex; align-items:center; gap:14px;
+    padding:10px 16px; background:var(--bg-panel);
+    border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:9px; margin-right:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent); box-shadow:0 0 10px var(--accent);}
+  .brand h1{font-size:15px; font-weight:700; margin:0; letter-spacing:.2px;}
+  .brand .sub{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+  .divider{width:1px; height:24px; background:var(--border); margin:0 2px;}
+  .field{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted);}
+  select, button, input[type=text]{
+    font-family:inherit; font-size:12.5px; color:var(--text);
+    background:var(--bg-panel-2); border:1px solid var(--border);
+    border-radius:6px; padding:7px 10px; cursor:pointer; transition:.15s;
+  }
+  select:hover, button:hover{border-color:var(--accent-dim); color:var(--text);}
+  button:active{transform:translateY(1px);}
+  button.primary{background:var(--accent); color:#052622; border-color:var(--accent); font-weight:600;}
+  button.primary:hover{background:#6ff2d6;}
+  button.active{background:var(--accent-2); color:#0c1230; border-color:var(--accent-2); font-weight:600;}
+  button.danger-outline{color:var(--danger); border-color:#4a2530;}
+  button.danger-outline:hover{border-color:var(--danger);}
+  button.icon-only{padding:7px 9px;}
+  .spacer{flex:1;}
+  main{flex:1; display:flex; min-height:0;}
+
+  aside.palette{
+    width:190px; background:var(--bg-panel); border-right:1px solid var(--border);
+    padding:14px 12px; overflow-y:auto; flex-shrink:0;
+  }
+  aside.palette h2, .rightpanel h2{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-faint);
+    margin:4px 0 10px; font-weight:600;
+  }
+  .shape-btn{
+    width:100%; display:flex; align-items:center; gap:10px;
+    background:var(--bg-panel-2); border:1px solid var(--border-soft);
+    border-radius:var(--radius); padding:8px 10px; margin-bottom:7px;
+    cursor:grab; text-align:left; color:var(--text);
+  }
+  .shape-btn:hover{border-color:var(--accent); background:#202632;}
+  .shape-btn svg{flex-shrink:0;}
+  .shape-btn .lbl{display:flex; flex-direction:column; line-height:1.25;}
+  .shape-btn .lbl b{font-size:12px; font-weight:600;}
+  .shape-btn .lbl span{font-size:10.5px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+
+  section.canvas-wrap{flex:1; position:relative; background:var(--bg-canvas); min-width:0;}
+  .canvas-toolbar{
+    position:absolute; top:12px; left:12px; z-index:5;
+    display:flex; gap:6px; background:rgba(24,28,36,.9); backdrop-filter:blur(6px);
+    padding:6px; border:1px solid var(--border); border-radius:10px;
+  }
+  .canvas-toolbar .grp{display:flex; gap:4px; padding-right:6px; border-right:1px solid var(--border);}
+  .canvas-toolbar .grp:last-child{border-right:none; padding-right:0;}
+  .hint{
+    position:absolute; bottom:12px; left:12px; z-index:5; font-size:11.5px;
+    color:var(--text-faint); background:rgba(24,28,36,.85); padding:6px 10px;
+    border-radius:8px; border:1px solid var(--border); max-width:420px;
+  }
+  .hint b{color:var(--accent);}
+  #canvas-container{position:absolute; inset:0;}
+
+  aside.rightpanel{
+    width:400px; background:var(--bg-panel); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .tabs{display:flex; border-bottom:1px solid var(--border);}
+  .tab{
+    flex:1; padding:11px; text-align:center; font-size:12.5px; font-weight:600;
+    color:var(--text-faint); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab.active{color:var(--accent); border-bottom-color:var(--accent);}
+  .tabpanel{flex:1; display:none; flex-direction:column; min-height:0; padding:14px;}
+  .tabpanel.active{display:flex;}
+  #codeArea, #markdownArea{
+    flex:1; resize:none; width:100%; background:var(--bg-canvas);
+    border:1px solid var(--border-soft); border-radius:8px; color:var(--accent);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.6;
+    padding:12px; white-space:pre; overflow:auto;
+  }
+  .code-actions{display:flex; gap:8px; margin-top:10px;}
+  #previewPane{
+    flex:1; background:var(--bg-canvas); border:1px solid var(--border-soft);
+    border-radius:8px; overflow:auto; display:flex; align-items:center; justify-content:center; padding:14px;
+  }
+  #previewPane svg{max-width:100%; height:auto;}
+  .preview-error{color:var(--danger); font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px; white-space:pre-wrap;}
+  .props-box{
+    background:var(--bg-panel-2); border:1px solid var(--border-soft); border-radius:8px;
+    padding:12px; margin-bottom:12px; font-size:12.5px;
+  }
+  .props-box .row{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .props-box .row:last-child{margin-bottom:0;}
+  .props-box label{color:var(--text-muted); font-size:12px;}
+  .props-box input[type=text]{width:190px;}
+  .empty-note{color:var(--text-faint); font-size:12px; line-height:1.6;}
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--accent); color:#052622; font-weight:600; font-size:12.5px;
+    padding:9px 18px; border-radius:20px; opacity:0; transition:.25s; pointer-events:none; z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  ::-webkit-scrollbar{width:9px; height:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* Context menu */
+  .ctx-menu, .ctx-submenu{
+    list-style:none; margin:0; padding:6px; min-width:210px;
+    background:var(--bg-panel-2); border:1px solid var(--border);
+    border-radius:10px; box-shadow:0 12px 32px rgba(0,0,0,.45);
+    font-size:12.5px;
+  }
+  .ctx-menu{ position:fixed; }
+  .ctx-item{
+    position:relative; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:8px 10px; border-radius:6px; cursor:pointer; color:var(--text);
+    white-space:nowrap;
+  }
+  .ctx-item:hover{ background:#242b37; }
+  .ctx-item.danger{ color:var(--danger); }
+  .ctx-item.danger:hover{ background:#2c1a20; }
+  .ctx-arrow{ color:var(--text-faint); font-size:13px; }
+  .ctx-sep{ height:1px; margin:6px 4px; background:var(--border); list-style:none; }
+  .ctx-submenu{
+    display:none; position:absolute; left:100%; top:-6px; z-index:2;
+    max-height:340px; overflow-y:auto;
+  }
+  .ctx-item.has-sub:hover > .ctx-submenu,
+  .ctx-item.has-sub.open > .ctx-submenu{ display:block; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <div>
+      <h1>Flowchart Studio</h1>
+      <div class="sub">canvas ⇄ mermaid, đồng bộ hai chiều</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="field">
+    <label>Hướng biểu đồ</label>
+    <select id="directionSelect">
+      <option value="TD">TD — Trên xuống</option>
+      <option value="LR">LR — Trái sang phải</option>
+      <option value="BT">BT — Dưới lên</option>
+      <option value="RL">RL — Phải sang trái</option>
+    </select>
+  </div>
+  <div class="divider"></div>
+  <div class="field">
+    <label>Kiểu liên kết</label>
+    <select id="edgeTypeSelect">
+      <option value="arrow">Mũi tên  --&gt;</option>
+      <option value="open">Đường nối  ---</option>
+      <option value="dottedArrow">Mũi tên chấm  -.-&gt;</option>
+      <option value="dottedOpen">Nối chấm  -.-</option>
+      <option value="thickArrow">Mũi tên đậm  ==&gt;</option>
+      <option value="thickOpen">Nối đậm  ===</option>
+    </select>
+  </div>
+  <div class="spacer"></div>
+  <button id="exportPngBtn" title="Xuất PNG">⬇ PNG</button>
+  <div class="divider"></div>
+  <button id="saveMermaidBtn" title="Lưu sơ đồ dạng mã Mermaid (.mmd)">⬇ .mmd</button>
+  <button id="loadMermaidBtn" title="Mở sơ đồ từ file Mermaid (.mmd/.md)">⬆ .mmd</button>
+  <input type="file" id="loadMermaidInput" accept=".mmd,.md,.mermaid,text/plain" style="display:none;">
+  <div class="divider"></div>
+  <button id="saveJsonBtn" title="Lưu sơ đồ (.json)">💾 Lưu</button>
+  <button id="loadJsonBtn" title="Mở sơ đồ (.json)">📂 Mở</button>
+  <input type="file" id="loadJsonInput" accept="application/json" style="display:none;">
+  <button id="clearBtn" class="danger-outline">🗑 Xoá hết</button>
+</header>
+
+<main>
+  <aside class="palette">
+    <h2>Hình khối (kéo thả)</h2>
+    <div id="shapeList"></div>
+    <h2 style="margin-top:18px;">Ghi chú</h2>
+    <p class="empty-note">Kéo hình vào canvas, hoặc bấm để thêm vào giữa khung nhìn. Nhấp đúp để sửa nhãn. Bấm <b style="color:var(--accent)">Nối</b> rồi chọn 2 khối để tạo liên kết.</p>
+  </aside>
+
+  <section class="canvas-wrap">
+    <div class="canvas-toolbar">
+      <div class="grp">
+        <button id="connectBtn" class="icon-only" title="Chế độ nối (C)">🔗 Nối</button>
+        <button id="editEdgeLabelBtn" class="icon-only" title="Sửa nhãn liên kết đang chọn">🏷 Nhãn</button>
+      </div>
+      <div class="grp">
+        <button id="zoomOutBtn" class="icon-only" title="Thu nhỏ">－</button>
+        <button id="zoomResetBtn" class="icon-only" title="Đặt lại 100%">100%</button>
+        <button id="zoomInBtn" class="icon-only" title="Phóng to">＋</button>
+      </div>
+      <div class="grp">
+        <button id="deleteBtn" class="icon-only danger-outline" title="Xoá mục đang chọn (Del)">✕ Xoá</button>
+      </div>
+    </div>
+    <div id="canvas-container">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="hint">Đang ở chế độ: <b id="modeLabel">Chọn / Kéo</b> · Phím tắt: <b>C</b> nối · <b>Del</b> xoá · <b>Esc</b> huỷ nối</div>
+  </aside>
+
+  <aside class="rightpanel">
+    <div class="tabs">
+      <div class="tab active" data-tab="props">Thuộc tính</div>
+      <div class="tab" data-tab="code">Mã Mermaid</div>
+      <div class="tab" data-tab="markdown">Markdown</div>
+      <div class="tab" data-tab="preview">Xem trước</div>
+    </div>
+
+    <div class="tabpanel active" id="tab-props">
+      <div id="propsContent">
+        <p class="empty-note">Chọn một khối hoặc liên kết trên canvas để xem/sửa thuộc tính tại đây.</p>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-code">
+      <textarea id="codeArea" spellcheck="false"></textarea>
+      <div class="code-actions">
+        <button id="copyCodeBtn" class="primary">📋 Copy mã</button>
+        <button id="importCodeBtn">⤵ Nhập vào canvas</button>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-markdown">
+      <textarea id="markdownArea" spellcheck="false" readonly></textarea>
+      <div class="code-actions">
+        <button id="copyMarkdownBtn" class="primary">📋 Copy khối Markdown</button>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="tab-preview">
+      <div id="previewPane"></div>
+    </div>
+  </aside>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+mermaid.initialize({ startOnLoad:false, theme:'dark', flowchart:{ curve:'basis' } });
+
+/* ---------------------------------------------------------------
+   Shape catalogue: id, label, mermaid open/close wrapper, drawer fn
+--------------------------------------------------------------- */
+const SHAPES = [
+  { type:'rect',          label:'Tiến trình',    preview:'[ ]',   open:'[',  close:']' },
+  { type:'round',         label:'Bo góc',        preview:'( )',   open:'(',  close:')' },
+  { type:'stadium',       label:'Bắt đầu/Kết thúc', preview:'([ ])', open:'([', close:'])' },
+  { type:'subroutine',    label:'Chương trình con', preview:'[[ ]]', open:'[[', close:']]' },
+  { type:'cylinder',      label:'Cơ sở dữ liệu', preview:'[( )]', open:'[(', close:')]' },
+  { type:'circle',        label:'Vòng tròn',     preview:'(( ))', open:'((', close:'))' },
+  { type:'rhombus',       label:'Quyết định',    preview:'{ }',   open:'{',  close:'}' },
+  { type:'hexagon',       label:'Chuẩn bị',      preview:'{{ }}', open:'{{', close:'}}' },
+  { type:'parallelogram', label:'Nhập/Xuất',     preview:'[/ /]', open:'[/', close:'/]' },
+  { type:'trapezoid',     label:'Thao tác tay',  preview:'[\\ /]', open:'[\\', close:'/]' },
+];
+
+const EDGE_SYNTAX = {
+  arrow:       { line:'-->',  dash:null,        width:2, arrowEnd:true  },
+  open:        { line:'---',  dash:null,        width:2, arrowEnd:false },
+  dottedArrow: { line:'-.->', dash:[4,4],        width:2, arrowEnd:true  },
+  dottedOpen:  { line:'-.-',  dash:[4,4],        width:2, arrowEnd:false },
+  thickArrow:  { line:'==>',  dash:null,        width:4, arrowEnd:true  },
+  thickOpen:   { line:'===',  dash:null,        width:4, arrowEnd:false },
+};
+
+const NODE_STYLE = { fill:'#1e232c', stroke:'#57e6c9', strokeWidth:2 };
+const NODE_STYLE_ALT = { fill:'#1e232c', stroke:'#57e6c9', strokeWidth:2 };
+
+/* ---------------------------------------------------------------
+   Build palette UI
+--------------------------------------------------------------- */
+const shapeListEl = document.getElementById('shapeList');
+SHAPES.forEach(s=>{
+  const btn = document.createElement('div');
+  btn.className = 'shape-btn';
+  btn.draggable = true;
+  btn.dataset.type = s.type;
+  btn.innerHTML = `${shapeIconSvg(s.type)}<span class="lbl"><b>${s.label}</b><span>${s.preview}</span></span>`;
+  btn.addEventListener('click', ()=>{
+    const c = canvas.getCenter();
+    createNode(s.type, c.left + (Math.random()*60-30), c.top + (Math.random()*60-30), s.label);
+  });
+  btn.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/shape-type', s.type);
+    e.dataTransfer.setData('text/shape-label', s.label);
+  });
+  shapeListEl.appendChild(btn);
+});
+
+function shapeIconSvg(type){
+  const common = 'width="28" height="20" viewBox="0 0 28 20" fill="none" stroke="#57e6c9" stroke-width="1.6"';
+  switch(type){
+    case 'rect': return `<svg ${common}><rect x="2" y="2" width="24" height="16"/></svg>`;
+    case 'round': return `<svg ${common}><rect x="2" y="2" width="24" height="16" rx="5"/></svg>`;
+    case 'stadium': return `<svg ${common}><rect x="2" y="2" width="24" height="16" rx="8"/></svg>`;
+    case 'subroutine': return `<svg ${common}><rect x="2" y="2" width="24" height="16"/><line x1="6" y1="2" x2="6" y2="18"/><line x1="22" y1="2" x2="22" y2="18"/></svg>`;
+    case 'cylinder': return `<svg ${common}><path d="M2 5 C2 2 26 2 26 5 V15 C26 18 2 18 2 15 Z"/><ellipse cx="14" cy="5" rx="12" ry="3"/></svg>`;
+    case 'circle': return `<svg ${common}><ellipse cx="14" cy="10" rx="12" ry="8"/></svg>`;
+    case 'rhombus': return `<svg ${common}><polygon points="14,2 26,10 14,18 2,10"/></svg>`;
+    case 'hexagon': return `<svg ${common}><polygon points="7,2 21,2 26,10 21,18 7,18 2,10"/></svg>`;
+    case 'parallelogram': return `<svg ${common}><polygon points="8,2 26,2 20,18 2,18"/></svg>`;
+    case 'trapezoid': return `<svg ${common}><polygon points="2,18 26,18 20,2 8,2"/></svg>`;
+    default: return `<svg ${common}></svg>`;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Fabric canvas setup
+--------------------------------------------------------------- */
+const canvas = new fabric.Canvas('canvas', {
+  backgroundColor: '#0d1015',
+  selection: true,
+  preserveObjectStacking: true,
+});
+let nodeCounter = 0;
+let edgeCounter = 0;
+const edges = []; // {id, fromId, toId, type, label, lineObj, headObj, labelObj}
+
+function resizeCanvas(){
+  const wrap = document.querySelector('.canvas-wrap');
+  canvas.setWidth(wrap.clientWidth);
+  canvas.setHeight(wrap.clientHeight);
+  canvas.renderAll();
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Drag from palette onto canvas
+const canvasContainer = document.getElementById('canvas-container');
+canvasContainer.addEventListener('dragover', e=> e.preventDefault());
+canvasContainer.addEventListener('drop', e=>{
+  e.preventDefault();
+  const type = e.dataTransfer.getData('text/shape-type');
+  const label = e.dataTransfer.getData('text/shape-label');
+  if(!type) return;
+  const rect = canvasContainer.getBoundingClientRect();
+  createNode(type, e.clientX-rect.left, e.clientY-rect.top, label);
+});
+
+/* ---------------------------------------------------------------
+   Shape geometry builder (returns a fabric object centered at 0,0)
+--------------------------------------------------------------- */
+function buildShapeGeometry(type){
+  const w = 150, h = 64;
+  const st = NODE_STYLE;
+  switch(type){
+    case 'rect':
+      return new fabric.Rect({ width:w, height:h, rx:0, ry:0, originX:'center', originY:'center', ...st });
+    case 'round':
+      return new fabric.Rect({ width:w, height:h, rx:16, ry:16, originX:'center', originY:'center', ...st });
+    case 'stadium':
+      return new fabric.Rect({ width:w, height:h, rx:h/2, ry:h/2, originX:'center', originY:'center', ...st });
+    case 'subroutine': {
+      const base = new fabric.Rect({ width:w, height:h, left:0, top:0, originX:'center', originY:'center', ...st });
+      const l1 = new fabric.Line([-w/2+9,-h/2,-w/2+9,h/2], { stroke:st.stroke, strokeWidth:2 });
+      const l2 = new fabric.Line([w/2-9,-h/2,w/2-9,h/2], { stroke:st.stroke, strokeWidth:2 });
+      return new fabric.Group([base,l1,l2], { originX:'center', originY:'center' });
+    }
+    case 'cylinder': {
+      const body = new fabric.Rect({ width:w, height:h-16, top:8, left:0, originX:'center', originY:'center', ...st, rx:0, ry:0 });
+      const topE = new fabric.Ellipse({ rx:w/2, ry:10, left:0, top:-h/2+10, originX:'center', originY:'center', ...st });
+      const botE = new fabric.Ellipse({ rx:w/2, ry:10, left:0, top:h/2-10, originX:'center', originY:'center', fill:st.fill, stroke:st.stroke, strokeWidth:st.strokeWidth });
+      return new fabric.Group([body, botE, topE], { originX:'center', originY:'center' });
+    }
+    case 'circle':
+      return new fabric.Ellipse({ rx:w/2, ry:h/2*1.05, originX:'center', originY:'center', ...st });
+    case 'rhombus':
+      return new fabric.Polygon([
+        {x:0,y:-h/2*1.15},{x:w/2,y:0},{x:0,y:h/2*1.15},{x:-w/2,y:0}
+      ], { originX:'center', originY:'center', ...st });
+    case 'hexagon':
+      return new fabric.Polygon([
+        {x:-w/2+18,y:-h/2},{x:w/2-18,y:-h/2},{x:w/2,y:0},{x:w/2-18,y:h/2},{x:-w/2+18,y:h/2},{x:-w/2,y:0}
+      ], { originX:'center', originY:'center', ...st });
+    case 'parallelogram':
+      return new fabric.Polygon([
+        {x:-w/2+20,y:-h/2},{x:w/2,y:-h/2},{x:w/2-20,y:h/2},{x:-w/2,y:h/2}
+      ], { originX:'center', originY:'center', ...st });
+    case 'trapezoid':
+      return new fabric.Polygon([
+        {x:-w/2+20,y:-h/2},{x:w/2-20,y:-h/2},{x:w/2,y:h/2},{x:-w/2,y:h/2}
+      ], { originX:'center', originY:'center', ...st });
+    default:
+      return new fabric.Rect({ width:w, height:h, originX:'center', originY:'center', ...st });
+  }
+}
+
+function createNode(type, left, top, label){
+  const id = 'n' + (++nodeCounter);
+  const geom = buildShapeGeometry(type);
+  const text = new fabric.IText(label || 'Nhãn', {
+    fontFamily:'Inter, sans-serif', fontSize:14, fill:'#e7eaf1', fontWeight:'600',
+    originX:'center', originY:'center', textAlign:'center', editable:false,
+    left:0, top:0, width:120,
+  });
+  const group = new fabric.Group([geom, text], {
+    left, top, originX:'center', originY:'center',
+    hasControls:true, hasBorders:true, lockScalingFlip:true,
+  });
+  group.nodeData = { id, shapeType:type, label: label || 'Nhãn' };
+  group.textObj = text;
+  canvas.add(group);
+  canvas.setActiveObject(group);
+  showToast('Đã thêm khối "' + group.nodeData.label + '"');
+  regenerateMermaid();
+  return group;
+}
+
+/* Double click to rename a node */
+canvas.on('mouse:dblclick', (opt)=>{
+  const obj = opt.target;
+  if(obj && obj.nodeData){
+    const val = prompt('Sửa nhãn khối:', obj.nodeData.label);
+    if(val !== null && val.trim() !== ''){
+      obj.nodeData.label = val.trim();
+      obj.textObj.set('text', val.trim());
+      canvas.requestRenderAll();
+      regenerateMermaid();
+    }
+  } else if(obj && obj.edgeData){
+    editEdgeLabel(obj.edgeData.id);
+  }
+});
+
+/* ---------------------------------------------------------------
+   Connect mode — click two nodes to create an edge between them
+--------------------------------------------------------------- */
+let connectMode = false;
+let connectFirst = null;
+const connectBtn = document.getElementById('connectBtn');
+const modeLabel = document.getElementById('modeLabel');
+
+connectBtn.addEventListener('click', ()=> setConnectMode(!connectMode));
+
+function setConnectMode(on){
+  connectMode = on;
+  connectFirst = null;
+  connectBtn.classList.toggle('active', on);
+  modeLabel.textContent = on ? 'Nối khối — chọn khối nguồn' : 'Chọn / Kéo';
+  canvas.getObjects().forEach(o=>{ if(o.nodeData) o.item(0).set('shadow', null); });
+  canvas.requestRenderAll();
+}
+
+canvas.on('mouse:down', (opt)=>{
+  if(!connectMode) return;
+  const obj = opt.target;
+  if(!obj || !obj.nodeData) return;
+  if(!connectFirst){
+    connectFirst = obj;
+    obj.item(0).set('shadow', new fabric.Shadow({ color:'#57e6c9', blur:18 }));
+    modeLabel.textContent = 'Nối khối — chọn khối đích';
+    canvas.requestRenderAll();
+  } else {
+    if(connectFirst !== obj){
+      createEdge(connectFirst.nodeData.id, obj.nodeData.id);
+    }
+    connectFirst.item(0).set('shadow', null);
+    connectFirst = null;
+    modeLabel.textContent = 'Nối khối — chọn khối nguồn';
+    canvas.requestRenderAll();
+  }
+});
+
+document.addEventListener('keydown', (e)=>{
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'TEXTAREA' || tag === 'INPUT') return;
+  if(e.key === 'c' || e.key === 'C') setConnectMode(!connectMode);
+  if(e.key === 'Escape') setConnectMode(false);
+  if(e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
+});
+
+/* ---------------------------------------------------------------
+   Edge creation / geometry / deletion
+--------------------------------------------------------------- */
+function getEdgeStyleKey(){ return document.getElementById('edgeTypeSelect').value; }
+
+function createEdge(fromId, toId, opts){
+  opts = opts || {};
+  const id = 'e' + (++edgeCounter);
+  const type = opts.type || getEdgeStyleKey();
+  const style = EDGE_SYNTAX[type];
+  const line = new fabric.Line([0,0,0,0], {
+    stroke:'#7c9eff', strokeWidth: style.width, strokeDashArray: style.dash,
+    selectable:true, hasControls:false, hasBorders:false, evented:true,
+  });
+  const head = new fabric.Triangle({
+    width:12, height:14, fill:'#7c9eff', originX:'center', originY:'center',
+    selectable:false, evented:false,
+  });
+  head.visible = style.arrowEnd;
+  const label = new fabric.IText(opts.label || '', {
+    fontFamily:'Inter, sans-serif', fontSize:12, fill:'#c8d0e0',
+    backgroundColor:'#12151b', originX:'center', originY:'center',
+    editable:false, selectable:true,
+  });
+  const edgeData = { id, fromId, toId, type, label: opts.label || '', lineObj:line, headObj:head, labelObj:label };
+  line.edgeData = edgeData; label.edgeData = edgeData;
+  canvas.add(line); canvas.add(head); canvas.add(label);
+  canvas.sendToBack(line);
+  edges.push(edgeData);
+  updateEdgeGeometry(id);
+  regenerateMermaid();
+  return edgeData;
+}
+
+function findNode(id){
+  return canvas.getObjects().find(o=> o.nodeData && o.nodeData.id === id);
+}
+
+function boundaryPoint(node, towardPt){
+  const r = node.getBoundingRect(true, true);
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  let dx = towardPt.x - cx, dy = towardPt.y - cy;
+  if(dx === 0 && dy === 0) return { x:cx, y:cy };
+  const halfW = r.width/2, halfH = r.height/2;
+  const scaleX = halfW / (Math.abs(dx) || 1e-6);
+  const scaleY = halfH / (Math.abs(dy) || 1e-6);
+  const scale = Math.min(scaleX, scaleY);
+  return { x: cx + dx*scale, y: cy + dy*scale };
+}
+
+function updateEdgeGeometry(id){
+  const e = edges.find(x=>x.id===id);
+  if(!e) return;
+  const a = findNode(e.fromId), b = findNode(e.toId);
+  if(!a || !b) return;
+  const ac = a.getCenterPoint(), bc = b.getCenterPoint();
+  const p1 = boundaryPoint(a, bc);
+  const p2 = boundaryPoint(b, ac);
+  e.lineObj.set({ x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y });
+  const angle = Math.atan2(p2.y-p1.y, p2.x-p1.x) * 180/Math.PI;
+  e.headObj.set({ left:p2.x, top:p2.y, angle: angle + 90 });
+  e.labelObj.set({ left:(p1.x+p2.x)/2, top:(p1.y+p2.y)/2 - 10 });
+  e.lineObj.setCoords(); e.headObj.setCoords(); e.labelObj.setCoords();
+}
+
+function updateAllEdgesFor(node){
+  edges.forEach(e=>{ if(e.fromId===node.nodeData.id || e.toId===node.nodeData.id) updateEdgeGeometry(e.id); });
+}
+
+canvas.on('object:moving', (opt)=>{
+  const obj = opt.target;
+  if(obj && obj.nodeData) updateAllEdgesFor(obj);
+});
+canvas.on('object:scaling', (opt)=>{
+  const obj = opt.target;
+  if(obj && obj.nodeData) updateAllEdgesFor(obj);
+});
+canvas.on('object:rotating', (opt)=>{
+  const obj = opt.target;
+  if(obj && obj.nodeData) updateAllEdgesFor(obj);
+});
+
+function removeEdge(id){
+  const idx = edges.findIndex(e=>e.id===id);
+  if(idx === -1) return;
+  const e = edges[idx];
+  canvas.remove(e.lineObj); canvas.remove(e.headObj); canvas.remove(e.labelObj);
+  edges.splice(idx,1);
+}
+
+function editEdgeLabel(id){
+  const e = edges.find(x=>x.id===id);
+  if(!e) return;
+  const val = prompt('Nhãn liên kết (để trống nếu không cần):', e.label || '');
+  if(val !== null){
+    e.label = val.trim();
+    e.labelObj.set('text', e.label);
+    updateEdgeGeometry(id);
+    canvas.requestRenderAll();
+    regenerateMermaid();
+  }
+}
+
+document.getElementById('editEdgeLabelBtn').addEventListener('click', ()=>{
+  const obj = canvas.getActiveObject();
+  if(obj && obj.edgeData) editEdgeLabel(obj.edgeData.id);
+  else showToast('Hãy chọn một liên kết trước');
+});
+
+function applyEdgeType(edgeData, type){
+  const style = EDGE_SYNTAX[type];
+  edgeData.type = type;
+  edgeData.lineObj.set({ strokeWidth: style.width, strokeDashArray: style.dash });
+  edgeData.headObj.set({ visible: style.arrowEnd });
+  canvas.requestRenderAll();
+  regenerateMermaid();
+}
+
+/* Change style of edge type selector -> apply to currently selected edge too */
+document.getElementById('edgeTypeSelect').addEventListener('change', (e)=>{
+  const obj = canvas.getActiveObject();
+  if(obj && obj.edgeData) applyEdgeType(obj.edgeData, e.target.value);
+});
+
+function reverseEdge(id){
+  const e = edges.find(x=>x.id===id);
+  if(!e) return;
+  const tmp = e.fromId; e.fromId = e.toId; e.toId = tmp;
+  updateEdgeGeometry(id);
+  canvas.requestRenderAll();
+  regenerateMermaid();
+}
+
+function removeEdgeAndRefresh(id){
+  removeEdge(id);
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  regenerateMermaid();
+  renderProps(null);
+}
+
+function duplicateNode(node){
+  const copy = createNode(node.nodeData.shapeType, node.left + 44, node.top + 44, node.nodeData.label);
+  return copy;
+}
+
+function changeNodeShape(node, newType){
+  if(node.nodeData.shapeType === newType) return;
+  const text = node.textObj;
+  const oldGeom = node.item(0);
+  node.removeWithUpdate(text);
+  node.removeWithUpdate(oldGeom);
+  const newGeom = buildShapeGeometry(newType);
+  node.addWithUpdate(newGeom);
+  node.addWithUpdate(text);
+  node.nodeData.shapeType = newType;
+  updateAllEdgesFor(node);
+  canvas.requestRenderAll();
+  regenerateMermaid();
+}
+
+function beginConnectFrom(node){
+  setConnectMode(true);
+  connectFirst = node;
+  node.item(0).set('shadow', new fabric.Shadow({ color:'#57e6c9', blur:18 }));
+  modeLabel.textContent = 'Nối khối — chọn khối đích';
+  canvas.requestRenderAll();
+}
+
+function deleteNodeAndRefresh(node){
+  const id = node.nodeData.id;
+  edges.filter(e=>e.fromId===id || e.toId===id).map(e=>e.id).forEach(removeEdge);
+  canvas.remove(node);
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  regenerateMermaid();
+  renderProps(null);
+}
+
+/* ---------------------------------------------------------------
+   Right-click context menu
+--------------------------------------------------------------- */
+let activeContextMenu = null;
+
+function closeContextMenu(){
+  if(activeContextMenu){ activeContextMenu.remove(); activeContextMenu = null; }
+  document.removeEventListener('click', closeContextMenu);
+  document.removeEventListener('contextmenu', closeContextMenuIfOutside);
+}
+function closeContextMenuIfOutside(e){
+  if(activeContextMenu && !activeContextMenu.contains(e.target)) closeContextMenu();
+}
+
+function buildMenuDOM(items, isRoot){
+  const ul = document.createElement('ul');
+  ul.className = isRoot ? 'ctx-menu' : 'ctx-submenu';
+  items.forEach(item=>{
+    if(item.separator){
+      const li = document.createElement('li');
+      li.className = 'ctx-sep';
+      ul.appendChild(li);
+      return;
+    }
+    const li = document.createElement('li');
+    li.className = 'ctx-item' + (item.danger ? ' danger' : '') + (item.submenu ? ' has-sub' : '');
+    const span = document.createElement('span');
+    span.textContent = item.label;
+    li.appendChild(span);
+    if(item.submenu){
+      const arrow = document.createElement('span');
+      arrow.className = 'ctx-arrow';
+      arrow.textContent = '›';
+      li.appendChild(arrow);
+      li.appendChild(buildMenuDOM(item.submenu, false));
+      li.addEventListener('click', (e)=>{ e.stopPropagation(); li.classList.toggle('open'); });
+    } else {
+      li.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        closeContextMenu();
+        if(item.action) item.action();
+      });
+    }
+    ul.appendChild(li);
+  });
+  return ul;
+}
+
+function openContextMenu(clientX, clientY, items){
+  closeContextMenu();
+  const menu = buildMenuDOM(items, true);
+  menu.style.left = clientX + 'px';
+  menu.style.top = clientY + 'px';
+  document.body.appendChild(menu);
+  requestAnimationFrame(()=>{
+    const rect = menu.getBoundingClientRect();
+    if(rect.right > window.innerWidth) menu.style.left = Math.max(4, clientX - rect.width) + 'px';
+    if(rect.bottom > window.innerHeight) menu.style.top = Math.max(4, clientY - rect.height) + 'px';
+  });
+  activeContextMenu = menu;
+  setTimeout(()=>{
+    document.addEventListener('click', closeContextMenu);
+    document.addEventListener('contextmenu', closeContextMenuIfOutside);
+  }, 0);
+}
+
+function nodeMenuItems(node){
+  return [
+    { label:'✏️  Sửa nhãn', action:()=>{
+        const val = prompt('Sửa nhãn khối:', node.nodeData.label);
+        if(val !== null && val.trim() !== ''){
+          node.nodeData.label = val.trim();
+          node.textObj.set('text', val.trim());
+          canvas.requestRenderAll();
+          regenerateMermaid();
+        }
+      }},
+    { label:'🔗  Nối từ khối này', action:()=> beginConnectFrom(node) },
+    { label:'🔷  Đổi hình dạng', submenu: SHAPES.map(s=>({
+        label:(node.nodeData.shapeType===s.type?'● ':'') + s.label + '  ' + s.preview,
+        action:()=> changeNodeShape(node, s.type)
+      })) },
+    { label:'🧬  Nhân đôi', action:()=> duplicateNode(node) },
+    { label:'⬆️  Đưa lên trên cùng', action:()=>{ canvas.bringToFront(node); canvas.requestRenderAll(); } },
+    { separator:true },
+    { label:'🗑️  Xoá khối', danger:true, action:()=> deleteNodeAndRefresh(node) },
+  ];
+}
+
+function edgeMenuItems(edgeTarget){
+  const ed = edgeTarget.edgeData;
+  const typeOptions = Array.from(document.getElementById('edgeTypeSelect').options);
+  return [
+    { label:'✏️  Sửa nhãn liên kết', action:()=> editEdgeLabel(ed.id) },
+    { label:'🔁  Đổi kiểu liên kết', submenu: typeOptions.map(opt=>({
+        label:(ed.type===opt.value?'● ':'') + opt.text,
+        action:()=> applyEdgeType(ed, opt.value)
+      })) },
+    { label:'⇄  Đảo chiều mũi tên', action:()=> reverseEdge(ed.id) },
+    { separator:true },
+    { label:'🗑️  Xoá liên kết', danger:true, action:()=> removeEdgeAndRefresh(ed.id) },
+  ];
+}
+
+function canvasMenuItems(pointer){
+  return [
+    { label:'➕  Thêm khối tại đây', submenu: SHAPES.map(s=>({
+        label:s.label + '  ' + s.preview,
+        action:()=> createNode(s.type, pointer.x, pointer.y, s.label)
+      })) },
+    { separator:true },
+    { label:'🧹  Xoá toàn bộ sơ đồ', danger:true, action:()=>{
+        if(confirm('Xoá toàn bộ sơ đồ?')) document.getElementById('clearBtn').click();
+      }},
+  ];
+}
+
+canvas.upperCanvasEl.addEventListener('contextmenu', (e)=>{
+  e.preventDefault();
+  const target = canvas.findTarget(e, false);
+  const pointer = canvas.getPointer(e);
+  let items;
+  if(target && target.nodeData){
+    canvas.setActiveObject(target);
+    items = nodeMenuItems(target);
+  } else if(target && target.edgeData){
+    canvas.setActiveObject(target);
+    items = edgeMenuItems(target);
+  } else {
+    canvas.discardActiveObject();
+    items = canvasMenuItems(pointer);
+  }
+  canvas.requestRenderAll();
+  openContextMenu(e.clientX, e.clientY, items);
+});
+
+/* ---------------------------------------------------------------
+   Delete selected (node or edge)
+--------------------------------------------------------------- */
+function deleteSelected(){
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'TEXTAREA' || tag === 'INPUT') return;
+  const obj = canvas.getActiveObject();
+  if(!obj) return;
+  if(obj.nodeData){
+    const id = obj.nodeData.id;
+    edges.filter(e=>e.fromId===id || e.toId===id).map(e=>e.id).forEach(removeEdge);
+    canvas.remove(obj);
+  } else if(obj.edgeData){
+    removeEdge(obj.edgeData.id);
+  }
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  regenerateMermaid();
+  renderProps(null);
+}
+document.getElementById('deleteBtn').addEventListener('click', deleteSelected);
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(!confirm('Xoá toàn bộ sơ đồ?')) return;
+  canvas.clear();
+  canvas.backgroundColor = '#0d1015';
+  edges.length = 0;
+  nodeCounter = 0; edgeCounter = 0;
+  canvas.requestRenderAll();
+  regenerateMermaid();
+});
+
+/* ---------------------------------------------------------------
+   Zoom
+--------------------------------------------------------------- */
+let zoom = 1;
+function applyZoom(z){
+  zoom = Math.max(.3, Math.min(2.5, z));
+  canvas.setZoom(zoom);
+  canvas.requestRenderAll();
+}
+document.getElementById('zoomInBtn').addEventListener('click', ()=>applyZoom(zoom+0.1));
+document.getElementById('zoomOutBtn').addEventListener('click', ()=>applyZoom(zoom-0.1));
+document.getElementById('zoomResetBtn').addEventListener('click', ()=>applyZoom(1));
+
+/* ---------------------------------------------------------------
+   Properties panel
+--------------------------------------------------------------- */
+function renderProps(obj){
+  const el = document.getElementById('propsContent');
+  if(!obj){
+    el.innerHTML = '<p class="empty-note">Chọn một khối hoặc liên kết trên canvas để xem/sửa thuộc tính tại đây.</p>';
+    return;
+  }
+  if(obj.nodeData){
+    const shape = SHAPES.find(s=>s.type===obj.nodeData.shapeType);
+    el.innerHTML = `
+      <div class="props-box">
+        <div class="row"><label>Loại khối</label><b>${shape ? shape.label : obj.nodeData.shapeType}</b></div>
+        <div class="row"><label>ID Mermaid</label><b style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${obj.nodeData.id}</b></div>
+        <div class="row"><label>Nhãn</label><input type="text" id="propLabelInput" value="${obj.nodeData.label.replace(/"/g,'&quot;')}"></div>
+      </div>`;
+    document.getElementById('propLabelInput').addEventListener('input', (e)=>{
+      obj.nodeData.label = e.target.value;
+      obj.textObj.set('text', e.target.value || ' ');
+      canvas.requestRenderAll();
+      regenerateMermaid();
+    });
+  } else if(obj.edgeData){
+    el.innerHTML = `
+      <div class="props-box">
+        <div class="row"><label>Liên kết</label><b style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${obj.edgeData.fromId} → ${obj.edgeData.toId}</b></div>
+        <div class="row"><label>Kiểu</label><b>${EDGE_SYNTAX[obj.edgeData.type].line}</b></div>
+        <div class="row"><label>Nhãn</label><input type="text" id="propEdgeLabelInput" value="${(obj.edgeData.label||'').replace(/"/g,'&quot;')}"></div>
+      </div>`;
+    document.getElementById('propEdgeLabelInput').addEventListener('input', (e)=>{
+      obj.edgeData.label = e.target.value;
+      obj.edgeData.labelObj.set('text', e.target.value);
+      updateEdgeGeometry(obj.edgeData.id);
+      canvas.requestRenderAll();
+      regenerateMermaid();
+    });
+  }
+}
+canvas.on('selection:created', (opt)=> renderProps(opt.selected && opt.selected[0]));
+canvas.on('selection:updated', (opt)=> renderProps(opt.selected && opt.selected[0]));
+canvas.on('selection:cleared', ()=> renderProps(null));
+
+/* ---------------------------------------------------------------
+   Mermaid code generation
+--------------------------------------------------------------- */
+function escapeLabel(label){
+  const l = (label || '').trim() || ' ';
+  if(/[^A-Za-z0-9À-ỹ _\-]/.test(l)){
+    return '"' + l.replace(/"/g,'#quot;') + '"';
+  }
+  return l;
+}
+
+function wrapShape(type, label){
+  const s = SHAPES.find(x=>x.type===type) || SHAPES[0];
+  return s.open + escapeLabel(label) + s.close;
+}
+
+function generateMermaid(){
+  const dir = document.getElementById('directionSelect').value;
+  const lines = ['flowchart ' + dir];
+  const nodes = canvas.getObjects().filter(o=>o.nodeData).sort((a,b)=>{
+    return parseInt(a.nodeData.id.slice(1)) - parseInt(b.nodeData.id.slice(1));
+  });
+  nodes.forEach(n=>{
+    lines.push('    ' + n.nodeData.id + wrapShape(n.nodeData.shapeType, n.nodeData.label));
+  });
+  edges.forEach(e=>{
+    const arrow = EDGE_SYNTAX[e.type].line;
+    if(e.label && e.label.trim()){
+      lines.push('    ' + e.fromId + ' ' + arrow + '|' + escapeLabel(e.label) + '| ' + e.toId);
+    } else {
+      lines.push('    ' + e.fromId + ' ' + arrow + ' ' + e.toId);
+    }
+  });
+  return lines.join('\n');
+}
+
+let codeAreaFocused = false;
+const codeArea = document.getElementById('codeArea');
+codeArea.addEventListener('focus', ()=> codeAreaFocused = true);
+codeArea.addEventListener('blur', ()=> codeAreaFocused = false);
+
+function generateMarkdownBlock(){
+  return '```mermaid\n' + generateMermaid() + '\n```';
+}
+
+function regenerateMermaid(){
+  const code = generateMermaid();
+  if(!codeAreaFocused) codeArea.value = code;
+  if(document.getElementById('tab-markdown').classList.contains('active')){
+    document.getElementById('markdownArea').value = generateMarkdownBlock();
+  }
+  if(document.getElementById('tab-preview').classList.contains('active')) renderPreview(code);
+}
+document.getElementById('directionSelect').addEventListener('change', regenerateMermaid);
+
+/* ---------------------------------------------------------------
+   Tabs
+--------------------------------------------------------------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab === 'preview') renderPreview(codeArea.value || generateMermaid());
+    if(tab.dataset.tab === 'code' && !codeAreaFocused) codeArea.value = generateMermaid();
+    if(tab.dataset.tab === 'markdown') document.getElementById('markdownArea').value = generateMarkdownBlock();
+  });
+});
+
+document.getElementById('copyCodeBtn').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(codeArea.value).then(()=> showToast('Đã copy mã Mermaid'));
+});
+
+document.getElementById('copyMarkdownBtn').addEventListener('click', ()=>{
+  const md = document.getElementById('markdownArea').value || generateMarkdownBlock();
+  navigator.clipboard.writeText(md).then(()=> showToast('Đã copy khối Markdown'));
+});
+
+/* ---------------------------------------------------------------
+   Live preview via mermaid.js
+--------------------------------------------------------------- */
+let previewSeq = 0;
+async function renderPreview(code){
+  const pane = document.getElementById('previewPane');
+  try{
+    const id = 'mmd-preview-' + (++previewSeq);
+    const { svg } = await mermaid.render(id, code);
+    pane.innerHTML = svg;
+  } catch(err){
+    pane.innerHTML = '<div class="preview-error">Lỗi cú pháp Mermaid:\n' + (err.message || err) + '</div>';
+  }
+}
+
+/* ---------------------------------------------------------------
+   Import mermaid code back into the canvas (best-effort parser)
+--------------------------------------------------------------- */
+const SHAPE_PATTERNS = [
+  { re:/^\[\[([\s\S]*?)\]\]$/, type:'subroutine' },
+  { re:/^\[\(([\s\S]*?)\)\]$/, type:'cylinder' },
+  { re:/^\(\(([\s\S]*?)\)\)$/, type:'circle' },
+  { re:/^\(\[([\s\S]*?)\]\)$/, type:'stadium' },
+  { re:/^\{\{([\s\S]*?)\}\}$/, type:'hexagon' },
+  { re:/^\[\/([\s\S]*?)\/\]$/, type:'parallelogram' },
+  { re:/^\[\\([\s\S]*?)\\\]$/, type:'trapezoid' },
+  { re:/^\[\\([\s\S]*?)\/\]$/, type:'trapezoid' },
+  { re:/^\[\/([\s\S]*?)\\\]$/, type:'parallelogram' },
+  { re:/^\(([\s\S]*?)\)$/,     type:'round' },
+  { re:/^\{([\s\S]*?)\}$/,     type:'rhombus' },
+  { re:/^\[([\s\S]*?)\]$/,     type:'rect' },
+];
+
+const EDGE_PATTERNS = [
+  { re:/-\.->/,  type:'dottedArrow' },
+  { re:/-\.-(?!>)/, type:'dottedOpen' },
+  { re:/==>/,    type:'thickArrow' },
+  { re:/===/,    type:'thickOpen' },
+  { re:/-->/,    type:'arrow' },
+  { re:/---/,    type:'open' },
+];
+
+function unquote(s){
+  s = s.trim();
+  if(s.startsWith('"') && s.endsWith('"')) s = s.slice(1,-1).replace(/#quot;/g,'"');
+  return s;
+}
+
+function parseNodeToken(token){
+  token = token.trim();
+  const idMatch = token.match(/^([A-Za-z0-9_]+)/);
+  if(!idMatch) return null;
+  const id = idMatch[1];
+  const rest = token.slice(id.length).trim();
+  if(!rest) return { id, type:null, label:null };
+  for(const p of SHAPE_PATTERNS){
+    const m = rest.match(p.re);
+    if(m) return { id, type:p.type, label: unquote(m[1]) };
+  }
+  return { id, type:null, label:null };
+}
+
+function importMermaid(text){
+  canvas.clear();
+  canvas.backgroundColor = '#0d1015';
+  edges.length = 0; nodeCounter = 0; edgeCounter = 0;
+
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l && !l.startsWith('%%'));
+  let dir = 'TD';
+  const nodeRegistry = {}; // mermaidId -> {fabricGroup}
+  const positions = {};
+  let col = 0, row = 0;
+
+  function ensureNode(id, type, label){
+    if(nodeRegistry[id]) {
+      if(type && nodeRegistry[id].nodeData.shapeType !== type){
+        // upgrade shape if a later definition specifies one
+      }
+      if(label){
+        nodeRegistry[id].nodeData.label = label;
+        nodeRegistry[id].textObj.set('text', label);
+      }
+      return nodeRegistry[id];
+    }
+    const x = 160 + (col%4)*220;
+    const y = 120 + Math.floor(col/4)*160;
+    col++;
+    const group = createNodeWithId(id, type || 'rect', x, y, label || id);
+    nodeRegistry[id] = group;
+    return group;
+  }
+
+  lines.forEach(line=>{
+    const headMatch = line.match(/^(flowchart|graph)\s+(TD|TB|LR|BT|RL)/i);
+    if(headMatch){ dir = headMatch[2].toUpperCase() === 'TB' ? 'TD' : headMatch[2].toUpperCase(); return; }
+    if(/^subgraph/i.test(line) || /^end$/i.test(line)) return; // subgraphs not supported visually, skip safely
+
+    let edgeMatch = null, edgeType = null;
+    for(const p of EDGE_PATTERNS){
+      const idx = line.search(p.re);
+      if(idx !== -1){ edgeMatch = p; edgeType = p.type; break; }
+    }
+
+    if(edgeMatch){
+      const parts = line.split(edgeMatch.re);
+      if(parts.length >= 2){
+        let left = parts[0].trim();
+        let right = parts.slice(1).join('').trim();
+        let label = '';
+        const labelMatch = right.match(/^\|([^|]*)\|\s*(.*)$/);
+        if(labelMatch){ label = unquote(labelMatch[1]); right = labelMatch[2].trim(); }
+        const leftNode = parseNodeToken(left);
+        const rightNode = parseNodeToken(right);
+        if(leftNode && rightNode){
+          const a = ensureNode(leftNode.id, leftNode.type, leftNode.label);
+          const b = ensureNode(rightNode.id, rightNode.type, rightNode.label);
+          createEdge(a.nodeData.id, b.nodeData.id, { type: edgeType, label });
+        }
+      }
+    } else {
+      const n = parseNodeToken(line);
+      if(n && n.type) ensureNode(n.id, n.type, n.label);
+    }
+  });
+
+  document.getElementById('directionSelect').value = dir;
+  canvas.requestRenderAll();
+  regenerateMermaid();
+}
+
+function createNodeWithId(customId, type, left, top, label){
+  const geom = buildShapeGeometry(type);
+  const text = new fabric.IText(label || customId, {
+    fontFamily:'Inter, sans-serif', fontSize:14, fill:'#e7eaf1', fontWeight:'600',
+    originX:'center', originY:'center', textAlign:'center', editable:false,
+    left:0, top:0, width:120,
+  });
+  const group = new fabric.Group([geom, text], {
+    left, top, originX:'center', originY:'center',
+    hasControls:true, hasBorders:true, lockScalingFlip:true,
+  });
+  group.nodeData = { id: customId, shapeType:type, label: label || customId };
+  group.textObj = text;
+  canvas.add(group);
+  const n = parseInt(customId.replace(/^\D+/,'')) || 0;
+  if(n > nodeCounter) nodeCounter = n;
+  return group;
+}
+
+document.getElementById('importCodeBtn').addEventListener('click', ()=>{
+  if(!confirm('Nhập mã sẽ thay thế toàn bộ sơ đồ hiện tại. Tiếp tục?')) return;
+  try{
+    importMermaid(codeArea.value);
+    showToast('Đã nhập sơ đồ từ mã Mermaid');
+  } catch(err){
+    alert('Không thể phân tích mã Mermaid: ' + err.message);
+  }
+});
+
+/* ---------------------------------------------------------------
+   Export PNG / Save & Load JSON
+--------------------------------------------------------------- */
+document.getElementById('exportPngBtn').addEventListener('click', ()=>{
+  const dataUrl = canvas.toDataURL({ format:'png', multiplier:2 });
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = 'flowchart.png'; a.click();
+});
+
+function stripMermaidFence(text){
+  const m = text.match(/```(?:mermaid)?\s*([\s\S]*?)```/i);
+  return (m ? m[1] : text).trim();
+}
+
+document.getElementById('saveMermaidBtn').addEventListener('click', ()=>{
+  const code = generateMermaid();
+  const blob = new Blob([code], { type:'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'flowchart.mmd'; a.click();
+  showToast('Đã lưu file .mmd');
+});
+
+document.getElementById('loadMermaidBtn').addEventListener('click', ()=> document.getElementById('loadMermaidInput').click());
+document.getElementById('loadMermaidInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    if(!confirm('Nhập file này sẽ thay thế toàn bộ sơ đồ hiện tại. Tiếp tục?')){ e.target.value=''; return; }
+    try{
+      importMermaid(stripMermaidFence(reader.result));
+      showToast('Đã mở sơ đồ từ ' + file.name);
+    } catch(err){ alert('Không thể đọc file Mermaid: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('saveJsonBtn').addEventListener('click', ()=>{
+  const payload = {
+    direction: document.getElementById('directionSelect').value,
+    nodes: canvas.getObjects().filter(o=>o.nodeData).map(o=>({
+      id:o.nodeData.id, type:o.nodeData.shapeType, label:o.nodeData.label,
+      left:o.left, top:o.top,
+    })),
+    edges: edges.map(e=>({ from:e.fromId, to:e.toId, type:e.type, label:e.label })),
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'flowchart.json'; a.click();
+});
+
+document.getElementById('loadJsonBtn').addEventListener('click', ()=> document.getElementById('loadJsonInput').click());
+document.getElementById('loadJsonInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      canvas.clear(); canvas.backgroundColor = '#0d1015';
+      edges.length = 0; nodeCounter = 0; edgeCounter = 0;
+      document.getElementById('directionSelect').value = data.direction || 'TD';
+      (data.nodes||[]).forEach(n=> createNodeWithId(n.id, n.type, n.left, n.top, n.label));
+      (data.edges||[]).forEach(e=> createEdge(e.from, e.to, { type:e.type, label:e.label }));
+      regenerateMermaid();
+      showToast('Đã mở sơ đồ');
+    } catch(err){ alert('File JSON không hợp lệ: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------------------------------------------------------------
+   Toast helper
+--------------------------------------------------------------- */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+/* ---------------------------------------------------------------
+   Seed with a tiny example so the canvas isn't empty on first load
+--------------------------------------------------------------- */
+(function seed(){
+  const a = createNode('stadium', 200, 90, 'Bắt đầu');
+  const b = createNode('rhombus', 200, 220, 'Đủ điều kiện?');
+  const c = createNode('rect', 420, 220, 'Xử lý yêu cầu');
+  const d = createNode('stadium', 200, 360, 'Kết thúc');
+  createEdge(a.nodeData.id, b.nodeData.id);
+  createEdge(b.nodeData.id, c.nodeData.id, { label:'Có' });
+  createEdge(b.nodeData.id, d.nodeData.id, { label:'Không' });
+  createEdge(c.nodeData.id, d.nodeData.id);
+  regenerateMermaid();
+})();
+</script>
+</body>
+</html>

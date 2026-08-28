@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Explorer — Mock API Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F7;
+  --panel:#FFFFFF;
+  --panel-alt:#F8F9FB;
+  --border:#E1E4EA;
+  --border-strong:#CBD0D9;
+  --text:#1B1F27;
+  --text-muted:#6B7280;
+  --text-faint:#9AA1AC;
+  --accent:#3454D1;
+  --accent-dark:#2540AC;
+  --accent-soft:#EAF0FE;
+  --accent-soft-strong:#D7E2FD;
+  --danger:#D64545;
+  --danger-soft:#FCE9E9;
+  --success:#1E9E6B;
+  --warning:#C97A1B;
+  --focus-ring:0 0 0 2px #fff, 0 0 0 4px var(--accent);
+  --radius-sm:4px;
+  --radius-md:7px;
+  --radius-lg:10px;
+  --shadow-sm:0 1px 2px rgba(20,24,34,.06);
+  --shadow-md:0 4px 16px rgba(20,24,34,.10);
+  --shadow-lg:0 12px 36px rgba(20,24,34,.16);
+  --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+  --row-h:30px;
+  --toolbar-h:48px;
+  --tabbar-h:34px;
+  --pathbar-h:40px;
+  --statusbar-h:26px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;font-family:var(--font-ui);color:var(--text);background:var(--bg);
+  font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;}
+input,select{font-family:inherit;font-size:inherit;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+.mono{font-family:var(--font-mono);}
+svg{display:block;flex-shrink:0;}
+.icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.icon-fill{fill:currentColor;stroke:none;}
+
+/* ---------- App shell ---------- */
+.app{
+  display:flex;flex-direction:column;height:100vh;width:100vw;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar{
+  height:var(--toolbar-h);flex:0 0 auto;display:flex;align-items:center;gap:4px;
+  padding:0 10px;background:var(--panel);border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow-sm);z-index:30;position:relative;
+}
+.toolbar__brand{
+  display:flex;align-items:center;gap:8px;padding-right:10px;margin-right:6px;
+  border-right:1px solid var(--border);color:var(--accent);font-weight:700;font-size:14px;
+}
+.toolbar__group{display:flex;align-items:center;gap:2px;padding:0 6px;position:relative;}
+.toolbar__group + .toolbar__group{border-left:1px solid var(--border);}
+.tbtn{
+  display:flex;align-items:center;gap:6px;height:32px;padding:0 9px;border:1px solid transparent;
+  background:transparent;border-radius:var(--radius-sm);cursor:pointer;color:var(--text);white-space:nowrap;
+  transition:background .1s,border-color .1s;
+}
+.tbtn:hover:not(:disabled){background:var(--panel-alt);border-color:var(--border);}
+.tbtn:active:not(:disabled){background:var(--accent-soft);}
+.tbtn.is-active{background:var(--accent-soft);border-color:var(--accent-soft-strong);color:var(--accent-dark);}
+.tbtn:disabled{opacity:.35;cursor:not-allowed;}
+.tbtn__label{font-size:12.5px;}
+.tbtn--danger:hover:not(:disabled){background:var(--danger-soft);color:var(--danger);}
+.toolbar__spacer{flex:1;}
+.toolbar__jobs{
+  display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;border:1px solid var(--border);
+  border-radius:var(--radius-md);cursor:pointer;background:var(--panel-alt);
+}
+.toolbar__jobs.has-running{border-color:var(--accent);color:var(--accent-dark);}
+.jobs-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* dropdown menu (More tools) */
+.dropdown{position:relative;}
+.dropdown__panel{
+  position:absolute;top:calc(100% + 6px);left:0;min-width:230px;background:var(--panel);
+  border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);
+  padding:6px;z-index:80;
+}
+.dropdown__panel.right{left:auto;right:0;}
+.dropdown__item{
+  display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--radius-sm);cursor:pointer;
+  color:var(--text);
+}
+.dropdown__item:hover:not(.is-disabled){background:var(--accent-soft);}
+.dropdown__item.is-disabled{color:var(--text-faint);cursor:not-allowed;}
+.dropdown__sep{height:1px;background:var(--border);margin:5px 2px;}
+.dropdown__hint{margin-left:auto;font-size:11px;color:var(--text-faint);}
+.dropdown__section-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:6px 9px 2px;}
+
+/* ---------- Workspace layout ---------- */
+.workspace{flex:1;display:flex;min-height:0;}
+.tree-pane{
+  width:230px;flex:0 0 auto;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;min-height:0;
+}
+.tree-pane__header{
+  height:36px;flex:0 0 auto;display:flex;align-items:center;padding:0 12px;font-size:11px;
+  font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);
+  border-bottom:1px solid var(--border);
+}
+.tree-pane__body{flex:1;overflow:auto;padding:6px 4px;}
+.tree-node{user-select:none;}
+.tree-row{
+  display:flex;align-items:center;gap:4px;height:27px;padding:0 6px;border-radius:var(--radius-sm);
+  cursor:pointer;color:var(--text);white-space:nowrap;
+}
+.tree-row:hover{background:var(--panel-alt);}
+.tree-row.is-active{background:var(--accent-soft);color:var(--accent-dark);font-weight:600;}
+.tree-row.is-dragover{outline:1.5px dashed var(--accent);background:var(--accent-soft);}
+.tree-caret{
+  width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  color:var(--text-faint);transition:transform .12s;
+}
+.tree-caret.is-open{transform:rotate(90deg);}
+.tree-caret.is-empty{visibility:hidden;}
+.tree-row__icon{color:#E5A028;flex:0 0 auto;}
+.tree-row__label{overflow:hidden;text-overflow:ellipsis;font-size:12.5px;}
+.tree-children{overflow:hidden;}
+
+.panels{flex:1;display:flex;min-width:0;min-height:0;}
+.panels.is-dual .panel{width:50%;}
+.panels.is-dual .panel + .panel{border-left:1px solid var(--border);}
+.panel{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--panel);position:relative;}
+.panel.is-active-panel{box-shadow:inset 0 0 0 2px var(--accent-soft-strong);}
+
+.panel__tabs{
+  height:var(--tabbar-h);flex:0 0 auto;display:flex;align-items:flex-end;gap:2px;padding:4px 6px 0;
+  background:var(--panel-alt);border-bottom:1px solid var(--border);overflow-x:auto;
+}
+.tab{
+  display:flex;align-items:center;gap:6px;height:28px;padding:0 8px 0 11px;max-width:180px;
+  background:var(--panel-alt);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;
+  cursor:pointer;color:var(--text-muted);position:relative;top:1px;
+}
+.tab.is-active{background:var(--panel);color:var(--text);border-color:var(--border);font-weight:500;}
+.tab__label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
+.tab__close{
+  width:16px;height:16px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-faint);flex:0 0 auto;
+}
+.tab__close:hover{background:var(--danger-soft);color:var(--danger);}
+.tab__add{
+  width:26px;height:26px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  color:var(--text-faint);border-radius:5px;cursor:pointer;
+}
+.tab__add:hover{background:var(--panel);color:var(--accent);}
+
+.panel__pathbar{
+  height:var(--pathbar-h);flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 8px;
+  border-bottom:1px solid var(--border);background:var(--panel);
+}
+.breadcrumb{
+  flex:1;display:flex;align-items:center;gap:2px;overflow-x:auto;min-width:0;
+  padding:5px 8px;background:var(--panel-alt);border:1px solid var(--border);border-radius:var(--radius-md);
+  height:28px;
+}
+.breadcrumb.is-dragover{outline:1.5px dashed var(--accent);}
+.crumb{
+  padding:2px 6px;border-radius:4px;cursor:pointer;color:var(--text-muted);white-space:nowrap;font-size:12.5px;
+}
+.crumb:hover{background:var(--accent-soft);color:var(--accent-dark);}
+.crumb.is-last{color:var(--text);font-weight:600;}
+.crumb-sep{color:var(--text-faint);font-size:11px;}
+.search-box{
+  display:flex;align-items:center;gap:5px;width:150px;height:28px;padding:0 8px;background:var(--panel-alt);
+  border:1px solid var(--border);border-radius:var(--radius-md);color:var(--text-faint);
+}
+.search-box input{border:none;background:transparent;outline:none;width:100%;color:var(--text);}
+.view-switch{display:flex;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+.view-switch button{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--panel);
+  color:var(--text-muted);border-right:1px solid var(--border);cursor:pointer;
+}
+.view-switch button:last-child{border-right:none;}
+.view-switch button:hover{background:var(--panel-alt);}
+.view-switch button.is-active{background:var(--accent-soft);color:var(--accent-dark);}
+.thumb-size-select{
+  height:28px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--panel);
+  padding:0 6px;color:var(--text);
+}
+.iconbtn{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
+  border-radius:var(--radius-md);background:var(--panel);color:var(--text-muted);cursor:pointer;
+}
+.iconbtn:hover{background:var(--panel-alt);color:var(--text);}
+
+.panel__body{flex:1;min-height:0;position:relative;overflow:auto;background:var(--panel);outline:none;}
+.panel__body.is-dragover-fs::after{
+  content:'Thả tệp để tải lên thư mục này';display:flex;align-items:center;justify-content:center;
+  position:absolute;inset:6px;border:2px dashed var(--accent);border-radius:var(--radius-lg);
+  background:rgba(52,84,209,.06);color:var(--accent-dark);font-weight:600;pointer-events:none;z-index:20;
+}
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;
+  color:var(--text-faint);gap:8px;
+}
+.empty-state .icon{width:34px;height:34px;opacity:.6;}
+
+/* virtual scroller */
+.vs-spacer{position:relative;width:100%;}
+.vs-content{position:absolute;top:0;left:0;right:0;}
+
+/* detail / list rows */
+.detail-header{
+  position:sticky;top:0;z-index:5;display:flex;height:30px;background:var(--panel-alt);
+  border-bottom:1px solid var(--border);font-size:11.5px;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:.03em;
+}
+.detail-header__cell{
+  display:flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer;border-right:1px solid var(--border);
+  overflow:hidden;
+}
+.detail-header__cell:hover{background:var(--panel);color:var(--text);}
+.detail-header__cell .sort-arrow{opacity:0;font-size:10px;}
+.detail-header__cell.is-sorted .sort-arrow{opacity:1;color:var(--accent);}
+.row{
+  display:flex;height:var(--row-h);align-items:center;cursor:default;border-bottom:1px solid #F0F1F4;
+}
+.row:hover{background:var(--panel-alt);}
+.row.is-selected{background:var(--accent-soft);}
+.row.is-selected:hover{background:var(--accent-soft-strong);}
+.row.is-dragover{outline:1.5px dashed var(--accent);outline-offset:-2px;}
+.row.is-cut{opacity:.45;}
+.cell{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);border-right:1px solid transparent;}
+.cell--name{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
+.cell--muted{color:var(--text-muted);font-family:var(--font-mono);font-size:12px;}
+.row-icon{width:16px;height:16px;flex:0 0 auto;}
+.row-icon.folder{color:#E5A028;}
+.row-name-input{
+  border:1px solid var(--accent);border-radius:3px;padding:1px 5px;font-family:inherit;font-size:inherit;
+  width:100%;
+}
+
+/* grid (thumbnail / icon) */
+.grid-row{display:flex;gap:14px;padding:0 14px;}
+.grid-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:var(--radius-md);
+  cursor:default;border:1px solid transparent;
+}
+.grid-item:hover{background:var(--panel-alt);}
+.grid-item.is-selected{background:var(--accent-soft);border-color:var(--accent-soft-strong);}
+.grid-item.is-dragover{outline:1.5px dashed var(--accent);}
+.grid-item.is-cut{opacity:.45;}
+.grid-thumb{
+  display:flex;align-items:center;justify-content:center;background:var(--panel-alt);border:1px solid var(--border);
+  border-radius:var(--radius-md);overflow:hidden;color:var(--text-faint);position:relative;
+}
+.grid-thumb img{width:100%;height:100%;object-fit:cover;}
+.grid-thumb .icon{width:42%;height:42%;}
+.grid-thumb .play-badge{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,24,34,.28);
+}
+.grid-label{
+  font-size:12px;text-align:center;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;line-height:1.25;color:var(--text);width:100%;
+}
+
+/* ---------- Preview pane ---------- */
+.preview-pane{
+  width:320px;flex:0 0 auto;background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;min-height:0;
+}
+.preview-pane[hidden]{display:none;}
+.preview-pane__header{
+  height:36px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 12px;
+  border-bottom:1px solid var(--border);font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--text-faint);
+}
+.preview-pane__body{flex:1;overflow:auto;padding:14px;}
+.preview-visual{
+  width:100%;aspect-ratio:4/3;background:var(--panel-alt);border:1px solid var(--border);border-radius:var(--radius-md);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:12px;color:var(--text-faint);
+  position:relative;
+}
+.preview-visual img{width:100%;height:100%;object-fit:contain;}
+.preview-visual .icon{width:56px;height:56px;}
+.preview-name{font-weight:600;font-size:13.5px;margin-bottom:4px;word-break:break-word;}
+.preview-meta{color:var(--text-muted);font-size:12px;margin-bottom:12px;}
+.preview-meta div{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--border);}
+.preview-meta span:first-child{color:var(--text-faint);}
+.preview-text{
+  white-space:pre-wrap;font-family:var(--font-mono);font-size:11.5px;background:var(--panel-alt);
+  border:1px solid var(--border);border-radius:var(--radius-md);padding:10px;max-height:220px;overflow:auto;
+}
+.preview-video-fake{width:100%;}
+.preview-video-fake .bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px;}
+.preview-video-fake .bar__fill{height:100%;background:var(--accent);width:0%;transition:width .1s linear;}
+.play-fake-btn{
+  display:flex;align-items:center;gap:6px;margin-top:6px;border:1px solid var(--border);background:var(--panel);
+  border-radius:var(--radius-md);padding:6px 10px;cursor:pointer;color:var(--text);
+}
+.play-fake-btn:hover{background:var(--panel-alt);}
+
+/* ---------- Status bar ---------- */
+.statusbar{
+  height:var(--statusbar-h);flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:0 12px;
+  background:var(--panel-alt);border-top:1px solid var(--border);font-size:11.5px;color:var(--text-muted);
+}
+.statusbar__path{font-family:var(--font-mono);color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+
+/* ---------- Context menu ---------- */
+.context-menu{
+  position:fixed;min-width:210px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-md);
+  box-shadow:var(--shadow-lg);padding:6px;z-index:200;
+}
+.context-menu[hidden]{display:none;}
+
+/* ---------- Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,24,34,.35);display:flex;align-items:center;justify-content:center;z-index:300;
+}
+.modal-overlay[hidden]{display:none;}
+.modal{
+  width:420px;max-width:92vw;background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);
+  padding:20px;
+}
+.modal h3{margin:0 0 4px;font-size:15px;}
+.modal p.modal-sub{margin:0 0 14px;color:var(--text-muted);font-size:12.5px;}
+.modal input[type=text]{
+  width:100%;height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:0 10px;
+  margin-bottom:14px;outline:none;
+}
+.modal input[type=text]:focus{border-color:var(--accent);}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+.btn{
+  height:34px;padding:0 15px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);background:var(--panel);
+  cursor:pointer;font-weight:500;
+}
+.btn:hover{background:var(--panel-alt);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-dark);}
+.btn-danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+.btn-danger:hover{background:#B93838;}
+.col-list{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;max-height:260px;overflow:auto;}
+.col-list__item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--radius-sm);}
+.col-list__item:hover{background:var(--panel-alt);}
+.col-list__item .grow{flex:1;font-size:12.5px;}
+.col-list__item button{width:24px;height:24px;border:1px solid var(--border);background:var(--panel);border-radius:4px;cursor:pointer;color:var(--text-muted);}
+.col-list__item button:hover{background:var(--panel-alt);}
+select.fmt-select{width:100%;height:34px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);margin-bottom:14px;padding:0 8px;}
+
+/* ---------- Jobs tray ---------- */
+.jobs-tray{
+  position:fixed;bottom:calc(var(--statusbar-h) + 12px);right:12px;width:300px;max-height:60vh;overflow:auto;
+  display:flex;flex-direction:column;gap:8px;z-index:150;
+}
+.jobs-tray[hidden]{display:none;}
+.job-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-md);padding:10px 12px;}
+.job-card__top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.job-card__title{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.job-card__status{font-size:11px;color:var(--text-faint);}
+.job-card__status.done{color:var(--success);}
+.job-card__status.error{color:var(--danger);}
+.job-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.job-bar__fill{height:100%;background:var(--accent);width:0%;transition:width .15s ease;}
+.job-bar__fill.done{background:var(--success);}
+.job-bar__fill.error{background:var(--danger);}
+
+/* ---------- Toast ---------- */
+.toast-stack{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{
+  background:#1B1F27;color:#fff;padding:9px 16px;border-radius:var(--radius-md);font-size:12.5px;box-shadow:var(--shadow-md);
+  opacity:0;transform:translateY(-6px);transition:opacity .18s,transform .18s;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+
+.hidden-input{display:none;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#D3D7DE;border-radius:6px;border:2px solid var(--panel);}
+::-webkit-scrollbar-thumb:hover{background:#B9BFC9;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <header class="toolbar" id="toolbar">
+    <div class="toolbar__brand">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+      Explorer
+    </div>
+    <div class="toolbar__group" id="tg-create"></div>
+    <div class="toolbar__group" id="tg-clipboard"></div>
+    <div class="toolbar__group" id="tg-transfer"></div>
+    <div class="toolbar__group" id="tg-more"></div>
+    <div class="toolbar__spacer"></div>
+    <div class="toolbar__group" id="tg-layout"></div>
+    <div class="toolbar__jobs" id="jobsToggle">
+      <span class="jobs-dot" id="jobsDot" style="display:none;"></span>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 8v4l3 3M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9Z"/></svg>
+      <span id="jobsCount">Tác vụ</span>
+    </div>
+  </header>
+
+  <!-- ===================== WORKSPACE ===================== -->
+  <div class="workspace">
+    <aside class="tree-pane">
+      <div class="tree-pane__header">Cây thư mục</div>
+      <div class="tree-pane__body" id="treeBody"></div>
+    </aside>
+
+    <div class="panels" id="panelsRoot"></div>
+
+    <aside class="preview-pane" id="previewPane">
+      <div class="preview-pane__header">
+        <span>Xem nhanh</span>
+        <button class="iconbtn" id="previewCloseBtn" title="Đóng"><svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="preview-pane__body" id="previewBody">
+        <div class="empty-state" style="height:auto;padding-top:40px;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+          <div>Chọn 1 tệp để xem nhanh</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer class="statusbar" id="statusbar">
+    <span class="statusbar__path" id="statusPath">/</span>
+    <span id="statusCount">0 mục</span>
+    <span id="statusSelected"></span>
+  </footer>
+</div>
+
+<div class="jobs-tray" id="jobsTray" hidden></div>
+<div class="toast-stack" id="toastStack"></div>
+<div class="context-menu" id="contextMenu" hidden></div>
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" id="modal"></div>
+</div>
+<input type="file" id="uploadInput" class="hidden-input" multiple>
+
+<script>
+'use strict';
+/* =========================================================================================
+   FILE EXPLORER — FRONTEND DEMO VỚI MOCK API
+   ------------------------------------------------------------------------------------------
+   Toàn bộ dữ liệu & thao tác (list/copy/move/upload/download/tool...) đều được MOCK trong bộ
+   nhớ trình duyệt (không có backend thật). Khi triển khai thật, chỉ cần thay nội dung bên
+   trong đối tượng `MockAPI` (đánh dấu === API CONTRACT === bên dưới) bằng các lệnh gọi HTTP
+   thật (fetch) tới backend của bạn — phần UI ở trên hoàn toàn không cần đổi vì đã lập trình
+   dựa theo hợp đồng (contract) trả về Promise.
+   ========================================================================================= */
+
+/* ============================== 1. TIỆN ÍCH CHUNG ============================== */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const uid = (() => { let n=0; return (p='id') => `${p}_${(++n).toString(36)}_${Date.now().toString(36)}`; })();
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
+const randDelay = (min=150, max=500) => delay(min + Math.random()*(max-min));
+const clamp = (v,a,b) => Math.max(a, Math.min(b,v));
+
+function fmtSize(bytes){
+  if(bytes == null) return '';
+  if(bytes < 1024) return bytes + ' B';
+  const units = ['KB','MB','GB','TB'];
+  let v = bytes, i = -1;
+  do { v/=1024; i++; } while(v >= 1024 && i < units.length-1);
+  return v.toFixed(v<10?2:1) + ' ' + units[i];
+}
+function fmtDate(ts){
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function extOf(name){
+  const m = /\.([a-zA-Z0-9]+)$/.exec(name);
+  return m ? m[1].toLowerCase() : '';
+}
+function joinPath(parent, name){
+  return parent === '/' ? '/' + name : parent + '/' + name;
+}
+function parentOf(path){
+  if(path === '/') return null;
+  const idx = path.lastIndexOf('/');
+  return idx <= 0 ? '/' : path.slice(0, idx);
+}
+function nameOf(path){
+  if(path === '/') return 'Gốc';
+  return path.slice(path.lastIndexOf('/')+1);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const stack = $('#toastStack');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  stack.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 250); }, 2600);
+}
+
+/* ============================== 2. ICON SVG (dùng chung tree/list/grid/preview) ============================== */
+const ICONS = {
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/>',
+  folderOpen: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2H9l-2 8H3V7Z"/><path d="M7 20l2.4-8H21l-2 6a2 2 0 0 1-2 2H7Z"/>',
+  file: '<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="m4 18 5-5 3.5 3.5L17 12l4 4"/>',
+  audio: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  video: '<rect x="2.5" y="5.5" width="14" height="13" rx="2"/><path d="m21.5 8.5-4.5 3 4.5 3v-6Z"/>',
+  archive: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 8h4M13 12h4M13 16h2"/>',
+  code: '<path d="m8 5-6 7 6 7M16 5l6 7-6 7"/>',
+  sheet: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>',
+  doc: '<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M8 12h8M8 16h8M8 8h3"/>',
+  pdf: '<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/><path d="M8 15.5h1.3a1 1 0 0 0 0-2H8v3.5M12.3 13.5v3.5h.7a1.7 1.7 0 0 0 0-3.5h-.7ZM17 13.5h-1.7v3.5M15.3 15h1.4"/>',
+  play: '<path d="M8 5v14l11-7L8 5Z"/>',
+  chevronRight: '<path d="m9 6 6 6-6 6"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  upload: '<path d="M12 19V6M6 12l6-6 6 6"/><path d="M5 21h14"/>',
+  download: '<path d="M12 5v13M6 12l6 6 6-6"/><path d="M5 21h14"/>',
+  newFolder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="M12 11v5M9.5 13.5h5"/>',
+  copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+  cut: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="m8.5 7.5 11 9M20 4 8.5 16.5"/>',
+  paste: '<rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/>',
+  rename: '<path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M13 6l3 3"/>',
+  refresh: '<path d="M4 12a8 8 0 0 1 14-5.3L21 9M4 12a8 8 0 0 0 14 5.3L21 15"/><path d="M21 4v5h-5M3 20v-5h5"/>',
+  selectAll: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="m8 12 3 3 5-6"/>',
+  more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  layoutSingle: '<rect x="3" y="4" width="18" height="16" rx="2"/>',
+  layoutDual: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>',
+  preview: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
+  viewList: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  viewDetail: '<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M9 9v11"/>',
+  viewThumb: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  viewIcon: '<rect x="4" y="4" width="4.5" height="4.5" rx="1"/><rect x="14.5" y="4" width="4.5" height="4.5" rx="1"/><rect x="4" y="14.5" width="4.5" height="4.5" rx="1"/><rect x="14.5" y="14.5" width="4.5" height="4.5" rx="1"/>',
+  columns: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/>',
+  checksum: '<path d="M9 11.5 11 14l4.5-5"/><circle cx="12" cy="12" r="9"/>',
+  split: '<path d="M6 3v6l6 3 6-3V3M6 21v-6l6-3 6 3v6"/>',
+  merge: '<path d="M6 3v6l6 3 6-3V3M12 12v9"/>',
+  convert: '<path d="M4 7h13M17 7l-3-3M17 7l-3 3M20 17H7M7 17l3-3M7 17l3 3"/>',
+  zip: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M11 6h2v3h-2v3h2v3h-2"/>',
+  properties: '<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',
+  close: '<path d="M6 6l12 12M18 6 6 18"/>',
+  warn: '<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/>',
+};
+function svgIcon(name, cls='icon'){ return `<svg class="${cls}" viewBox="0 0 24 24">${ICONS[name]||ICONS.file}</svg>`; }
+
+const EXT_ICON_MAP = {
+  jpg:'image',jpeg:'image',png:'image',gif:'image',webp:'image',svg:'image',bmp:'image',
+  mp3:'audio',wav:'audio',ogg:'audio',flac:'audio',
+  mp4:'video',mov:'video',webm:'video',mkv:'video',
+  zip:'archive','7z':'archive',rar:'archive',tar:'archive',gz:'archive',
+  js:'code',ts:'code',html:'code',css:'code',json:'code',py:'code',java:'code',c:'code',cpp:'code',sh:'code',
+  xlsx:'sheet',xls:'sheet',csv:'sheet',
+  doc:'doc',docx:'doc',txt:'doc',md:'doc',
+  pdf:'pdf',
+};
+const EXT_COLOR_MAP = {
+  image:'#3454D1', audio:'#C97A1B', video:'#7A3FD6', archive:'#6B7280', code:'#1E9E6B',
+  sheet:'#1E9E6B', doc:'#3454D1', pdf:'#D64545',
+};
+function iconForFile(node){
+  if(node.type === 'folder') return {icon:'folder', color:'#E5A028'};
+  const key = EXT_ICON_MAP[node.ext] || 'file';
+  return {icon:key, color: EXT_COLOR_MAP[key] || '#8A8F98'};
+}
+const TEXT_EXTS = new Set(['txt','md','json','js','ts','html','css','csv','log','xml','py']);
+const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','webp','svg','bmp']);
+const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac']);
+const VIDEO_EXTS = new Set(['mp4','mov','webm','mkv']);
+
+/* ============================== 3. TẠO ẢNH / ÂM THANH GIẢ LẬP ============================== */
+// Sinh ảnh placeholder bằng canvas (đóng vai trò dữ liệu ảnh thật khi chưa có backend).
+const _imgCache = new Map();
+function generatePlaceholderImage(node, size=256){
+  const cacheKey = node.path + '@' + size;
+  if(_imgCache.has(cacheKey)) return _imgCache.get(cacheKey);
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  let hash = 0;
+  for(let i=0;i<node.name.length;i++) hash = (hash*31 + node.name.charCodeAt(i)) >>> 0;
+  const hue1 = hash % 360, hue2 = (hue1 + 55) % 360;
+  const grad = ctx.createLinearGradient(0,0,size,size);
+  grad.addColorStop(0, `hsl(${hue1} 65% 58%)`);
+  grad.addColorStop(1, `hsl(${hue2} 65% 42%)`);
+  ctx.fillStyle = grad; ctx.fillRect(0,0,size,size);
+  ctx.fillStyle = 'rgba(255,255,255,.16)';
+  for(let i=0;i<5;i++){
+    ctx.beginPath();
+    ctx.arc((hash*(i+3))%size, (hash*(i+7))%size, size*0.12 + i*size*0.03, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.font = `${Math.round(size*0.11)}px Inter, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const label = node.ext ? node.ext.toUpperCase() : 'IMG';
+  ctx.fillText(label, size/2, size/2);
+  const url = canvas.toDataURL('image/png');
+  _imgCache.set(cacheKey, url);
+  return url;
+}
+let _silentWavCache = null;
+function generateSilentWavDataUrl(seconds=8, sampleRate=8000){
+  if(_silentWavCache) return _silentWavCache;
+  const numSamples = seconds*sampleRate;
+  const buffer = new ArrayBuffer(44 + numSamples*2);
+  const view = new DataView(buffer);
+  const writeStr = (off,str) => { for(let i=0;i<str.length;i++) view.setUint8(off+i, str.charCodeAt(i)); };
+  writeStr(0,'RIFF'); view.setUint32(4, 36+numSamples*2, true); writeStr(8,'WAVE');
+  writeStr(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+  view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true);
+  view.setUint16(32,2,true); view.setUint16(34,16,true);
+  writeStr(36,'data'); view.setUint32(40, numSamples*2, true);
+  // Chèn một sóng sine rất nhỏ để không hoàn toàn im lặng (dễ nhận biết đang phát demo)
+  for(let i=0;i<numSamples;i++){
+    const v = Math.sin(i/sampleRate * 2*Math.PI * 220) * 800;
+    view.setInt16(44 + i*2, v, true);
+  }
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunk = 0x8000;
+  for(let i=0;i<bytes.length;i+=chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i,i+chunk));
+  _silentWavCache = 'data:audio/wav;base64,' + btoa(binary);
+  return _silentWavCache;
+}
+function generateLoremText(node){
+  const words = ('dữ liệu demo được sinh tự động cho tệp này khi kết nối API thật nội dung sẽ được ' +
+    'trả về từ backend của bạn hệ thống mô phỏng độ trễ mạng và cấu trúc phản hồi giống thật để bạn ' +
+    'phát triển giao diện trước sau đó chỉ cần thay thế lớp MockAPI mà không cần sửa phần hiển thị ' +
+    'file explorer hỗ trợ xem nhanh văn bản ảnh âm thanh và video ngay trong bảng xem trước bên phải').split(' ');
+  let out = `// ${node.name}\n// (nội dung mock — thay bằng dữ liệu thật từ backend)\n\n`;
+  for(let p=0;p<3;p++){
+    let line = '';
+    for(let i=0;i<22;i++) line += words[(i*7+p*13+node.name.length)%words.length] + ' ';
+    out += line.trim() + '.\n\n';
+  }
+  return out;
+}
+
+/* ============================== 4. HỆ THỐNG TỆP MÔ PHỎNG (in-memory) ============================== */
+const fsNodes = new Map();    // path -> node {name,path,type,ext,size,modified,mime}
+const fsChildren = new Map(); // path -> [childPath, ...] (thứ tự chèn)
+
+function addFolder(parentPath, name){
+  const path = joinPath(parentPath, name);
+  fsNodes.set(path, {name, path, type:'folder', modified: Date.now() - Math.floor(Math.random()*20)*86400000});
+  if(!fsChildren.has(path)) fsChildren.set(path, []);
+  fsChildren.get(parentPath).push(path);
+  return path;
+}
+function addFile(parentPath, name, size, modifiedOffsetDays=0){
+  const path = joinPath(parentPath, name);
+  fsNodes.set(path, {
+    name, path, type:'file', ext: extOf(name), size,
+    modified: Date.now() - modifiedOffsetDays*86400000,
+  });
+  fsChildren.get(parentPath).push(path);
+  return path;
+}
+function uniqueNameIn(parentPath, desiredName){
+  const children = fsChildren.get(parentPath) || [];
+  const existing = new Set(children.map(p => fsNodes.get(p).name));
+  if(!existing.has(desiredName)) return desiredName;
+  const dot = desiredName.lastIndexOf('.');
+  const base = dot > 0 ? desiredName.slice(0,dot) : desiredName;
+  const ext = dot > 0 ? desiredName.slice(dot) : '';
+  let i = 2;
+  while(existing.has(`${base} (${i})${ext}`)) i++;
+  return `${base} (${i})${ext}`;
+}
+function renamePathRecursive(oldPath, newParentPath, newName){
+  const node = fsNodes.get(oldPath);
+  const newPath = joinPath(newParentPath, newName);
+  fsNodes.delete(oldPath);
+  node.path = newPath; node.name = newName;
+  fsNodes.set(newPath, node);
+  if(node.type === 'folder'){
+    const children = (fsChildren.get(oldPath) || []).slice();
+    fsChildren.delete(oldPath);
+    const newChildren = children.map(childOld => renamePathRecursive(childOld, newPath, nameOf(childOld)));
+    fsChildren.set(newPath, newChildren);
+  }
+  return newPath;
+}
+
+fsChildren.set('/', []);
+fsNodes.set('/', {name:'Gốc', path:'/', type:'folder', modified: Date.now()});
+
+(function seed(){
+  addFolder('/', 'Documents');
+  addFolder('/', 'Pictures');
+  addFolder('/', 'Music');
+  addFolder('/', 'Videos');
+  addFolder('/', 'Projects');
+  addFolder('/', 'Kho lưu trữ (10.000 tệp)');
+
+  addFile('/Documents', 'Báo cáo Q3-2026.docx', 245_000, 2);
+  addFile('/Documents', 'Ngân sách dự án.xlsx', 88_400, 5);
+  addFile('/Documents', 'Ghi chú họp.md', 3_200, 1);
+  addFile('/Documents', 'ke-hoach.txt', 1_050, 9);
+  addFolder('/Documents', 'Hợp đồng');
+  addFile('/Documents/Hợp đồng', 'HĐ số 12-2026.pdf', 512_300, 30);
+  addFile('/Documents/Hợp đồng', 'Phụ lục A.pdf', 128_900, 30);
+  addFolder('/Documents', 'Đã lưu trữ');
+  addFile('/Documents/Đã lưu trữ', 'so-lieu-cu.csv', 45_000, 200);
+
+  const picNames = ['hoang-hon-vinh-ha-long','chan-dung-01','phong-canh-sapa','team-outing-2026',
+    'logo-cong-ty','banner-web','anh-bia-fb','mockup-app','ve-tay-01','anh-san-pham'];
+  picNames.forEach((n,i) => addFile('/Pictures', `${n}.${i%3===0?'png':'jpg'}`, 1_200_000 + i*88_000, i));
+  addFolder('/Pictures', 'Ảnh cũ');
+  addFile('/Pictures/Ảnh cũ', 'scan-001.jpg', 3_400_000, 400);
+
+  ['lofi-beat-01','podcast-tap-12','nhac-nen-video','ghi-am-phong-van','effect-thong-bao']
+    .forEach((n,i) => addFile('/Music', `${n}.mp3`, 3_800_000 + i*400_000, i*2));
+
+  ['demo-app-walkthrough','review-san-pham-Q3','hop-truc-tuyen-ghi-hinh','trailer-du-an']
+    .forEach((n,i) => addFile('/Videos', `${n}.mp4`, 45_000_000 + i*5_000_000, i*3));
+
+  addFolder('/Projects', 'file-explorer-web');
+  addFile('/Projects/file-explorer-web', 'index.html', 12_400, 0);
+  addFile('/Projects/file-explorer-web', 'README.md', 2_100, 0);
+  addFolder('/Projects/file-explorer-web', 'assets');
+  addFile('/Projects/file-explorer-web/assets', 'style.css', 4_300, 0);
+  addFolder('/Projects', 'api-backend');
+  addFile('/Projects/api-backend', 'server.js', 8_800, 4);
+  addFile('/Projects/api-backend', 'package.json', 900, 4);
+  addFile('/Projects', 'tong-hop-du-an.zip', 15_600_000, 10);
+
+  const stressPath = '/Kho lưu trữ (10.000 tệp)';
+  const exts = ['dat','log','csv','txt','bin'];
+  for(let i=1;i<=10000;i++){
+    addFile(stressPath, `file-${String(i).padStart(5,'0')}.${exts[i%exts.length]}`,
+      1024 + Math.floor(Math.random()*900_000), Math.floor(Math.random()*400));
+  }
+})();
+
+/* ============================== 5. MOCK API (=== API CONTRACT === thay bằng fetch() thật ở đây) ============================== */
+const MockAPI = {
+  // GET /api/dir?path=...  -> {folders:[], files:[]}
+  async listDir(path){
+    await randDelay(120, 420);
+    const children = fsChildren.get(path) || [];
+    const nodes = children.map(p => fsNodes.get(p)).filter(Boolean);
+    return {
+      path,
+      folders: nodes.filter(n => n.type === 'folder').map(n => ({...n})),
+      files: nodes.filter(n => n.type === 'file').map(n => ({...n})),
+    };
+  },
+
+  // GET /api/file/content?path=...  -> {kind, text?|dataUrl?|poster?}
+  async getFileContent(path){
+    await randDelay(150, 450);
+    const node = fsNodes.get(path);
+    if(!node) throw new Error('Không tìm thấy tệp');
+    if(TEXT_EXTS.has(node.ext)) return {kind:'text', text: generateLoremText(node)};
+    if(IMAGE_EXTS.has(node.ext)) return {kind:'image', dataUrl: generatePlaceholderImage(node, 512)};
+    if(AUDIO_EXTS.has(node.ext)) return {kind:'audio', dataUrl: generateSilentWavDataUrl(10)};
+    if(VIDEO_EXTS.has(node.ext)) return {kind:'video', poster: generatePlaceholderImage(node, 512), duration: 132};
+    return {kind:'binary'};
+  },
+
+  // GET /api/thumbnail?path=...&size=...  -> dataUrl | null
+  async getThumbnail(path, size){
+    const node = fsNodes.get(path);
+    if(!node || node.type === 'folder') return null;
+    if(IMAGE_EXTS.has(node.ext) || VIDEO_EXTS.has(node.ext)) return generatePlaceholderImage(node, size);
+    return null;
+  },
+
+  // POST /api/folder  {parentPath, name}
+  async createFolder(parentPath, name){
+    await randDelay();
+    const finalName = uniqueNameIn(parentPath, name);
+    const path = joinPath(parentPath, finalName);
+    fsNodes.set(path, {name:finalName, path, type:'folder', modified: Date.now()});
+    fsChildren.set(path, []);
+    fsChildren.get(parentPath).push(path);
+    return {...fsNodes.get(path)};
+  },
+
+  // PATCH /api/rename {path, newName}
+  async rename(path, newName){
+    await randDelay();
+    const parent = parentOf(path);
+    const finalName = uniqueNameIn(parent, newName);
+    const newPath = renamePathRecursive(path, parent, finalName);
+    return {...fsNodes.get(newPath)};
+  },
+
+  // DELETE /api/entries {paths:[]}   (xóa vĩnh viễn, không thùng rác)
+  async deleteEntries(paths){
+    await randDelay(200, 500);
+    paths.forEach(path => {
+      const parent = parentOf(path);
+      if(parent){
+        const arr = fsChildren.get(parent);
+        const idx = arr.indexOf(path);
+        if(idx >= 0) arr.splice(idx,1);
+      }
+      deleteSubtree(path);
+    });
+    return {deleted: paths};
+  },
+
+  // POST /api/copy {paths:[], destPath}
+  async copyEntries(paths, destPath){
+    await randDelay(250, 600);
+    const results = paths.map(path => copySubtree(path, destPath));
+    return {copied: results};
+  },
+
+  // POST /api/move {paths:[], destPath}
+  async moveEntries(paths, destPath){
+    await randDelay(200, 450);
+    const results = [];
+    paths.forEach(path => {
+      const node = fsNodes.get(path);
+      const parent = parentOf(path);
+      const arr = fsChildren.get(parent);
+      const idx = arr.indexOf(path);
+      if(idx >= 0) arr.splice(idx,1);
+      const finalName = uniqueNameIn(destPath, node.name);
+      const newPath = renamePathRecursive(path, destPath, finalName);
+      fsChildren.get(destPath).push(newPath);
+      results.push(newPath);
+    });
+    return {moved: results};
+  },
+
+  // POST /api/upload (multipart) {destPath, files[]} + onProgress(pct)
+  async uploadFiles(destPath, fileList, onProgress){
+    const total = fileList.length;
+    for(let i=0;i<total;i++){
+      const f = fileList[i];
+      await randDelay(180, 420);
+      const finalName = uniqueNameIn(destPath, f.name);
+      addFile(destPath, finalName, f.size || Math.floor(Math.random()*500000), 0);
+      onProgress && onProgress(Math.round(((i+1)/total)*100));
+    }
+    return {uploaded: total};
+  },
+
+  // POST /api/download {paths:[]} -> Blob (server nén 7z nếu >1 mục hoặc có thư mục) + onProgress
+  async downloadEntries(paths, onProgress){
+    const needsArchive = paths.length > 1 || paths.some(p => fsNodes.get(p)?.type === 'folder');
+    if(!needsArchive){
+      await randDelay(150, 300);
+      onProgress && onProgress(100);
+      const node = fsNodes.get(paths[0]);
+      return {blob: new Blob([`(demo) nội dung tệp: ${node.name}`], {type:'application/octet-stream'}), filename: node.name};
+    }
+    // Mô phỏng tiến trình nén phía server bằng 7-Zip rồi trả về blob của gói .7z
+    const steps = 8;
+    for(let s=1;s<=steps;s++){
+      await randDelay(120, 260);
+      onProgress && onProgress(Math.round((s/steps)*100));
+    }
+    const listing = paths.map(p => nameOf(p)).join(', ');
+    return {
+      blob: new Blob([`(demo) kho nén 7z chứa: ${listing}`], {type:'application/x-7z-compressed'}),
+      filename: `archive-${Date.now()}.7z`,
+    };
+  },
+
+  // POST /api/tools/run {toolId, paths:[], options} + onProgress -> {message, extractedPaths?}
+  async runTool(toolId, paths, options, onProgress){
+    const steps = 6;
+    for(let s=1;s<=steps;s++){
+      await randDelay(140, 320);
+      onProgress && onProgress(Math.round((s/steps)*100));
+    }
+    switch(toolId){
+      case 'checksum': {
+        const lines = paths.map(p => `${nameOf(p)}: ${fakeHash(p)}`);
+        return {message: 'Đã tính checksum (mock, SHA-256 giả lập):\n' + lines.join('\n')};
+      }
+      case 'split':
+        return {message: `Đã tách "${nameOf(paths[0])}" thành 3 phần (mock): .001 / .002 / .003`};
+      case 'merge':
+        return {message: `Đã ghép ${paths.length} tệp thành 1 tệp (mock).`};
+      case 'convert':
+        return {message: `Đã chuyển đổi (mock) sang định dạng .${options.targetFormat} bằng ${options.engine}.`};
+      case 'compress': {
+        const destParent = parentOf(paths[0]);
+        const finalName = uniqueNameIn(destParent, `archive-${Date.now()}.7z`);
+        addFile(destParent, finalName, 1_200_000, 0);
+        return {message: `Đã nén ${paths.length} mục thành "${finalName}" (mock).`, refreshPath: destParent};
+      }
+      case 'extract': {
+        const destParent = parentOf(paths[0]);
+        const extracted = [];
+        for(let i=1;i<=3;i++){
+          const n = uniqueNameIn(destParent, `giai-nen-tep-${i}.txt`);
+          addFile(destParent, n, 2048*i, 0);
+          extracted.push(n);
+        }
+        return {message: `Đã giải nén (mock), tạo ${extracted.length} tệp mới: ${extracted.join(', ')}`, refreshPath: destParent};
+      }
+      default:
+        return {message: 'Đã hoàn tất tác vụ (mock).'};
+    }
+  },
+};
+function fakeHash(path){
+  let h = 0;
+  const s = path + Date.now();
+  for(let i=0;i<s.length;i++) h = (h*33 + s.charCodeAt(i)) >>> 0;
+  return h.toString(16).padStart(8,'0') + (h*2654435761 >>> 0).toString(16).padStart(8,'0');
+}
+function deleteSubtree(path){
+  const node = fsNodes.get(path);
+  if(!node) return;
+  if(node.type === 'folder'){
+    (fsChildren.get(path) || []).slice().forEach(child => deleteSubtree(child));
+    fsChildren.delete(path);
+  }
+  fsNodes.delete(path);
+}
+function copySubtree(path, destParent){
+  const node = fsNodes.get(path);
+  const finalName = uniqueNameIn(destParent, node.name);
+  const newPath = joinPath(destParent, finalName);
+  if(node.type === 'folder'){
+    fsNodes.set(newPath, {...node, name:finalName, path:newPath});
+    fsChildren.set(newPath, []);
+    fsChildren.get(destParent).push(newPath);
+    (fsChildren.get(path) || []).forEach(child => copySubtree(child, newPath));
+  } else {
+    fsNodes.set(newPath, {...node, name:finalName, path:newPath});
+    fsChildren.get(destParent).push(newPath);
+  }
+  return newPath;
+}
+
+/* ============================== 6. TRẠNG THÁI ỨNG DỤNG ============================== */
+const DEFAULT_COLUMNS = ['name','size','type','modified'];
+const ALL_COLUMNS = {
+  name:{label:'Tên', width:'1fr'}, size:{label:'Kích thước', width:'110px'},
+  type:{label:'Loại', width:'120px'}, modified:{label:'Sửa đổi', width:'150px'},
+  ext:{label:'Phần mở rộng', width:'100px'}, path:{label:'Đường dẫn', width:'220px'},
+};
+
+function createTab(path='/'){
+  return {
+    id: uid('tab'), path, viewMode:'detail', thumbSize:128,
+    sortKey:'name', sortDir:'asc', columns: DEFAULT_COLUMNS.slice(),
+    selection: new Set(), search:'', folders:[], files:[], loading:false,
+  };
+}
+function createPanel(path='/'){
+  const tab = createTab(path);
+  return {id: uid('panel'), tabs:[tab], activeTabId: tab.id};
+}
+
+const State = {
+  dualPanel: false,
+  activePanelId: null,
+  panels: [],
+  expandedTree: new Set(['/']),
+  clipboard: {mode:null, paths:[]}, // mode: 'copy' | 'cut'
+  previewOpen: true,
+  previewPath: null,
+  jobs: [],
+  dragData: null, // {paths:[...]} khi kéo nội bộ
+};
+
+function activePanel(){ return State.panels.find(p => p.id === State.activePanelId); }
+function activeTab(panel){ panel = panel || activePanel(); return panel.tabs.find(t => t.id === panel.activeTabId); }
+function allTabs(){ return State.panels.flatMap(p => p.tabs); }
+
+/* ============================== 7. TẢI DỮ LIỆU THƯ MỤC ============================== */
+async function loadTab(tab){
+  tab.loading = true;
+  renderAll();
+  try{
+    const res = await MockAPI.listDir(tab.path);
+    tab.folders = res.folders;
+    tab.files = res.files;
+    tab.selection.clear();
+  } catch(e){
+    showToast('Lỗi tải thư mục: ' + e.message);
+    tab.folders = []; tab.files = [];
+  }
+  tab.loading = false;
+  renderAll();
+}
+function refreshPathEverywhere(path){
+  allTabs().forEach(t => { if(t.path === path) loadTab(t); });
+  renderTree();
+}
+function navigateTab(panel, tab, path){
+  tab.path = path; tab.selection.clear(); tab.search='';
+  loadTab(tab);
+}
+
+/* ============================== 8. JOBS TRAY (thông báo tiến trình nền) ============================== */
+function addJob(title){
+  const job = {id: uid('job'), title, progress:0, status:'running', message:''};
+  State.jobs.unshift(job);
+  renderJobs();
+  return {
+    update(pct){ job.progress = pct; renderJobs(); },
+    finish(status, message){
+      job.status = status; job.progress = 100; job.message = message || '';
+      renderJobs();
+      if(status === 'done') showToast(message || `${title} — hoàn tất`);
+      else showToast(message || `${title} — lỗi`);
+      setTimeout(() => {
+        const idx = State.jobs.indexOf(job);
+        if(idx >= 0 && State.jobs[idx].status !== 'running') { /* giữ lịch sử, chỉ ẩn thanh chạy */ }
+        renderJobs();
+      }, 4000);
+    }
+  };
+}
+function renderJobs(){
+  const tray = $('#jobsTray');
+  const running = State.jobs.filter(j => j.status === 'running');
+  $('#jobsDot').style.display = running.length ? 'inline-block' : 'none';
+  $('#jobsToggle').classList.toggle('has-running', running.length > 0);
+  $('#jobsCount').textContent = running.length ? `Đang chạy (${running.length})` : 'Tác vụ';
+  tray.innerHTML = State.jobs.slice(0,8).map(j => `
+    <div class="job-card">
+      <div class="job-card__top">
+        <div class="job-card__title" title="${escapeHtml(j.title)}">${escapeHtml(j.title)}</div>
+        <div class="job-card__status ${j.status}">${j.status==='running'?j.progress+'%':(j.status==='done'?'Xong':'Lỗi')}</div>
+      </div>
+      <div class="job-bar"><div class="job-bar__fill ${j.status!=='running'?j.status:''}" style="width:${j.progress}%"></div></div>
+    </div>
+  `).join('');
+}
+$('#jobsToggle').addEventListener('click', () => {
+  const tray = $('#jobsTray');
+  tray.hidden = !tray.hidden;
+});
+
+/* ============================== 9. TOOLS REGISTRY (điểm mở rộng toolbar) ============================== */
+// Mỗi tool: {id, group, icon, label, shortcut?, isEnabled(ctx), run(ctx)}
+// ctx = {panel, tab, selection: [...node]}
+function ctxOf(){
+  const panel = activePanel();
+  const tab = activeTab(panel);
+  const selection = Array.from(tab.selection).map(p => fsNodes.get(p)).filter(Boolean);
+  return {panel, tab, selection};
+}
+const CORE_TOOLS = [
+  {id:'newFolder', group:'create', icon:'newFolder', label:'Thư mục mới', shortcut:'',
+    isEnabled:()=>true, run: (ctx) => openNewFolderModal(ctx)},
+  {id:'upload', group:'create', icon:'upload', label:'Tải lên', shortcut:'',
+    isEnabled:()=>true, run: () => $('#uploadInput').click()},
+  {id:'copy', group:'clipboard', icon:'copy', label:'Sao chép', shortcut:'Ctrl+C',
+    isEnabled:(ctx)=>ctx.selection.length>0, run:(ctx)=>setClipboard('copy', ctx)},
+  {id:'cut', group:'clipboard', icon:'cut', label:'Cắt', shortcut:'Ctrl+X',
+    isEnabled:(ctx)=>ctx.selection.length>0, run:(ctx)=>setClipboard('cut', ctx)},
+  {id:'paste', group:'clipboard', icon:'paste', label:'Dán', shortcut:'Ctrl+V',
+    isEnabled:()=>State.clipboard.paths.length>0, run:(ctx)=>pasteClipboard(ctx)},
+  {id:'rename', group:'clipboard', icon:'rename', label:'Đổi tên', shortcut:'F2',
+    isEnabled:(ctx)=>ctx.selection.length===1, run:(ctx)=>startRename(ctx.selection[0].path)},
+  {id:'delete', group:'clipboard', icon:'trash', label:'Xoá', shortcut:'Del', danger:true,
+    isEnabled:(ctx)=>ctx.selection.length>0, run:(ctx)=>confirmDelete(ctx.selection.map(n=>n.path))},
+  {id:'download', group:'transfer', icon:'download', label:'Tải xuống', shortcut:'',
+    isEnabled:(ctx)=>ctx.selection.length>0, run:(ctx)=>downloadSelection(ctx.selection.map(n=>n.path))},
+  {id:'selectAll', group:'transfer', icon:'selectAll', label:'Chọn tất cả', shortcut:'Ctrl+A',
+    isEnabled:(ctx)=>(ctx.tab.folders.length+ctx.tab.files.length)>0, run:(ctx)=>selectAllInTab(ctx.tab)},
+  {id:'refresh', group:'transfer', icon:'refresh', label:'Làm mới', shortcut:'F5',
+    isEnabled:()=>true, run:(ctx)=>loadTab(ctx.tab)},
+];
+// Các công cụ tương lai — đã có kiến trúc sẵn, chỉ cần bổ sung logic thật khi có backend.
+const FUTURE_TOOLS = [
+  {id:'checksum', icon:'checksum', label:'Tính checksum (MD5/SHA-256)'},
+  {id:'split', icon:'split', label:'Tách tệp (Split)'},
+  {id:'merge', icon:'merge', label:'Ghép tệp (Merge)'},
+  {id:'convert', icon:'convert', label:'Chuyển đổi định dạng (ffmpeg/ImageMagick/Pandoc)'},
+  {id:'compress', icon:'zip', label:'Nén 7-Zip'},
+  {id:'extract', icon:'zip', label:'Giải nén 7-Zip'},
+];
+
+function setClipboard(mode, ctx){
+  State.clipboard = {mode, paths: ctx.selection.map(n=>n.path)};
+  showToast(mode==='copy' ? `Đã sao chép ${ctx.selection.length} mục` : `Đã cắt ${ctx.selection.length} mục`);
+  renderAll();
+}
+async function pasteClipboard(ctx){
+  const {mode, paths} = State.clipboard;
+  if(!paths.length) return;
+  const destPath = ctx.tab.path;
+  const job = addJob(mode==='copy' ? 'Đang dán (sao chép)…' : 'Đang dán (di chuyển)…');
+  try{
+    if(mode === 'copy') await MockAPI.copyEntries(paths, destPath);
+    else { await MockAPI.moveEntries(paths, destPath); State.clipboard = {mode:null, paths:[]}; }
+    job.update(100); job.finish('done', 'Đã dán xong');
+    refreshAffected(paths, destPath);
+  } catch(e){ job.finish('error', 'Dán thất bại: ' + e.message); }
+}
+function refreshAffected(srcPaths, destPath){
+  const parents = new Set(srcPaths.map(parentOf));
+  parents.add(destPath);
+  allTabs().forEach(t => { if(parents.has(t.path)) loadTab(t); });
+  renderTree();
+}
+function selectAllInTab(tab){
+  tab.selection = new Set([...tab.folders, ...tab.files].map(n=>n.path));
+  renderAll();
+}
+async function confirmDelete(paths){
+  openModal({
+    title: 'Xoá vĩnh viễn?',
+    sub: `Bạn sắp xoá ${paths.length} mục. Thao tác này KHÔNG THỂ hoàn tác (không có thùng rác).`,
+    body: '',
+    actions: [
+      {label:'Huỷ', variant:'default'},
+      {label:'Xoá vĩnh viễn', variant:'danger', onClick: async () => {
+        closeModal();
+        const job = addJob(`Đang xoá ${paths.length} mục…`);
+        try{
+          const parents = new Set(paths.map(parentOf));
+          await MockAPI.deleteEntries(paths);
+          job.finish('done', 'Đã xoá');
+          parents.forEach(p => refreshPathEverywhere(p));
+          allTabs().forEach(t => paths.forEach(p => t.selection.delete(p)));
+          renderAll();
+        }catch(e){ job.finish('error','Xoá thất bại: '+e.message); }
+      }},
+    ]
+  });
+}
+async function downloadSelection(paths){
+  const job = addJob(paths.length>1 ? `Đang nén ${paths.length} mục để tải xuống…` : `Đang chuẩn bị tải "${nameOf(paths[0])}"…`);
+  try{
+    const {blob, filename} = await MockAPI.downloadEntries(paths, pct => job.update(pct));
+    job.finish('done', 'Sẵn sàng tải xuống');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(e){ job.finish('error', 'Tải xuống thất bại: '+e.message); }
+}
+async function runToolMock(toolId, label, paths, options={}){
+  if(!paths.length){ showToast('Hãy chọn ít nhất 1 mục'); return; }
+  const job = addJob(`${label} (${paths.length} mục)…`);
+  try{
+    const res = await MockAPI.runTool(toolId, paths, options, pct => job.update(pct));
+    job.finish('done', res.message);
+    if(res.refreshPath) refreshPathEverywhere(res.refreshPath);
+  }catch(e){ job.finish('error', label+' thất bại: '+e.message); }
+}
+
+/* ============================== 10. UPLOAD (input + kéo-thả) ============================== */
+$('#uploadInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files || []);
+  if(files.length) doUpload(files, activeTab().path);
+  e.target.value = '';
+});
+async function doUpload(files, destPath){
+  const job = addJob(`Đang tải lên ${files.length} tệp…`);
+  try{
+    await MockAPI.uploadFiles(destPath, files, pct => job.update(pct));
+    job.finish('done', `Đã tải lên ${files.length} tệp`);
+    refreshPathEverywhere(destPath);
+  }catch(e){ job.finish('error','Tải lên thất bại: '+e.message); }
+}
+
+/* ============================== 11. RENDER: TOOLBAR ============================== */
+function buildToolbarButton(tool, ctx){
+  const enabled = tool.isEnabled(ctx);
+  const btn = document.createElement('button');
+  btn.className = 'tbtn' + (tool.danger ? ' tbtn--danger' : '');
+  btn.disabled = !enabled;
+  btn.title = tool.label + (tool.shortcut ? ` (${tool.shortcut})` : '');
+  btn.innerHTML = svgIcon(tool.icon) + `<span class="tbtn__label">${tool.label}</span>`;
+  btn.addEventListener('click', () => tool.run(ctxOf()));
+  return btn;
+}
+function renderToolbar(){
+  const ctx = ctxOf();
+  const groups = {create:'#tg-create', clipboard:'#tg-clipboard', transfer:'#tg-transfer'};
+  Object.entries(groups).forEach(([g, sel]) => {
+    const wrap = $(sel); wrap.innerHTML = '';
+    CORE_TOOLS.filter(t => t.group === g).forEach(t => wrap.appendChild(buildToolbarButton(t, ctx)));
+  });
+
+  // Dropdown "Công cụ khác" (kiến trúc mở rộng)
+  const moreWrap = $('#tg-more');
+  moreWrap.innerHTML = `
+    <div class="dropdown">
+      <button class="tbtn" id="moreToolsBtn">${svgIcon('more')}<span class="tbtn__label">Công cụ khác</span></button>
+      <div class="dropdown__panel" id="moreToolsPanel" hidden>
+        <div class="dropdown__section-label">Sắp có backend thật</div>
+        ${FUTURE_TOOLS.map(t => `
+          <div class="dropdown__item" data-tool="${t.id}">
+            ${svgIcon(t.icon)}<span>${t.label}</span><span class="dropdown__hint">mock</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  const panel = $('#moreToolsPanel');
+  $('#moreToolsBtn').addEventListener('click', (e) => { e.stopPropagation(); panel.hidden = !panel.hidden; });
+  $$('.dropdown__item', panel).forEach(item => {
+    item.addEventListener('click', () => {
+      panel.hidden = true;
+      const toolId = item.dataset.tool;
+      const sel = ctxOf().selection.map(n=>n.path);
+      if(!sel.length){ showToast('Hãy chọn ít nhất 1 mục trước'); return; }
+      const label = FUTURE_TOOLS.find(t=>t.id===toolId).label;
+      if(toolId === 'convert') openConvertModal(sel);
+      else runToolMock(toolId, label, sel);
+    });
+  });
+
+  // Layout: dual panel + preview toggle
+  const layoutWrap = $('#tg-layout'); layoutWrap.innerHTML = '';
+  const dualBtn = document.createElement('button');
+  dualBtn.className = 'tbtn' + (State.dualPanel ? ' is-active' : '');
+  dualBtn.title = 'Bật/tắt 2 khung nhìn (dual panel)';
+  dualBtn.innerHTML = svgIcon(State.dualPanel ? 'layoutDual' : 'layoutSingle') + `<span class="tbtn__label">${State.dualPanel?'2 khung':'1 khung'}</span>`;
+  dualBtn.addEventListener('click', toggleDualPanel);
+  layoutWrap.appendChild(dualBtn);
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'tbtn' + (State.previewOpen ? ' is-active' : '');
+  prevBtn.title = 'Bật/tắt bảng xem nhanh';
+  prevBtn.innerHTML = svgIcon('preview') + `<span class="tbtn__label">Xem nhanh</span>`;
+  prevBtn.addEventListener('click', () => { State.previewOpen = !State.previewOpen; renderAll(); });
+  layoutWrap.appendChild(prevBtn);
+}
+document.addEventListener('click', () => { const p = $('#moreToolsPanel'); if(p) p.hidden = true; });
+
+function toggleDualPanel(){
+  State.dualPanel = !State.dualPanel;
+  if(State.dualPanel && State.panels.length === 1){
+    const p2 = createPanel(activeTab().path);
+    State.panels.push(p2);
+  } else if(!State.dualPanel && State.panels.length > 1){
+    State.panels = [State.panels[0]];
+    State.activePanelId = State.panels[0].id;
+  }
+  renderAll();
+}
+
+/* ============================== 12. RENDER: CÂY THƯ MỤC ============================== */
+function getFolderChildrenSync(path){
+  return (fsChildren.get(path) || []).map(p => fsNodes.get(p)).filter(n => n && n.type === 'folder');
+}
+function renderTree(){
+  const body = $('#treeBody');
+  body.innerHTML = '';
+  body.appendChild(renderTreeNode('/', 0));
+}
+function renderTreeNode(path, depth){
+  const node = fsNodes.get(path);
+  const wrap = document.createElement('div');
+  wrap.className = 'tree-node';
+  const children = getFolderChildrenSync(path);
+  const isOpen = State.expandedTree.has(path);
+  const isActive = activeTab() && activeTab().path === path;
+
+  const row = document.createElement('div');
+  row.className = 'tree-row' + (isActive ? ' is-active' : '');
+  row.style.paddingLeft = (6 + depth*16) + 'px';
+  row.innerHTML = `
+    <span class="tree-caret ${children.length? (isOpen?'is-open':'') : 'is-empty'}">${svgIcon('chevronRight')}</span>
+    <span class="tree-row__icon">${svgIcon(isOpen && children.length ? 'folderOpen' : 'folder')}</span>
+    <span class="tree-row__label">${escapeHtml(node.name)}</span>`;
+  row.addEventListener('click', () => {
+    State.expandedTree.has(path) ? null : State.expandedTree.add(path);
+    const panel = activePanel();
+    navigateTab(panel, activeTab(panel), path);
+    renderTree();
+  });
+  $('.tree-caret', row).addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(!children.length) return;
+    State.expandedTree.has(path) ? State.expandedTree.delete(path) : State.expandedTree.add(path);
+    renderTree();
+  });
+  // Drop nội bộ (move/copy) lên tree
+  row.addEventListener('dragover', (e) => { if(canDropHere(path)){ e.preventDefault(); row.classList.add('is-dragover'); }});
+  row.addEventListener('dragleave', () => row.classList.remove('is-dragover'));
+  row.addEventListener('drop', (e) => { e.preventDefault(); row.classList.remove('is-dragover'); handleInternalDrop(e, path); });
+
+  wrap.appendChild(row);
+  if(isOpen && children.length){
+    const childWrap = document.createElement('div');
+    childWrap.className = 'tree-children';
+    children.sort((a,b)=>a.name.localeCompare(b.name)).forEach(c => childWrap.appendChild(renderTreeNode(c.path, depth+1)));
+    wrap.appendChild(childWrap);
+  }
+  return wrap;
+}
+function canDropHere(destPath){
+  if(!State.dragData) return false;
+  return !State.dragData.paths.includes(destPath) && !State.dragData.paths.some(p => destPath.startsWith(p+'/'));
+}
+
+/* ============================== 13. RENDER: PANELS / TABS / PATHBAR ============================== */
+function renderPanels(){
+  const root = $('#panelsRoot');
+  root.className = 'panels' + (State.dualPanel ? ' is-dual' : '');
+  root.innerHTML = '';
+  State.panels.forEach(panel => root.appendChild(renderPanel(panel)));
+}
+function renderPanel(panel){
+  const el = document.createElement('section');
+  el.className = 'panel' + (panel.id === State.activePanelId ? ' is-active-panel' : '');
+  el.addEventListener('mousedown', () => { if(State.activePanelId !== panel.id){ State.activePanelId = panel.id; renderAll(); }});
+
+  el.appendChild(renderTabsBar(panel));
+  const tab = activeTab(panel);
+  el.appendChild(renderPathBar(panel, tab));
+
+  const body = document.createElement('div');
+  body.className = 'panel__body';
+  body.tabIndex = 0;
+  bindPanelBodyDnD(body, panel, tab);
+  el.appendChild(body);
+
+  if(tab.loading){
+    body.innerHTML = '<div class="empty-state">Đang tải…</div>';
+  } else if(!tab.folders.length && !tab.files.length){
+    body.innerHTML = `<div class="empty-state">${svgIcon('folder')}<div>Thư mục trống</div></div>`;
+  } else {
+    renderPanelItems(body, panel, tab);
+  }
+  return el;
+}
+function renderTabsBar(panel){
+  const bar = document.createElement('div');
+  bar.className = 'panel__tabs';
+  panel.tabs.forEach(tab => {
+    const el = document.createElement('div');
+    el.className = 'tab' + (tab.id === panel.activeTabId ? ' is-active' : '');
+    el.innerHTML = `<span class="tab__label" title="${escapeHtml(tab.path)}">${escapeHtml(nameOf(tab.path))}</span>
+      <span class="tab__close">${svgIcon('close')}</span>`;
+    el.addEventListener('click', (e) => {
+      if(e.target.closest('.tab__close')) return;
+      panel.activeTabId = tab.id; State.activePanelId = panel.id; renderAll();
+    });
+    $('.tab__close', el).addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(panel.tabs.length === 1) return;
+      const idx = panel.tabs.indexOf(tab);
+      panel.tabs.splice(idx,1);
+      if(panel.activeTabId === tab.id) panel.activeTabId = panel.tabs[Math.max(0,idx-1)].id;
+      renderAll();
+    });
+    bar.appendChild(el);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'tab__add'; addBtn.title = 'Mở tab mới';
+  addBtn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 5v14M5 12h14"/></svg>`;
+  addBtn.addEventListener('click', () => {
+    const t = createTab(activeTab(panel).path);
+    panel.tabs.push(t); panel.activeTabId = t.id; State.activePanelId = panel.id;
+    loadTab(t); renderAll();
+  });
+  bar.appendChild(addBtn);
+  return bar;
+}
+function renderPathBar(panel, tab){
+  const bar = document.createElement('div');
+  bar.className = 'panel__pathbar';
+
+  const crumb = document.createElement('div');
+  crumb.className = 'breadcrumb';
+  const parts = tab.path === '/' ? [] : tab.path.split('/').filter(Boolean);
+  let acc = '';
+  const segs = [{label:'Gốc', path:'/'}];
+  parts.forEach(p => { acc += '/'+p; segs.push({label:p, path:acc}); });
+  segs.forEach((s,i) => {
+    const c = document.createElement('span');
+    c.className = 'crumb' + (i===segs.length-1 ? ' is-last' : '');
+    c.textContent = s.label;
+    c.addEventListener('click', () => navigateTab(panel, tab, s.path));
+    c.addEventListener('dragover', (e)=>{ if(canDropHere(s.path)){ e.preventDefault(); crumb.classList.add('is-dragover'); }});
+    c.addEventListener('dragleave', ()=>crumb.classList.remove('is-dragover'));
+    c.addEventListener('drop', (e)=>{ e.preventDefault(); crumb.classList.remove('is-dragover'); handleInternalDrop(e, s.path); });
+    crumb.appendChild(c);
+    if(i < segs.length-1){ const sep = document.createElement('span'); sep.className='crumb-sep'; sep.textContent='/'; crumb.appendChild(sep); }
+  });
+  bar.appendChild(crumb);
+
+  const search = document.createElement('div');
+  search.className = 'search-box';
+  search.innerHTML = `${svgIcon('search')}<input type="text" placeholder="Tìm trong thư mục…" value="${escapeHtml(tab.search)}">`;
+  $('input', search).addEventListener('input', (e) => { tab.search = e.target.value; renderAll(); });
+  bar.appendChild(search);
+
+  const viewSwitch = document.createElement('div');
+  viewSwitch.className = 'view-switch';
+  [['list','viewList','Danh sách'],['detail','viewDetail','Chi tiết'],['thumbnail','viewThumb','Hình thu nhỏ'],['icon','viewIcon','Biểu tượng']]
+    .forEach(([mode, icon, label]) => {
+      const b = document.createElement('button');
+      b.className = mode === tab.viewMode ? 'is-active' : '';
+      b.title = label; b.innerHTML = svgIcon(icon);
+      b.addEventListener('click', () => { tab.viewMode = mode; renderAll(); });
+      viewSwitch.appendChild(b);
+    });
+  bar.appendChild(viewSwitch);
+
+  if(tab.viewMode === 'thumbnail'){
+    const sizeSel = document.createElement('select');
+    sizeSel.className = 'thumb-size-select';
+    [64,128,256,512].forEach(sz => {
+      const o = document.createElement('option'); o.value=sz; o.textContent = sz+'px';
+      if(sz === tab.thumbSize) o.selected = true;
+      sizeSel.appendChild(o);
+    });
+    sizeSel.addEventListener('change', (e) => { tab.thumbSize = Number(e.target.value); renderAll(); });
+    bar.appendChild(sizeSel);
+  }
+
+  if(tab.viewMode === 'detail'){
+    const colBtn = document.createElement('button');
+    colBtn.className = 'iconbtn'; colBtn.title = 'Tuỳ chỉnh cột';
+    colBtn.innerHTML = svgIcon('columns');
+    colBtn.addEventListener('click', () => openColumnsModal(tab));
+    bar.appendChild(colBtn);
+  }
+  return bar;
+}
+
+/* ============================== 14. VIRTUAL SCROLL HELPER ============================== */
+function renderVirtual(container, {rowHeight, rowCount, renderRow, buffer=5}){
+  container.innerHTML = '<div class="vs-spacer"><div class="vs-content"></div></div>';
+  const spacer = $('.vs-spacer', container);
+  const content = $('.vs-content', container);
+  spacer.style.height = (rowHeight*rowCount) + 'px';
+  function update(){
+    const scrollTop = container.scrollTop;
+    const viewH = container.clientHeight || 400;
+    const start = Math.max(0, Math.floor(scrollTop/rowHeight) - buffer);
+    const end = Math.min(rowCount, Math.ceil((scrollTop+viewH)/rowHeight) + buffer);
+    content.innerHTML = '';
+    for(let i=start;i<end;i++){
+      const rowEl = renderRow(i);
+      if(!rowEl) continue;
+      rowEl.style.position = 'absolute';
+      rowEl.style.top = (i*rowHeight)+'px';
+      rowEl.style.left = '0'; rowEl.style.right = '0';
+      content.appendChild(rowEl);
+    }
+  }
+  container.addEventListener('scroll', update);
+  update();
+  window.addEventListener('resize', update, {once:false});
+}
+
+/* ============================== 15. RENDER: NỘI DUNG PANEL (list/detail/thumb/icon) ============================== */
+function getVisibleItems(tab){
+  let items = [...tab.folders.map(n=>({...n})), ...tab.files.map(n=>({...n}))];
+  if(tab.search.trim()){
+    const q = tab.search.trim().toLowerCase();
+    items = items.filter(n => n.name.toLowerCase().includes(q));
+  }
+  const dir = tab.sortDir === 'asc' ? 1 : -1;
+  items.sort((a,b) => {
+    if(a.type !== b.type) return a.type === 'folder' ? -1 : 1; // luôn để thư mục lên trước
+    let av = a[tab.sortKey], bv = b[tab.sortKey];
+    if(tab.sortKey === 'type') { av = a.type==='folder'?'':a.ext; bv = b.type==='folder'?'':b.ext; }
+    if(typeof av === 'string') return av.localeCompare(bv) * dir;
+    return ((av||0) - (bv||0)) * dir;
+  });
+  return items;
+}
+function renderPanelItems(body, panel, tab){
+  const items = getVisibleItems(tab);
+  updateStatusBar(tab, items);
+  if(tab.viewMode === 'detail') return renderDetailView(body, panel, tab, items);
+  if(tab.viewMode === 'list') return renderListView(body, panel, tab, items);
+  return renderGridView(body, panel, tab, items, tab.viewMode === 'thumbnail');
+}
+
+function renderDetailView(body, panel, tab, items){
+  const cols = tab.columns;
+  const gridTemplate = cols.map(c => ALL_COLUMNS[c].width).join(' ');
+  const wrap = document.createElement('div');
+  wrap.style.minHeight = '100%';
+
+  const header = document.createElement('div');
+  header.className = 'detail-header';
+  header.style.display = 'grid'; header.style.gridTemplateColumns = gridTemplate;
+  cols.forEach(c => {
+    const cell = document.createElement('div');
+    cell.className = 'detail-header__cell' + (tab.sortKey===c ? ' is-sorted' : '');
+    cell.innerHTML = `<span>${ALL_COLUMNS[c].label}</span><span class="sort-arrow">${tab.sortDir==='asc'?'▲':'▼'}</span>`;
+    cell.addEventListener('click', () => {
+      if(tab.sortKey === c) tab.sortDir = tab.sortDir === 'asc' ? 'desc' : 'asc';
+      else { tab.sortKey = c; tab.sortDir = 'asc'; }
+      renderAll();
+    });
+    header.appendChild(cell);
+  });
+  wrap.appendChild(header);
+
+  const listWrap = document.createElement('div');
+  listWrap.style.position = 'relative';
+  wrap.appendChild(listWrap);
+  body.innerHTML = ''; body.appendChild(wrap);
+
+  renderVirtual(listWrap, {
+    rowHeight: 30, rowCount: items.length,
+    renderRow: (i) => buildDetailRow(items[i], panel, tab, cols),
+  });
+}
+function buildDetailRow(node, panel, tab, cols){
+  const row = document.createElement('div');
+  row.className = 'row' + (tab.selection.has(node.path) ? ' is-selected' : '') + (isCut(node.path) ? ' is-cut' : '');
+  row.style.display = 'grid'; row.style.gridTemplateColumns = cols.map(c => ALL_COLUMNS[c].width).join(' ');
+  row.draggable = true;
+  cols.forEach(c => {
+    const cell = document.createElement('div');
+    if(c === 'name'){
+      cell.className = 'cell cell--name';
+      const {icon,color} = iconForFile(node);
+      cell.innerHTML = `<span class="row-icon ${node.type==='folder'?'folder':''}" style="color:${node.type==='folder'?'':color}">${svgIcon(icon)}</span><span class="cell-name-text">${escapeHtml(node.name)}</span>`;
+    } else if(c === 'size'){
+      cell.className = 'cell cell--muted'; cell.textContent = node.type==='folder' ? '' : fmtSize(node.size);
+    } else if(c === 'type'){
+      cell.className = 'cell cell--muted'; cell.textContent = node.type==='folder' ? 'Thư mục' : (node.ext ? node.ext.toUpperCase()+' File' : 'Tệp');
+    } else if(c === 'modified'){
+      cell.className = 'cell cell--muted'; cell.textContent = fmtDate(node.modified);
+    } else if(c === 'ext'){
+      cell.className = 'cell cell--muted'; cell.textContent = node.ext || '';
+    } else if(c === 'path'){
+      cell.className = 'cell cell--muted'; cell.textContent = node.path;
+    }
+    row.appendChild(cell);
+  });
+  bindItemInteractions(row, node, panel, tab);
+  return row;
+}
+function renderListView(body, panel, tab, items){
+  const wrap = document.createElement('div');
+  body.innerHTML = ''; body.appendChild(wrap);
+  renderVirtual(wrap, {
+    rowHeight: 28, rowCount: items.length,
+    renderRow: (i) => {
+      const node = items[i];
+      const row = document.createElement('div');
+      row.className = 'row' + (tab.selection.has(node.path) ? ' is-selected' : '') + (isCut(node.path) ? ' is-cut' : '');
+      row.draggable = true;
+      const {icon,color} = iconForFile(node);
+      row.innerHTML = `<div class="cell cell--name" style="padding-left:10px;">
+        <span class="row-icon ${node.type==='folder'?'folder':''}" style="color:${node.type==='folder'?'':color}">${svgIcon(icon)}</span>
+        <span class="cell-name-text">${escapeHtml(node.name)}</span></div>`;
+      bindItemInteractions(row, node, panel, tab);
+      return row;
+    }
+  });
+}
+function renderGridView(body, panel, tab, items, isThumb){
+  const size = isThumb ? tab.thumbSize : 88;
+  const cellW = size + 24;
+  const wrap = document.createElement('div');
+  wrap.style.paddingTop = '10px';
+  body.innerHTML = ''; body.appendChild(wrap);
+  const cols = Math.max(1, Math.floor((body.clientWidth - 12) / cellW));
+  const rowCount = Math.ceil(items.length / cols);
+  renderVirtual(wrap, {
+    rowHeight: size + 54, rowCount,
+    renderRow: (r) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'grid-row';
+      for(let c=0;c<cols;c++){
+        const idx = r*cols + c;
+        if(idx >= items.length) break;
+        rowEl.appendChild(buildGridItem(items[idx], panel, tab, size, isThumb));
+      }
+      return rowEl;
+    }
+  });
+}
+function buildGridItem(node, panel, tab, size, isThumb){
+  const item = document.createElement('div');
+  item.className = 'grid-item' + (tab.selection.has(node.path) ? ' is-selected' : '') + (isCut(node.path) ? ' is-cut' : '');
+  item.style.width = (size+16) + 'px';
+  item.draggable = true;
+  const thumb = document.createElement('div');
+  thumb.className = 'grid-thumb';
+  thumb.style.width = size+'px'; thumb.style.height = size+'px';
+  const {icon,color} = iconForFile(node);
+  thumb.style.color = node.type==='folder' ? '#E5A028' : color;
+  thumb.innerHTML = svgIcon(node.type==='folder' ? 'folder' : icon);
+  item.appendChild(thumb);
+  const label = document.createElement('div');
+  label.className = 'grid-label'; label.textContent = node.name;
+  item.appendChild(label);
+  bindItemInteractions(item, node, panel, tab);
+  if(isThumb && node.type === 'file' && (IMAGE_EXTS.has(node.ext) || VIDEO_EXTS.has(node.ext))){
+    MockAPI.getThumbnail(node.path, size).then(url => {
+      if(!url) return;
+      thumb.innerHTML = `<img src="${url}" alt="">` + (VIDEO_EXTS.has(node.ext) ? `<span class="play-badge">${svgIcon('play')}</span>` : '');
+    });
+  }
+  return item;
+}
+function isCut(path){ return State.clipboard.mode === 'cut' && State.clipboard.paths.includes(path); }
+
+/* ============================== 16. CHỌN / TƯƠNG TÁC MỤC (click, kéo-thả, menu chuột phải) ============================== */
+function bindItemInteractions(el, node, panel, tab){
+  el.addEventListener('click', (e) => {
+    State.activePanelId = panel.id;
+    if(e.shiftKey){
+      const items = getVisibleItems(tab).map(n=>n.path);
+      const last = tab._lastClicked || items[0];
+      const a = items.indexOf(last), b = items.indexOf(node.path);
+      const [from,to] = a<b ? [a,b] : [b,a];
+      for(let i=from;i<=to;i++) tab.selection.add(items[i]);
+    } else if(e.ctrlKey || e.metaKey){
+      tab.selection.has(node.path) ? tab.selection.delete(node.path) : tab.selection.add(node.path);
+    } else {
+      tab.selection = new Set([node.path]);
+    }
+    tab._lastClicked = node.path;
+    renderAll();
+  });
+  el.addEventListener('dblclick', () => {
+    if(node.type === 'folder') navigateTab(panel, tab, node.path);
+    else openPreview(node.path);
+  });
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    State.activePanelId = panel.id;
+    if(!tab.selection.has(node.path)) tab.selection = new Set([node.path]);
+    renderAll();
+    openContextMenuFor(e.clientX, e.clientY, panel, tab, node);
+  });
+  // Kéo ra ngoài (bắt đầu thao tác move/copy nội bộ)
+  el.addEventListener('dragstart', (e) => {
+    if(!tab.selection.has(node.path)) tab.selection = new Set([node.path]);
+    State.dragData = {paths: Array.from(tab.selection), srcTabId: tab.id};
+    e.dataTransfer.setData('application/x-fileexplorer', '1');
+    e.dataTransfer.effectAllowed = 'copyMove';
+    renderAll();
+  });
+  el.addEventListener('dragend', () => { State.dragData = null; });
+  // Nhận thả (nếu là thư mục)
+  if(node.type === 'folder'){
+    el.addEventListener('dragover', (e) => { if(canDropHere(node.path)){ e.preventDefault(); el.classList.add('is-dragover'); }});
+    el.addEventListener('dragleave', () => el.classList.remove('is-dragover'));
+    el.addEventListener('drop', (e) => { e.preventDefault(); el.classList.remove('is-dragover'); handleInternalDrop(e, node.path); });
+  }
+}
+async function handleInternalDrop(e, destPath){
+  if(!State.dragData) return;
+  const {paths} = State.dragData;
+  State.dragData = null;
+  if(paths.includes(destPath) || paths.some(p => destPath.startsWith(p+'/'))) return;
+  const isCopyMode = e.ctrlKey;
+  const job = addJob(isCopyMode ? `Đang sao chép ${paths.length} mục…` : `Đang di chuyển ${paths.length} mục…`);
+  try{
+    if(isCopyMode) await MockAPI.copyEntries(paths, destPath);
+    else await MockAPI.moveEntries(paths, destPath);
+    job.finish('done', isCopyMode ? 'Đã sao chép' : 'Đã di chuyển');
+    refreshAffected(paths, destPath);
+  }catch(err){ job.finish('error', 'Thất bại: '+err.message); }
+}
+function bindPanelBodyDnD(body, panel, tab){
+  let dragCounter = 0;
+  body.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if(!e.dataTransfer.types.includes('application/x-fileexplorer')) body.classList.add('is-dragover-fs');
+  });
+  body.addEventListener('dragleave', (e) => { dragCounter--; if(dragCounter<=0) body.classList.remove('is-dragover-fs'); });
+  body.addEventListener('dragenter', () => dragCounter++);
+  body.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dragCounter = 0; body.classList.remove('is-dragover-fs');
+    if(e.dataTransfer.types.includes('application/x-fileexplorer')){
+      handleInternalDrop(e, tab.path);
+      return;
+    }
+    const items = Array.from(e.dataTransfer.items || []);
+    const files = [];
+    let skippedFolders = 0;
+    if(items.length && items[0].webkitGetAsEntry){
+      items.forEach(it => {
+        const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+        if(entry && entry.isDirectory) skippedFolders++;
+        else { const f = it.getAsFile(); if(f) files.push(f); }
+      });
+    } else {
+      files.push(...Array.from(e.dataTransfer.files || []));
+    }
+    if(skippedFolders) showToast(`Đã bỏ qua ${skippedFolders} thư mục — chỉ hỗ trợ kéo-thả tệp rời`);
+    if(files.length) doUpload(files, tab.path);
+  });
+}
+
+/* ============================== 17. CONTEXT MENU ============================== */
+function openContextMenuFor(x, y, panel, tab, clickedNode){
+  const sel = Array.from(tab.selection).map(p=>fsNodes.get(p)).filter(Boolean);
+  const items = [
+    {label:'Mở', icon:'folderOpen', onClick:()=> clickedNode.type==='folder' ? navigateTab(panel,tab,clickedNode.path) : openPreview(clickedNode.path)},
+    {sep:true},
+    {label:'Cắt', icon:'cut', hint:'Ctrl+X', onClick:()=>setClipboard('cut', {selection:sel})},
+    {label:'Sao chép', icon:'copy', hint:'Ctrl+C', onClick:()=>setClipboard('copy', {selection:sel})},
+    {label:'Dán vào đây', icon:'paste', hint:'Ctrl+V', disabled: !State.clipboard.paths.length, onClick:()=>pasteClipboard({tab})},
+    {sep:true},
+    {label:'Đổi tên', icon:'rename', hint:'F2', disabled: sel.length!==1, onClick:()=>startRename(clickedNode.path)},
+    {label:'Tải xuống', icon:'download', onClick:()=>downloadSelection(sel.map(n=>n.path))},
+    {label:'Xoá vĩnh viễn', icon:'trash', danger:true, onClick:()=>confirmDelete(sel.map(n=>n.path))},
+    {sep:true},
+    {label:'Thuộc tính', icon:'properties', onClick:()=>openPropertiesModal(clickedNode)},
+  ];
+  renderContextMenu(x, y, items);
+}
+function openContextMenuEmpty(x, y, panel, tab){
+  const items = [
+    {label:'Thư mục mới', icon:'newFolder', onClick:()=>openNewFolderModal({tab})},
+    {label:'Tải lên', icon:'upload', onClick:()=>$('#uploadInput').click()},
+    {label:'Dán vào đây', icon:'paste', hint:'Ctrl+V', disabled: !State.clipboard.paths.length, onClick:()=>pasteClipboard({tab})},
+    {sep:true},
+    {label:'Làm mới', icon:'refresh', hint:'F5', onClick:()=>loadTab(tab)},
+  ];
+  renderContextMenu(x, y, items);
+}
+function renderContextMenu(x, y, items){
+  const menu = $('#contextMenu');
+  menu.innerHTML = items.map(it => it.sep
+    ? '<div class="dropdown__sep"></div>'
+    : `<div class="dropdown__item ${it.disabled?'is-disabled':''}" data-idx="${items.indexOf(it)}" style="${it.danger?'color:var(--danger)':''}">
+         ${svgIcon(it.icon)}<span>${it.label}</span>${it.hint?`<span class="dropdown__hint">${it.hint}</span>`:''}
+       </div>`
+  ).join('');
+  $$('.dropdown__item', menu).forEach(el => {
+    const it = items[Number(el.dataset.idx)];
+    if(it.disabled) return;
+    el.addEventListener('click', () => { hideContextMenu(); it.onClick(); });
+  });
+  menu.hidden = false;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const mw = 230, mh = items.length*32+20;
+  menu.style.left = Math.min(x, vw-mw-8) + 'px';
+  menu.style.top = Math.min(y, vh-mh-8) + 'px';
+}
+function hideContextMenu(){ $('#contextMenu').hidden = true; }
+document.addEventListener('click', hideContextMenu);
+document.addEventListener('contextmenu', (e) => { if(!e.target.closest('.row,.grid-item')) hideContextMenu(); });
+
+/* ============================== 18. XEM NHANH (PREVIEW PANE) ============================== */
+async function openPreview(path){
+  State.previewPath = path;
+  State.previewOpen = true;
+  renderAll();
+  const node = fsNodes.get(path);
+  const body = $('#previewBody');
+  body.innerHTML = `<div class="empty-state" style="height:auto;padding-top:40px;">Đang tải…</div>`;
+  try{
+    const res = await MockAPI.getFileContent(path);
+    if(State.previewPath !== path) return;
+    renderPreviewContent(node, res);
+  }catch(e){ body.innerHTML = `<div class="empty-state">Không thể xem trước</div>`; }
+}
+function renderPreviewContent(node, res){
+  const body = $('#previewBody');
+  let visualHtml = '';
+  if(res.kind === 'image'){
+    visualHtml = `<div class="preview-visual"><img src="${res.dataUrl}" alt=""></div>`;
+  } else if(res.kind === 'audio'){
+    visualHtml = `<div class="preview-visual">${svgIcon('audio')}</div><audio controls style="width:100%" src="${res.dataUrl}"></audio>`;
+  } else if(res.kind === 'video'){
+    visualHtml = `<div class="preview-visual"><img src="${res.poster}" alt="">
+        <span class="play-badge" id="fakePlayOverlay" style="cursor:pointer">${svgIcon('play')}</span></div>
+        <div class="preview-video-fake"><div class="bar"><div class="bar__fill" id="fakeVideoBar"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;color:var(--text-faint);font-size:11px;">
+          <span id="fakeVideoTime">0:00</span><span>${Math.floor(res.duration/60)}:${String(res.duration%60).padStart(2,'0')}</span></div></div>`;
+  } else {
+    const {icon,color} = iconForFile(node);
+    visualHtml = `<div class="preview-visual" style="color:${color}">${svgIcon(icon)}</div>`;
+  }
+  body.innerHTML = `
+    ${visualHtml}
+    <div class="preview-name">${escapeHtml(node.name)}</div>
+    <div class="preview-meta">
+      <div><span>Loại</span><span>${node.ext ? node.ext.toUpperCase() : 'Tệp'}</span></div>
+      <div><span>Kích thước</span><span>${fmtSize(node.size)}</span></div>
+      <div><span>Sửa đổi</span><span>${fmtDate(node.modified)}</span></div>
+      <div><span>Đường dẫn</span><span class="mono" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;">${node.path}</span></div>
+    </div>
+    ${res.kind === 'text' ? `<div class="preview-text">${escapeHtml(res.text)}</div>` : ''}
+  `;
+  if(res.kind === 'video'){
+    const overlay = $('#fakePlayOverlay'), bar = $('#fakeVideoBar'), time = $('#fakeVideoTime');
+    let playing = false, t = 0, timer = null;
+    overlay.addEventListener('click', () => {
+      playing = !playing;
+      overlay.innerHTML = svgIcon(playing ? 'file' : 'play'); // đổi biểu tượng đơn giản khi phát (mock, không giải mã video thật)
+      if(playing){
+        timer = setInterval(() => {
+          t += 1; if(t > res.duration){ t = 0; playing=false; clearInterval(timer); overlay.innerHTML = svgIcon('play'); }
+          bar.style.width = (t/res.duration*100) + '%';
+          time.textContent = `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;
+        }, 200); // tua nhanh để demo, thực tế sẽ đồng bộ với thẻ <video> thật khi có backend
+      } else clearInterval(timer);
+    });
+  }
+}
+$('#previewCloseBtn').addEventListener('click', () => { State.previewOpen = false; renderAll(); });
+
+/* ============================== 19. MODAL (New Folder / Rename / Columns / Convert / Properties) ============================== */
+function openModal({title, sub, body, actions}){
+  const overlay = $('#modalOverlay');
+  const modal = $('#modal');
+  modal.innerHTML = `<h3>${title}</h3>${sub?`<p class="modal-sub">${sub}</p>`:''}<div id="modalBody"></div><div class="modal-actions" id="modalActions"></div>`;
+  if(body) $('#modalBody').appendChild(body);
+  const actionsWrap = $('#modalActions');
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (a.variant==='primary'?' btn-primary':a.variant==='danger'?' btn-danger':'');
+    btn.textContent = a.label;
+    btn.addEventListener('click', () => a.onClick ? a.onClick() : closeModal());
+    actionsWrap.appendChild(btn);
+  });
+  overlay.hidden = false;
+}
+function closeModal(){ $('#modalOverlay').hidden = true; }
+$('#modalOverlay').addEventListener('mousedown', (e) => { if(e.target === $('#modalOverlay')) closeModal(); });
+
+function openNewFolderModal(ctx){
+  const input = document.createElement('input');
+  input.type = 'text'; input.value = 'Thư mục mới'; input.placeholder = 'Tên thư mục';
+  openModal({
+    title: 'Tạo thư mục mới', body: input,
+    actions: [
+      {label:'Huỷ'},
+      {label:'Tạo', variant:'primary', onClick: async () => {
+        closeModal();
+        try{ await MockAPI.createFolder(ctx.tab.path, input.value.trim() || 'Thư mục mới'); refreshPathEverywhere(ctx.tab.path); }
+        catch(e){ showToast('Không tạo được: '+e.message); }
+      }}
+    ]
+  });
+  setTimeout(() => { input.focus(); input.select(); }, 30);
+}
+function startRename(path){
+  const node = fsNodes.get(path);
+  const input = document.createElement('input');
+  input.type = 'text'; input.value = node.name;
+  openModal({
+    title:'Đổi tên', body: input,
+    actions:[
+      {label:'Huỷ'},
+      {label:'Lưu', variant:'primary', onClick: async () => {
+        closeModal();
+        try{ await MockAPI.rename(path, input.value.trim() || node.name); refreshPathEverywhere(parentOf(path)); }
+        catch(e){ showToast('Không đổi tên được: '+e.message); }
+      }}
+    ]
+  });
+  setTimeout(() => { input.focus(); const dot=node.name.lastIndexOf('.'); input.setSelectionRange(0, dot>0?dot:node.name.length); }, 30);
+}
+function openColumnsModal(tab){
+  const wrap = document.createElement('div');
+  wrap.className = 'col-list';
+  function renderList(){
+    wrap.innerHTML = '';
+    tab.columns.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'col-list__item';
+      row.innerHTML = `<span class="grow">${ALL_COLUMNS[c].label}${c==='name'?' (bắt buộc)':''}</span>`;
+      if(c !== 'name'){
+        const up = document.createElement('button'); up.textContent='↑'; up.disabled = i<=1;
+        up.addEventListener('click', () => { [tab.columns[i-1],tab.columns[i]]=[tab.columns[i],tab.columns[i-1]]; renderList(); });
+        const down = document.createElement('button'); down.textContent='↓'; down.disabled = i===tab.columns.length-1;
+        down.addEventListener('click', () => { [tab.columns[i+1],tab.columns[i]]=[tab.columns[i],tab.columns[i+1]]; renderList(); });
+        const rm = document.createElement('button'); rm.textContent='✕';
+        rm.addEventListener('click', () => { tab.columns.splice(i,1); renderList(); });
+        row.appendChild(up); row.appendChild(down); row.appendChild(rm);
+      }
+      wrap.appendChild(row);
+    });
+    const remaining = Object.keys(ALL_COLUMNS).filter(c => !tab.columns.includes(c));
+    if(remaining.length){
+      const addRow = document.createElement('div');
+      addRow.className = 'col-list__item';
+      const sel = document.createElement('select');
+      sel.style.cssText = 'flex:1;height:28px;';
+      remaining.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=ALL_COLUMNS[c].label; sel.appendChild(o); });
+      const addBtn = document.createElement('button'); addBtn.textContent='+ Thêm';
+      addBtn.style.width = 'auto'; addBtn.style.padding='0 8px';
+      addBtn.addEventListener('click', () => { tab.columns.push(sel.value); renderList(); });
+      addRow.appendChild(sel); addRow.appendChild(addBtn);
+      wrap.appendChild(addRow);
+    }
+  }
+  renderList();
+  openModal({
+    title:'Tuỳ chỉnh cột hiển thị', sub:'Thêm, bớt hoặc sắp xếp lại thứ tự cột trong chế độ Chi tiết.', body: wrap,
+    actions:[{label:'Xong', variant:'primary', onClick: () => { closeModal(); renderAll(); }}]
+  });
+}
+function openConvertModal(paths){
+  const sel = document.createElement('select');
+  sel.className = 'fmt-select';
+  ['pdf','png','jpg','mp4','mp3','txt','docx'].forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent='.'+f; sel.appendChild(o); });
+  const engineNote = document.createElement('p');
+  engineNote.className = 'modal-sub';
+  engineNote.textContent = 'Công cụ xử lý (mock): ffmpeg / ImageMagick / Pandoc sẽ được chọn tự động theo định dạng khi có backend thật.';
+  const wrap = document.createElement('div'); wrap.appendChild(sel); wrap.appendChild(engineNote);
+  openModal({
+    title:'Chuyển đổi định dạng', sub:`${paths.length} tệp được chọn`, body: wrap,
+    actions:[
+      {label:'Huỷ'},
+      {label:'Chuyển đổi', variant:'primary', onClick: () => {
+        closeModal();
+        runToolMock('convert', 'Chuyển đổi định dạng', paths, {targetFormat: sel.value, engine:'ffmpeg/magick/pandoc'});
+      }}
+    ]
+  });
+}
+function openPropertiesModal(node){
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="preview-meta">
+    <div><span>Tên</span><span>${escapeHtml(node.name)}</span></div>
+    <div><span>Loại</span><span>${node.type==='folder'?'Thư mục':(node.ext?node.ext.toUpperCase()+' File':'Tệp')}</span></div>
+    <div><span>Kích thước</span><span>${node.type==='folder'?'—':fmtSize(node.size)}</span></div>
+    <div><span>Sửa đổi</span><span>${fmtDate(node.modified)}</span></div>
+    <div><span>Đường dẫn</span><span class="mono">${node.path}</span></div>
+  </div>`;
+  openModal({title:'Thuộc tính', body: wrap, actions:[{label:'Đóng', variant:'primary'}]});
+}
+
+/* ============================== 20. STATUS BAR ============================== */
+function updateStatusBar(tab, items){
+  $('#statusPath').textContent = tab.path;
+  $('#statusCount').textContent = `${items.length} mục`;
+  if(tab.selection.size){
+    const nodes = Array.from(tab.selection).map(p=>fsNodes.get(p)).filter(Boolean);
+    const totalSize = nodes.reduce((s,n)=>s+(n.size||0),0);
+    $('#statusSelected').textContent = `Đã chọn ${tab.selection.size} mục · ${fmtSize(totalSize)}`;
+  } else {
+    $('#statusSelected').textContent = '';
+  }
+}
+
+/* ============================== 21. PHÍM TẮT ============================== */
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if(tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  const ctx = ctxOf();
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c'){ e.preventDefault(); if(ctx.selection.length) setClipboard('copy', ctx); }
+  else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x'){ e.preventDefault(); if(ctx.selection.length) setClipboard('cut', ctx); }
+  else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v'){ e.preventDefault(); pasteClipboard(ctx); }
+  else if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a'){ e.preventDefault(); selectAllInTab(ctx.tab); }
+  else if(e.key === 'Delete'){ if(ctx.selection.length) confirmDelete(ctx.selection.map(n=>n.path)); }
+  else if(e.key === 'F2'){ if(ctx.selection.length===1) startRename(ctx.selection[0].path); }
+  else if(e.key === 'F5'){ e.preventDefault(); loadTab(ctx.tab); }
+  else if(e.key === 'Escape'){ closeModal(); hideContextMenu(); }
+});
+
+/* ============================== 22. VÒNG LẶP RENDER TỔNG ============================== */
+function renderAll(){
+  renderToolbar();
+  renderTree();
+  renderPanels();
+  $('#previewPane').hidden = !State.previewOpen;
+  // click chuột phải vào vùng trống của panel để mở menu "tạo mới / dán"
+  $$('.panel__body').forEach((body, i) => {
+    body.addEventListener('contextmenu', (e) => {
+      if(e.target !== body && !e.target.classList.contains('vs-spacer') && !e.target.classList.contains('vs-content')) return;
+      e.preventDefault();
+      const panel = State.panels[i];
+      openContextMenuEmpty(e.clientX, e.clientY, panel, activeTab(panel));
+    });
+    body.addEventListener('mousedown', (e) => { if(e.target === body) { activeTab(State.panels[i]).selection.clear(); renderAll(); } });
+  });
+}
+
+/* ============================== 23. KHỞI ĐỘNG ỨNG DỤNG ============================== */
+(function init(){
+  const p1 = createPanel('/');
+  State.panels = [p1];
+  State.activePanelId = p1.id;
+  State.expandedTree.add('/');
+  loadTab(activeTab(p1));
+  renderAll();
+})();
+</script>
+</body>
+</html>
