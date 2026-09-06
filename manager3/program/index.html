@@ -1,39 +1,21 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Server</title>
-
-	<!-- <link href="/document/favicon.ico" rel="shortcut icon" type="image/png"> -->
-
-	<!-- <script src="/lib/jquery/jquery-3.7.1.min.js"></script> -->
-
-	<link href="/lib/fontawesome-6.7.2/css/all.min.css" rel="stylesheet" integrity="sha512-..." crossorigin="anonymous" />
-
-	<!-- <link href="/server/style.css" type="text/css" rel="stylesheet"> -->
-</head>
-<body style="height:100vh;width:100%;margin:0;padding:0;">
-
-	<div style="height:100%;display:flex;flex-direction:column;">
+<div style="display:flex;flex-direction:column;height:100%;">
 
 		<!-- Toolbar -->
 		<div style="display:flex;align-items:center;gap:6px;padding:2px 6px;background:#ffffff;flex-wrap:wrap;width:fit-content;">
 
 			<!-- Nút Refresh All -->
-			<button onclick="mt.event.btnTopRefreshAll()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#1a1a18; color:#ffffff; border:none; border-radius:6px; font-size:14px; cursor:pointer;">
+			<button onclick="mt.program.event.btnTopRefreshAll()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#1a1a18; color:#ffffff; border:none; border-radius:6px; font-size:14px; cursor:pointer;">
 				<i class="fa-solid fa-arrows-rotate" style="font-size:16px;"></i>
 				Refresh All
 			</button>
 
 			<!-- Nút split: New, Save -->
 			<div style="display:flex; border:1px solid #d4d4d0; border-radius:6px; overflow:hidden;">
-				<button onclick="mt.event.btnTopNew()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+				<button onclick="mt.program.event.btnTopNew()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
 					<i class="fa-solid fa-plus"></i>
 					New
 				</button>
-				<button onclick="mt.event.btnTopSave()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
+				<button onclick="mt.program.event.btnTopSave()" style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:#ffffff; border:none; border-right:1px solid #e5e5e2; font-size:14px; cursor:pointer; color:#1a1a18;">
 					<i class="fa-regular fa-floppy-disk"></i>
 					Save
 				</button>
@@ -78,11 +60,7 @@
 
 		</div>
 
-		<!-- Tabulator -->
-		<div id="table" style="flex:1;border:0;"></div>
+	<!-- Tabulator -->
+	<div id="table" style="flex:1;border:0;"></div>
 
-	</div>
-
-	<script src="/server/script.js" type="module"></script>
-</body>
-</html>
+</div>

@@ -720,7 +720,7 @@ let mt = {
 			});
 
 			// Load data
-			this.d_list = await mt.file.loadJson(this.h_pathDB);
+			this.d_list = await mt.api.fileRead(mt.m_pathServer+'/database/game.json', 'json');
 			for (let i=0, sz=this.d_list.length; i<sz; i++) {
 				let game = this.d_list[i];
 				game.id = i+1; // Thêm ID
@@ -759,6 +759,7 @@ let mt = {
 			}
 		},
 	},
+	program: 'ext',
 	explorer: {
 		h_config: {
 			lstSkip: [
