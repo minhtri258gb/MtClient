@@ -54,6 +54,7 @@ let mt = {
 					{ type: 'break' },
 					{ type: 'button', id: 'page-document', text: 'Document', icon: 'fa-solid fa-book-open-reader' },
 					{ type: 'button', id: 'page-server', text: 'Server', icon: 'fa-solid fa-server' },
+					{ type: 'button', id: 'page-task', text: 'Task', icon: 'fa-solid fa-list-check' },
 					{ type: 'break' },
 					{ type: 'check', id: 'item2', text: 'Check 1', icon: 'w2ui-icon-check' },
 					{ type: 'check', id: 'item3', text: 'Check 2', icon: 'w2ui-icon-check' },
@@ -79,6 +80,7 @@ let mt = {
 						case 'page-piano': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Piano', '/piano'); break;
 						case 'page-document': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Document', '/document'); break;
 						case 'page-server': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Server', '/server'); break;
+						case 'page-task': mt.utils.confirmRedirect('Chuyển hướng', 'Xác nhận mở trang Task', '/task'); break;
 						case 'menu': this.btnMenu(!event.object.checked); break;
 						case 'link:link-icon': window.open('https://fontawesome.com/v6/search?ic=free-collection'); break;
 						case 'link:link-w2ui': window.open('https://w2ui.com/web/docs/2.0/'); break;

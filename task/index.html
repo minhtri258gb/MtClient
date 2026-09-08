@@ -116,7 +116,7 @@
 		.active-code-chip button:hover { background:rgba(0,0,0,.3); }
 
 		ul.task-list { list-style:none; margin:0; padding:0; }
-		ul.child-list { margin:2px 0 6px 30px; padding-left:14px; border-left:2px solid var(--line); }
+		ul.child-list { margin:2px 0 2px 30px; padding-left:14px; border-left:2px solid var(--line); }
 		li.empty-state{ padding:26px 10px; text-align:center; color:var(--ink-dim); font-size:13.5px; }
 
 		li.task-item { margin-bottom:3px; }
@@ -165,7 +165,7 @@
 
 		.inline-edit { border:1px solid var(--accent); border-radius:4px; padding:3px 6px; font-size:13px; font-family:inherit; }
 
-		.add-child-form { margin-top:4px; }
+		.add-child-form { margin-bottom:3px; }
 		.add-child-form .task-row { background:#f5f8f8; border-style:dashed; flex-wrap:wrap; }
 		.add-child-form input[type=text], .add-child-form input[type=date] {
 			border:1px solid var(--line); border-radius:4px; padding:5px 8px; font-size:12.5px; background:#fff;
@@ -201,8 +201,8 @@
 			<input type="text" id="new-task-name" placeholder="Name: ...">
 			<input type="date" id="new-task-date">
 			<input type="text" id="new-task-tags" placeholder="Tags: new, support, ...">
-			<label class="chk-label"><input type="checkbox" id="new-task-top"> Ưu tiên</label>
-			<button class="btn" onclick="mt.action.addRootTask()"><i class="fa-solid fa-plus"></i> Thêm</button>
+			<!-- <label class="chk-label"><input type="checkbox" id="new-task-top"> Ưu tiên</label> -->
+			<button class="btn" onclick="mt.edit.addRootTask()"><i class="fa-solid fa-plus"></i> Thêm</button>
 		</div>
 	</div>
 
@@ -214,7 +214,7 @@
 
 	<div class="panel filter-panel">
 		<div class="filter-row">
-			<input type="text" id="filter-search" placeholder="Tìm theo tên hoặc tag…" oninput="mt.filterText = this.value; mt.ui.render();">
+			<input type="text" id="filter-search" placeholder="Tìm theo tên hoặc tag…" oninput="mt.filterText = this.value; mt.list.render();">
 			<button class="time-chip" data-key="overdue" onclick="mt.filter.toggleTime('overdue')">Trễ hạn</button>
 			<button class="time-chip" data-key="today" onclick="mt.filter.toggleTime('today')">Hôm nay</button>
 			<button class="time-chip" data-key="ok" onclick="mt.filter.toggleTime('ok')">Còn hạn</button>
@@ -230,6 +230,7 @@
 
 	<div id="context-menu">
 		<button onclick="mt.ctxMenu.btnAddSubTask()"><i class="fa-solid fa-plus"></i> Thêm task con</button>
+		<button onclick="mt.ctxMenu.btnEditTask()"><i class="fa-solid fa-edit"></i> Chỉnh sửa</button>
 		<button onclick="mt.ctxMenu.btnDelTask()" class="ctxmenu-danger"><i class="fa-solid fa-trash"></i> Xóa task</button>
 	</div>
 
@@ -348,15 +349,15 @@
 				},
 				toggleTag(tag) {
 					this.m_filterTags.has(tag) ? this.m_filterTags.delete(tag) : this.m_filterTags.add(tag);
-					mt.ui.render();
+					mt.list.render();
 				},
 				toggleCode(code) {
 					this.m_filterCodes.has(code) ? this.m_filterCodes.delete(code) : this.m_filterCodes.add(code);
-					mt.ui.render();
+					mt.list.render();
 				},
 				toggleTime(key) {
 					this.m_filterTime.has(key) ? this.m_filterTime.delete(key) : this.m_filterTime.add(key);
-					mt.ui.render();
+					mt.list.render();
 				},
 				clear() {
 					this.m_filterText = '';
@@ -364,7 +365,7 @@
 					this.m_filterTime.clear();
 					this.m_filterCodes.clear();
 					document.getElementById('filter-search').value = '';
-					mt.ui.render();
+					mt.list.render();
 				},
 			},
 			storage: {
@@ -435,7 +436,7 @@
 							mt.d_mapTasks = {};
 							this.buildMapTask(mt.d_tasks, null);
 							this.saveData();
-							mt.ui.render();
+							mt.list.render();
 						}
 						catch(err) {
 							alert('File JSON không hợp lệ.');
@@ -444,9 +445,52 @@
 					reader.readAsText(file);
 				},
 			},
-			action: {
-				m_addingChildTo: null,    // rootId or null
+			edit: {
+				m_editing: null,          // {id, field}
 
+				// Quick edit
+				startEdit(id, field) {
+					this.m_editing = { id, field };
+					mt.list.render();
+				},
+				commitEdit(input, task, field) {
+					const val = input.value;
+					if (field === 'name')
+						task.name = val;
+					else if (field === 'date')
+						task.expired = val || null;
+					else if (field === 'tags')
+						task.tags = val.split(',').map(s=>s.trim()).filter(Boolean);
+					else if (field === 'icon')
+						task.icon = val.trim() || null;
+					else if (field === 'code')
+						task.code = mt.utils.cleanCode(val) || null;
+					this.m_editing = null;
+					mt.storage.saveData();
+					mt.list.render();
+				},
+				bindEditInput(input, task, field) {
+					input.dataset.editId = task.id;
+					input.dataset.editField = field;
+					input.addEventListener('keydown', e => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							input.blur();
+						}
+						else if (e.key === 'Escape') {
+							e.preventDefault();
+							this.m_editing = null;
+							mt.list.render();
+						}
+					});
+					input.addEventListener('blur', () => {
+						if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === field) {
+							this.commitEdit(input, task, field);
+						}
+					});
+				},
+
+				// Add Child task
 				recomputeParent(parent) {
 
 					if (!parent.list || parent.list.length === 0)
@@ -472,7 +516,7 @@
 
 						// Nếu là task root thì update headerCount
 						if (pack.parent == null)
-							mt.ui.updateHeaderCount();
+							mt.list.updateHeaderCount();
 
 						// Đệ quy nếu có
 						let packParent = mt.d_mapTasks[parent.id];
@@ -520,7 +564,7 @@
 								task.collapsed = !task.collapsed; // Mark
 
 								// Tạo animation đóng / mở
-								mt.show.animFold(pack.elmList, task.collapsed, { margin: ['2px', '6px'] });
+								mt.show.animFold(pack.elmList, task.collapsed, { margin: ['2px', '2px'] });
 
 								// Đổi icon fold
 								pack.elmFoldIcon.classList.remove(`fa-chevron-${task.collapsed ? 'down' : 'right'}`);
@@ -550,7 +594,7 @@
 
 						// Cập nhật UI - Nếu là task root thì cập nhật số task hoàn thành
 						if (pack.parent == null)
-							mt.ui.updateHeaderCount();
+							mt.list.updateHeaderCount();
 
 						// Lưu
 						mt.storage.saveData();
@@ -559,60 +603,6 @@
 						console.error(ex);
 						mt.show.toast('error', ex.message);
 					}
-				},
-				deleteTask(id) {
-					try {
-
-						const pack = mt.d_mapTasks[id];
-						if (!pack)
-							return;
-
-						if (!confirm(`Xóa task "${pack.task.name}"?`))
-							return;
-
-						if (pack.parent) {
-							pack.parent.list = pack.parent.list.filter(c => c.id !== id);
-							this.recomputeParent(pack.parent);
-						}
-						else {
-							mt.d_tasks = mt.d_tasks.filter(t => t.id !== id);
-							delete mt.d_mapTasks[id]; // Bỏ link
-						}
-
-						// Lưu Storage
-						mt.storage.saveData();
-
-						// Cập nhật UI - Xóa Task
-						const elmLiTaskRow = document.querySelector(`li[data-id="${id}"]`);
-						mt.show.animRemove(elmLiTaskRow); // Remove Elm
-					}
-					catch (ex) {
-						console.error(ex);
-						mt.show.toast('error', ex.message);
-					}
-				},
-				toggleCollapse(id) {
-
-					const pack = mt.d_mapTasks[id];
-					if (!pack)
-						return;
-
-					// Mark in data
-					let collapsed = !pack.task.collapsed;
-					pack.task.collapsed = collapsed;
-
-					// Update UI
-					if (pack.elmList) {
-
-						// Tạo animation đóng / mở
-						mt.show.animFold(pack.elmList, collapsed, { margin: ['2px', '6px'] });
-
-						// Đổi icon fold
-						pack.elmFoldIcon.classList.remove(`fa-chevron-${collapsed ? 'down' : 'right'}`);
-						pack.elmFoldIcon.classList.add(`fa-chevron-${collapsed ? 'right' : 'down'}`);
-					}
-					else // Trường hợp collapse sẵn, load lên lại, render ban đầu sẽ ko có DOM
-						mt.ui.render(); // #TODO optimize, render sẵn dù collapse
 				},
 				addRootTask() {
 					const nameInput = document.getElementById('new-task-name');
@@ -625,7 +615,7 @@
 					const code = mt.utils.cleanCode(document.getElementById('new-task-code').value) || null;
 					const dateVal = document.getElementById('new-task-date').value || null;
 					const tags = document.getElementById('new-task-tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-					const toTop = document.getElementById('new-task-top').checked;
+					// const toTop = document.getElementById('new-task-top').checked;
 
 					const task = {
 						id: mt.utils.genId(),
@@ -640,7 +630,8 @@
 						collapsed: false,
 					};
 
-					toTop ? mt.d_tasks.unshift(task) : mt.d_tasks.push(task);
+					// toTop ? mt.d_tasks.unshift(task) : mt.d_tasks.push(task);
+					mt.d_tasks.unshift(task);
 					mt.d_mapTasks[task.id] = { task, parent: null }; // Link map
 
 					nameInput.value = '';
@@ -648,13 +639,13 @@
 					document.getElementById('new-task-code').value = '';
 					document.getElementById('new-task-date').value = '';
 					document.getElementById('new-task-tags').value = '';
-					document.getElementById('new-task-top').checked = false;
+					// document.getElementById('new-task-top').checked = false;
 
 					mt.storage.saveData();
 
-					mt.ui.render();
+					mt.list.render();
 				},
-				addChildTask(rootId, toTop) {
+				saveChildTask(rootId) { // , toTop
 
 					// Tìm task
 					const pack = mt.d_mapTasks[rootId];
@@ -671,70 +662,93 @@
 					const code = mt.utils.cleanCode(document.getElementById(`child-code-${rootId}`).value) || null;
 					const dateVal = document.getElementById(`child-date-${rootId}`).value || null;
 					const tags = document.getElementById(`child-tags-${rootId}`).value.split(',').map(s=>s.trim()).filter(Boolean);
+
 					const child = { id: mt.utils.genId(), icon, code, name, expired: dateVal, done:false, completedAt:null, tags };
 					if (!root.list)
 						root.list = [];
 
-					toTop ? root.list.unshift(child) : root.list.push(child);
+					// toTop ? root.list.unshift(child) : root.list.push(child);
+					root.list.unshift(child);
 					mt.d_mapTasks[child.id] = { task: child, parent: root };
 
 					this.recomputeParent(root);
 					root.collapsed = false;
-					this.m_addingChildTo = null;
 					mt.storage.saveData();
-					mt.ui.render();
+					mt.list.render();
 				},
-				cancelAddChild() {
-					this.m_addingChildTo = null;
-					mt.ui.render();
-				},
-			},
-			edit: {
-				m_editing: null,          // {id, field}
+				cancelAddChild(parentId) {
+					debugger
 
-				startEdit(id, field) {
-					this.m_editing = { id, field };
-					mt.ui.render();
+					// Tìm task
+					const pack = mt.d_mapTasks[parentId];
+					if (!pack)
+						return;
+
+					if (pack.elmForm == null)
+						return;
+
+					pack.elmTask.removeChild(pack.elmForm);
+					pack.elmForm = null;
 				},
-				commitEdit(input, task, field) {
-					const val = input.value;
-					if (field === 'name')
-						task.name = val;
-					else if (field === 'date')
-						task.expired = val || null;
-					else if (field === 'tags')
-						task.tags = val.split(',').map(s=>s.trim()).filter(Boolean);
-					else if (field === 'icon')
-						task.icon = val.trim() || null;
-					else if (field === 'code')
-						task.code = mt.utils.cleanCode(val) || null;
-					this.m_editing = null;
-					mt.storage.saveData();
-					mt.ui.render();
+
+				// Main action
+				editTask(taskId) {
+					try {
+
+						const pack = mt.d_mapTasks[taskId];
+						if (!pack)
+							return;
+
+						if (pack.elmForm == null) {
+							let elmForm = mt.list.buildTaskForm(taskId);
+							pack.elmForm = elmForm; // link
+							pack.elmRow.style.display = 'none'; // Ẩn row thông tin
+							pack.elmTask.prepend(elmForm); // Thêm form vào đầu task
+						}
+						else {
+							pack.elmRow.style.display = 'none'; // Ẩn row thông tin
+							pack.elmForm.style.display = ''; // Hiện form
+						}
+					}
+					catch (ex) {
+						console.error(ex);
+						mt.show.toast('error', ex.message);
+					}
 				},
-				bindEditInput(input, task, field) {
-					input.dataset.editId = task.id;
-					input.dataset.editField = field;
-					input.addEventListener('keydown', e => {
-						if (e.key === 'Enter') {
-							e.preventDefault();
-							input.blur();
+				deleteTask(taskId) {
+					try {
+
+						const pack = mt.d_mapTasks[taskId];
+						if (!pack)
+							return;
+
+						if (!confirm(`Xóa task "${pack.task.name}"?`))
+							return;
+
+						if (pack.parent) {
+							pack.parent.list = pack.parent.list.filter(c => c.id !== taskId);
+							this.recomputeParent(pack.parent);
 						}
-						else if (e.key === 'Escape') {
-							e.preventDefault();
-							this.m_editing = null;
-							mt.ui.render();
+						else {
+							mt.d_tasks = mt.d_tasks.filter(t => t.id !== taskId);
+							delete mt.d_mapTasks[taskId]; // Bỏ link
 						}
-					});
-					input.addEventListener('blur', () => {
-						if (this.m_editing && this.m_editing.id === task.id && this.m_editing.field === field) {
-							this.commitEdit(input, task, field);
-						}
-					});
+
+						// Lưu Storage
+						mt.storage.saveData();
+
+						// Cập nhật UI - Xóa Task
+						const elmLiTaskRow = document.querySelector(`li[data-id="${taskId}"]`);
+						mt.show.animRemove(elmLiTaskRow); // Remove Elm
+					}
+					catch (ex) {
+						console.error(ex);
+						mt.show.toast('error', ex.message);
+					}
 				},
 			},
 			ctxMenu: {
-				e_ctxMenu: null, // Div Content Menu
+				e_ctxMenu: null,  // Div Content Menu
 				m_targetId: null, // Element Contenxt Menu Target
 
 				init() {
@@ -753,22 +767,49 @@
 				},
 				btnAddSubTask() {
 					try {
-						const id = this.m_targetId;
+						const taskId = this.m_targetId;
 						this.hide();
 
-						const pack = mt.d_mapTasks[id];
-						if (pack)
+						const pack = mt.d_mapTasks[taskId];
+						if (!pack)
+							return;
+
+						// Nếu đang Fold thì mở ngay (ko anim)
+						if (pack.task.collapsed) {
 							pack.task.collapsed = false;
 
-						mt.edit.m_addingChildTo = id;
+							const animations = pack.elmList.getAnimations();
+							if (animations && animations.length > 0)
+								animations[0].cancel();
+						}
 
-						mt.ui.render();
+						// Create new task
+						// ...
 
+						// Build Form
+						let elmLi = document.createElement('li');
+						li.className = 'add-child-form';
+						let elmForm = mt.list.buildTaskForm(taskId);
+						elmLi.appendChild(elmForm);
+						pack.elmList.prepend(elmLi);
+
+						// Auto focus
 						setTimeout(() => {
-							const el = document.getElementById(`child-name-${id}`);
+							const el = document.getElementById(`child-name-${taskId}`);
 							if (el)
 								el.focus();
 						}, 0);
+					}
+					catch (ex) {
+						console.error(ex);
+						mt.show.toast('error', ex.message);
+					}
+				},
+				btnEditTask() {
+					try {
+						const id = this.m_targetId;
+						this.hide();
+						mt.edit.editTask(id);
 					}
 					catch (ex) {
 						console.error(ex);
@@ -779,7 +820,7 @@
 					try {
 						const id = this.m_targetId;
 						this.hide();
-						mt.action.deleteTask(id);
+						mt.edit.deleteTask(id);
 					}
 					catch (ex) {
 						console.error(ex);
@@ -787,7 +828,7 @@
 					}
 				},
 			},
-			ui: {
+			list: {
 				e_headerCount: null, // Số task hoàn thành
 
 				buildTaskRow(task, isRoot, opts) {
@@ -823,7 +864,7 @@
 
 						const elmFold = document.createElement('button');
 						elmFold.className = 'chevron-btn';
-						elmFold.onclick = () => mt.action.toggleCollapse(task.id);
+						elmFold.onclick = () => mt.list.toggleCollapse(task.id);
 						elmFold.appendChild(elmFoldIcon);
 
 						row.appendChild(elmFold);
@@ -838,7 +879,7 @@
 					const chkWrap = document.createElement('span'); chkWrap.className = 'chk-wrap';
 					const chk = document.createElement('input');
 					chk.type = 'checkbox'; chk.className = 'task-checkbox'; chk.checked = task.done;
-					chk.onclick = () => mt.action.toggleDone(task.id);
+					chk.onclick = () => mt.edit.toggleDone(task.id);
 					chkWrap.appendChild(chk);
 					row.appendChild(chkWrap);
 					pack.elmCheck = chk; // link
@@ -958,7 +999,7 @@
 					const delBtn = document.createElement('button');
 					delBtn.className = 'icon-btn'; delBtn.title = 'Xóa task';
 					delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-					delBtn.onclick = () => mt.action.deleteTask(task.id);
+					delBtn.onclick = () => mt.edit.deleteTask(task.id);
 					row.appendChild(delBtn);
 
 					li.appendChild(row);
@@ -972,7 +1013,7 @@
 
 					// children
 					const childrenToRender = overrideChildren !== null ? overrideChildren : (task.list || []);
-					const showChildren = (childrenToRender.length > 0 && !effectiveCollapsed) || mt.edit.m_addingChildTo === task.id;
+					const showChildren = (childrenToRender.length > 0 && !effectiveCollapsed);
 					if (showChildren) {
 						const childUl = document.createElement('ul');
 						childUl.className = 'task-list child-list';
@@ -984,53 +1025,76 @@
 							mt.sort.createSort(task.id, childUl);
 
 						childrenToRender.forEach(child => childUl.appendChild(this.buildTaskRow(child, false)));
-						if (mt.edit.m_addingChildTo === task.id) {
-							childUl.appendChild(this.buildAddChildForm(task.id));
-						}
 						li.appendChild(childUl);
 					}
 
 					return li;
 				},
-				buildAddChildForm(rootId) {
-					const li = document.createElement('li');
-					li.className = 'add-child-form';
+				buildTaskForm(parentId) { // type: 1 = add child task, 2 = edit task
+
 					const row = document.createElement('div');
 					row.className = 'task-row';
 
 					const icon = document.createElement('input');
-					icon.type = 'text'; icon.id = `child-icon-${rootId}`; icon.placeholder = 'icon'; icon.style.width = '90px';
+					icon.type = 'text';
+					icon.id = `child-icon-${parentId}`;
+					icon.placeholder = 'icon';
+					icon.style.width = '90px';
+
 					const code = document.createElement('input');
-					code.type = 'text'; code.id = `child-code-${rootId}`; code.placeholder = 'Mã dự án'; code.style.width = '90px';
+					code.type = 'text';
+					code.id = `child-code-${parentId}`;
+					code.placeholder = 'Mã dự án';
+					code.style.width = '90px';
+
 					const name = document.createElement('input');
-					name.type = 'text'; name.id = `child-name-${rootId}`; name.placeholder = 'Tên task con…'; name.style.flex = '1';
+					name.type = 'text';
+					name.id = `child-name-${parentId}`;
+					name.placeholder = 'Tên task con…';
+					name.style.flex = '1';
+
 					const date = document.createElement('input');
-					date.type = 'date'; date.id = `child-date-${rootId}`; date.style.width = '135px';
+					date.type = 'date';
+					date.id = `child-date-${parentId}`;
+					date.style.width = '135px';
+
 					const tags = document.createElement('input');
-					tags.type = 'text'; tags.id = `child-tags-${rootId}`; tags.placeholder = 'tags'; tags.style.width = '130px';
+					tags.type = 'text';
+					tags.id = `child-tags-${parentId}`;
+					tags.placeholder = 'tags';
+					tags.style.width = '130px';
 
-					const topLabel = document.createElement('label');
-					topLabel.className = 'chk-label';
-					const topChk = document.createElement('input');
-					topChk.type = 'checkbox'; topChk.id = `child-top-${rootId}`;
-					topLabel.appendChild(topChk);
-					topLabel.append(' Lên đầu');
+					// const topLabel = document.createElement('label');
+					// topLabel.className = 'chk-label';
+					// const topChk = document.createElement('input');
+					// topChk.type = 'checkbox';
+					// topChk.id = `child-top-${parentId}`;
+					// topLabel.appendChild(topChk);
+					// topLabel.append(' Lên đầu');
 
-					const addBtn = document.createElement('button');
-					addBtn.className = 'btn small';
-					addBtn.textContent = 'Thêm';
-					addBtn.onclick = () => mt.action.addChildTask(rootId, topChk.checked);
+					const saveBtn = document.createElement('button');
+					saveBtn.className = 'btn small';
+					saveBtn.textContent = 'Lưu';
+					// saveBtn.onclick = () => mt.edit.saveChildTask(parentId, topChk.checked);
+					saveBtn.onclick = () => mt.edit.saveChildTask(parentId);
 
 					const cancelBtn = document.createElement('button');
 					cancelBtn.className = 'btn ghost small';
 					cancelBtn.textContent = 'Hủy';
-					cancelBtn.onclick = () => mt.action.cancelAddChild();
+					cancelBtn.onclick = () => mt.edit.cancelAddChild(parentId);
 
-					name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); mt.action.addChildTask(rootId, topChk.checked); } });
+					name.addEventListener('keydown', e => {
+						if (e.key === 'Enter') {
+							e.preventDefault();
+							// mt.edit.saveChildTask(parentId, topChk.checked);
+							mt.edit.saveChildTask(parentId);
+						}
+					});
 
-					[icon, code, name, date, tags, topLabel, addBtn, cancelBtn].forEach(el => row.appendChild(el));
-					li.appendChild(row);
-					return li;
+					// [icon, code, name, date, tags, topLabel, saveBtn, cancelBtn].forEach(el => row.appendChild(el));
+					[icon, code, name, date, tags, saveBtn, cancelBtn].forEach(el => row.appendChild(el));
+
+					return row;
 				},
 				updateHeaderCount() {
 					let total = 0, done = 0;
@@ -1089,7 +1153,7 @@
 						countEl.textContent = '';
 					}
 				},
-				render() { // Xây dựng DOM
+				render() {           // Xây dựng DOM
 
 					mt.e_rootList.innerHTML = '';
 
@@ -1146,8 +1210,32 @@
 						}
 					}
 				},
-				renderFilter() { // Ẩn hiện DOM
+				renderFilter() {     // Ẩn hiện DOM
 
+				},
+
+				toggleCollapse(taskId) {
+
+					const pack = mt.d_mapTasks[taskId];
+					if (!pack)
+						return;
+
+					// Mark in data
+					let collapsed = !pack.task.collapsed;
+					pack.task.collapsed = collapsed;
+
+					// Update UI
+					if (pack.elmList) {
+
+						// Tạo animation đóng / mở
+						mt.show.animFold(pack.elmList, collapsed, { margin: ['2px', '2px'] });
+
+						// Đổi icon fold
+						pack.elmFoldIcon.classList.remove(`fa-chevron-${collapsed ? 'down' : 'right'}`);
+						pack.elmFoldIcon.classList.add(`fa-chevron-${collapsed ? 'right' : 'down'}`);
+					}
+					else // Trường hợp collapse sẵn, load lên lại, render ban đầu sẽ ko có DOM
+						mt.list.render(); // #TODO optimize, render sẵn dù collapse
 				},
 			},
 			sort: {
@@ -1255,13 +1343,13 @@
 
 					// Reference
 					this.e_rootList = document.getElementById('root-list');
-					this.ui.e_headerCount = document.getElementById('header-count');
+					this.list.e_headerCount = document.getElementById('header-count');
 
 					// Register Event
 					document.addEventListener('click', () => this.ctxMenu.hide());
 
 					this.storage.loadData();
-					this.ui.render();
+					this.list.render();
 				}
 				catch (ex) {
 					console.error(ex);
