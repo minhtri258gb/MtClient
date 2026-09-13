@@ -85,7 +85,7 @@ var mt = {
 			// 	await mt.api.init();
 
 			// Confirm
-			let isConfirm = await mt.show.alertConfirmPrimary('Lưu lại thai đổi server?', 'Lưu');
+			let isConfirm = await mt.show.alertConfirmPrimary('Lưu lại thay đổi server?', 'Lưu');
 			if (!isConfirm)
 				return;
 

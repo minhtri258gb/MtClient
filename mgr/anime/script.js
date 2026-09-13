@@ -221,7 +221,6 @@ var mt = {
 		let row = cell.getRow(); // Cột đã chỉnh sửa
 		let rowData = row.getData(); // Dữ liệu của hàng
 
-
 		// // Move next Field
 		// setTimeout(() => {
 		// 	let lstCell = row.getCells();

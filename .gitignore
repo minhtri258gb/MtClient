@@ -3,6 +3,7 @@ lib
 node_modules
 /.vscode/chrome-debug
 /res/assets
+/res/images/game
 /res/instruments
 /res/maps
 /res/midi
