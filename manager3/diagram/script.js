@@ -478,6 +478,7 @@ let mtDiagram = {
 	e_contain: null,
 	e_type: null,
 	e_render: null,
+	e_svg: null, // SVG render mermaid
 	m_init: false,
 
 	event: {
@@ -570,13 +571,13 @@ let mtDiagram = {
 			// Render to DOM
 			this.e_render.innerHTML = result.svg;
 
-			const svgElm = this.e_contain.querySelector('#'+uniqueId);
-			svgElm.style.maxWidth = '';
-			svgElm.style.height = '100%';
-			svgElm.style.marginBottom = '-4px';
+			this.e_svg = this.e_contain.querySelector('#'+uniqueId);
+			this.e_svg.style.maxWidth = '';
+			this.e_svg.style.height = '100%';
+			this.e_svg.style.marginBottom = '-4px';
 
 			// Bật Zoom / Pan
-			svgPanZoom(svgElm, {
+			svgPanZoom(this.e_svg, {
 					// viewportSelector: '.svg-pan-zoom_viewport'
 					panEnabled: true
 				, controlIconsEnabled: true
@@ -606,6 +607,47 @@ let mtDiagram = {
 		catch (ex) {
 			mt.show.toast('error', ex.message);
 			console.error('[mt.diagram.btnRender]', ex);
+		}
+	},
+	async btnDownloadImage() { // Download Image
+		try {
+
+			let svgElement = this.e_svg;
+			let filename = 'diagram.png';
+			let scale = 2;
+
+			const svgString = new XMLSerializer().serializeToString(svgElement);
+			const svgDataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+			const img = new Image();
+			img.src = svgDataUrl;
+
+			await new Promise((resolve, reject) => {
+				img.onload = resolve;
+				img.onerror = reject;
+			});
+
+			const canvas = document.createElement('canvas');
+			const bbox = svgElement.getBoundingClientRect();
+			canvas.width = bbox.width * scale;
+			canvas.height = bbox.height * scale;
+
+			const ctx = canvas.getContext('2d');
+			ctx.fillStyle = '#ffffff'; // nền trắng (WebP/PNG trong suốt nếu bỏ dòng này)
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+			// PNG
+			const pngUrl = canvas.toDataURL('image/png');
+
+			const a = document.createElement('a');
+			a.href = pngUrl;
+			a.download = filename;
+			a.click();
+			a.remove();
+		}
+		catch (ex) {
+			console.error(ex);
+			mt.show.toast('error', ex.message);
 		}
 	},
 	onChangeType() {

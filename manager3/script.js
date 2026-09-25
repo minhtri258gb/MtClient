@@ -162,6 +162,11 @@ let mt = {
 							}
 						}
 						module.open();
+
+						// Thêm link vào url
+						const url = new URL(window.location);
+						url.searchParams.set('app', moduleName);
+						window.history.replaceState({}, '', url);
 					}
 					else {
 						mt.show.toast('warning', `App "${moduleName}" chưa có sẵn!`);

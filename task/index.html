@@ -446,7 +446,7 @@
 				},
 			},
 			edit: {
-				m_editing: null,          // {id, field}
+				m_editing: null,        // {id, field}
 
 				// Quick edit
 				startEdit(id, field) {
@@ -767,6 +767,7 @@
 				},
 				btnAddSubTask() {
 					try {
+
 						const taskId = this.m_targetId;
 						this.hide();
 
@@ -788,9 +789,16 @@
 
 						// Build Form
 						let elmLi = document.createElement('li');
-						li.className = 'add-child-form';
+						elmLi.className = 'add-child-form';
 						let elmForm = mt.list.buildTaskForm(taskId);
 						elmLi.appendChild(elmForm);
+						if (pack.elmList == null) {
+							const childUl = document.createElement('ul');
+							childUl.className = 'task-list child-list';
+							childUl.dataset.parentId = taskId;
+							pack.elmList = childUl; // link
+							pack.elmTask.appendChild(childUl); // Add DOM
+						}
 						pack.elmList.prepend(elmLi);
 
 						// Auto focus
@@ -887,8 +895,11 @@
 					// code badge
 					if (mt.edit.m_editing && mt.edit.m_editing.id === task.id && mt.edit.m_editing.field === 'code') {
 						const input = document.createElement('input');
-						input.type = 'text'; input.className = 'inline-edit'; input.style.width = '80px';
-						input.value = task.code || ''; input.placeholder = 'LA';
+						input.type = 'text';
+						input.className = 'inline-edit';
+						input.style.width = '80px';
+						input.value = task.code || '';
+						input.placeholder = 'Project';
 						mt.edit.bindEditInput(input, task, 'code');
 						row.appendChild(input);
 					}
@@ -900,13 +911,20 @@
 							pBadge.className = 'code-badge' + (mt.filter.m_filterCodes.has(task.code) ? ' active' : '');
 							pBadge.style.background = colors.bg;
 							pBadge.style.color = colors.fg;
-							pBadge.textContent = `[${task.code}]`;
-							pBadge.onclick = (e) => { e.stopPropagation(); mt.filter.toggleCode(task.code); };
-						} else {
+							pBadge.textContent = `${task.code}`;
+							pBadge.onclick = (e) => {
+								e.stopPropagation();
+								mt.filter.toggleCode(task.code);
+							};
+						}
+						else {
 							pBadge.className = 'code-badge placeholder';
 							pBadge.textContent = '+ dự án';
 						}
-						pBadge.ondblclick = (e) => { e.stopPropagation(); mt.edit.startEdit(task.id, 'code'); };
+						pBadge.ondblclick = (e) => {
+							e.stopPropagation();
+							mt.edit.startEdit(task.id, 'code');
+						};
 						row.appendChild(pBadge);
 					}
 

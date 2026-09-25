@@ -378,6 +378,11 @@ let mt = {
 
 				// Render
 				mt.content.load(mt.m_content);
+
+				// Thêm link vào url
+				const url = new URL(window.location);
+				url.searchParams.set('path', filepath);
+				window.history.replaceState({}, '', url);
 			}
 		},
 		getType(filename) { // Lấy type tương ứng trên JsTree
@@ -591,9 +596,9 @@ let mt = {
 		processImage(elmMdDoc) { // Process Path Image
 
 			let posPath = mt.m_currentFile.lastIndexOf('/');
-			let filenameNExt = mt.m_currentFile.substring(posPath + 1).replace('.md', '');
+			// let filenameNExt = mt.m_currentFile.substring(posPath + 1).replace('.md', '');
 			let folder = mt.m_currentFile.substring(0, posPath).replace(mt.h_pathDoc, '');
-			mt.m_urlStaticImage = window.location.origin + '/static/document' + folder + '/images/' + filenameNExt + '/';
+			mt.m_urlStaticImage = window.location.origin + '/static/document' + folder + '/';
 
 			elmMdDoc.querySelectorAll('img').forEach(img => {
 				let fileImageName = img.src.replace(window.location.origin + '/', '');

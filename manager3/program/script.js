@@ -1,4 +1,6 @@
 let mtProgram = {
+	h_pathDB: '/database/program.json',
+	h_pathImg: '/res/images/program',
 	e_contain: null, // Element chứa app
 	m_init: false, // Khởi tạo app
 
@@ -7,15 +9,12 @@ let mtProgram = {
 
 		async init() {
 
-			let renderStatus = (cell) => {
-				let status = cell.getValue() || '';
-				if (status === -2)
-					return `...`;
-				else if (status === -1)
-					return `<i class="fa-solid fa-spinner fa-lg anim-rotate"></i>`;
-				return `<i class="fa-solid fa-circle-${status === 1 ? 'check' : 'xmark'} fa-lg"
-					style="color:#${status === 1 ? '4ade80' : 'f87171'}"></i>`;
-			}
+			let renderImg = (cell) => {
+				let img = cell.getValue() || '';
+				if (img && img.length > 0)
+					return `<img src="${mtProgram.h_pathImg}/${img}" />`;
+				return '';
+			};
 			let renderTag = (cell) => {
 				let tags = cell.getValue() || '';
 				let htmlBtn = '<div style="display:flex;gap:4px;">';
@@ -26,7 +25,7 @@ let mtProgram = {
 				return htmlBtn + '</div>';
 			}
 
-			this.c_table = new Tabulator('#table', {
+			this.c_table = new Tabulator('#program-table', {
 				layout: 'fitData',
 				height: '100%',
 				renderVertical: 'basic', // Tắt virtual DOM
@@ -34,10 +33,9 @@ let mtProgram = {
 				data: [],
 				columns: [
 					{ title:'STT', formatter:'rownum', width:40, hozAlign:'center', headerSort:false },
-					{ title:'Actions', field:'actions', width:120, headerSort:false, formatter: (cell) => this.buildRowAction(cell) },
-					{ title:'Status', field:'status', width:52, hozAlign:'center', vertAlign:'middle', headerSort:false, formatter: (cell) => renderStatus(cell) },
+					{ title:'Image', field:'img', width:51, vertAlign:'middle', hozAlign:'center', headerSort:false, formatter: (cell) => renderImg(cell), editor:'input', editable:false },
 					{ title:'Name', field:'name', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
-					{ title:'URL', field:'url', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
+					{ title:'Note', field:'note', vertAlign:'middle', headerSort:true, editor:'input', editable:false },
 					{ title:'Tags', field:'tags', headerSort:false, formatter: (cell) => renderTag(cell) },
 				],
 				rowContextMenu: (event, row) => this.contextMenu(event, row),
@@ -46,21 +44,13 @@ let mtProgram = {
 		async load() {
 
 			// Call API - read file
-			mt.d_list = await mt.api.fileRead(mt.m_pathServer+'/database/program.json', 'json');
+			mt.d_list = await mt.api.fileRead(mt.m_pathServer + mtProgram.h_pathDB, 'json');
 
 			let id = 1;
 			for (let server of mt.d_list) {
 
 				// Thêm Id
 				server.id = id++;
-
-				// Trạng thái chưa check
-				server.status = -2;
-
-				// Lấy host và port
-				let splitURL = mt.utils.splitURL(server.url);
-				server.host = splitURL.host;
-				server.port = splitURL.port;
 			}
 
 			// Load into list
@@ -100,7 +90,7 @@ let mtProgram = {
 			}
 
 			// Call API - Lưu dữ liệu
-			let filepath = `${mt.m_pathServer}/database/server.json`;
+			let filepath = mt.m_pathServer + mtProgram.h_pathDB;
 			let content = JSON.stringify(listData);
 			await mt.api.fileWriteText(filepath, content, true);
 
@@ -111,25 +101,6 @@ let mtProgram = {
 
 			// Log
 			mt.h_debug && console.log('[mt.list.save]', { listData });
-		},
-		buildRowAction(cell) {
-			let row = cell.getRow().getData();
-			let act = ',' + (cell.getValue() || '') + ',';
-
-			let htmlBtn = '<div style="display:flex;gap:4px;">';
-
-			// Refresh
-			htmlBtn += `<button onclick="mt.event.btnRowRefresh(${row.id})" style="padding:0;"><i class="fa-solid fa-arrows-rotate"></i></button>`;
-
-			// Link
-			if (row.status === 1 && act.includes(',link,'))
-				htmlBtn += `<button onclick="mt.event.btnRowLink(${row.id})" style="padding:0;"><i class="fa-solid fa-link"></i></button>`;
-
-			// Log
-			if (row.log && row.log.length > 0)
-				htmlBtn += `<button onclick="mt.event.btnRowLog(${row.id})" style="padding:0;"><i class="fa-solid fa-hourglass-half"></i></button>`;
-
-			return htmlBtn + '</div>';
 		},
 		contextMenu(event, row) {
 			let actions = [];
@@ -553,41 +524,47 @@ let mtProgram = {
 	},
 
 	async init() {
+		try {
 
-		// Add container
-		this.e_contain.id = 'program-contain';
-		this.e_contain.style.height = '100%';
-		this.e_contain.style.display = '';
+			// Add container
+			this.e_contain.id = 'program-contain';
+			this.e_contain.style.height = '100%';
+			this.e_contain.style.display = '';
 
-		// Import Library
-		mt.lib.component(['TagBox']); // Ko cần đợi | 'Rate'
-		await mt.lib.import([
-			'tabulator', // Datagrid
-			'tingle', // Popup
-			'jsonEditor', // Form
-		]);
+			// Import Library
+			mt.lib.component(['TagBox']); // Ko cần đợi | 'Rate'
+			await mt.lib.import([
+				'tabulator', // Datagrid
+				'tingle', // Popup
+				'jsonEditor', // Form
+			]);
 
-		// Prepare element
-		// this.e_type = this.e_contain.querySelector('#sticker-type');
-		// this.e_file_compare = this.e_contain.querySelector('#sticker-file-compare');
-		// this.e_labelLeft = this.e_contain.querySelector('#sticker-label-left');
-		// this.e_listLeft = this.e_contain.querySelector('#sticker-list-left');
-		// this.e_labelRight = this.e_contain.querySelector('#sticker-label-right');
-		// this.e_listRight = this.e_contain.querySelector('#sticker-list-right');
-		// this.e_compareTop = this.e_contain.querySelector('#sticker-compare-top');
-		// this.e_compareBottom = this.e_contain.querySelector('#sticker-compare-bottom');
+			// Prepare element
+			// this.e_type = this.e_contain.querySelector('#sticker-type');
+			// this.e_file_compare = this.e_contain.querySelector('#sticker-file-compare');
+			// this.e_labelLeft = this.e_contain.querySelector('#sticker-label-left');
+			// this.e_listLeft = this.e_contain.querySelector('#sticker-list-left');
+			// this.e_labelRight = this.e_contain.querySelector('#sticker-label-right');
+			// this.e_listRight = this.e_contain.querySelector('#sticker-list-right');
+			// this.e_compareTop = this.e_contain.querySelector('#sticker-compare-top');
+			// this.e_compareBottom = this.e_contain.querySelector('#sticker-compare-bottom');
 
-		// Call API - Lấy PATH_PUBLIC
-		// if (this.m_clientPath.length == 0)
-		// 	this.m_clientPath = await mt.api.config('PATH_PUBLIC');
+			// Call API - Lấy PATH_PUBLIC
+			// if (this.m_clientPath.length == 0)
+			// 	this.m_clientPath = await mt.api.config('PATH_PUBLIC');
 
-		// Init module
-		this.list.init();
-		this.form.init();
+			// Init module
+			this.list.init();
+			this.form.init();
 
-		// Load data
-		await this.list.load();
+			// Load data
+			await this.list.load();
 
+		}
+		catch (ex) {
+			console.error(ex);
+			mt.show.toast('error', ex.message);
+		}
 	},
 }
 export default mtProgram;

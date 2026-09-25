@@ -1,0 +1,44 @@
+
+/* === Tabulator === */
+#program-table {
+	background-color: white;
+	border: none;
+
+	.highlight-row-add {
+		background-color: #d4fcff !important;
+		transition: background-color 1s;
+	}
+	.highlight-row-edit {
+		background-color: #fff8be !important;
+		transition: background-color 1s;
+	}
+	.tabulator-header .tabulator-col {
+		background: #f2faff;
+	}
+	.tabulator-row.tabulator-row-even {
+		background-color: #fbfbfb;
+	}
+	.tabulator-row.tabulator-row-odd {
+		background-color: #fff;
+	}
+	.tabulator-row:hover {
+		background-color: #e6f3ff;
+	}
+	.tabulator-row .tabulator-cell {
+		border-right: 1px dotted #ccc;
+	}
+
+	.row-tag {
+		padding: 0px 3px;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+	}
+}
+.tabulator-menu {
+	border-radius: 6px;
+
+	.tabulator-menu-item {
+		display: flex;
+		gap: 4px;
+	}
+}
